@@ -80,11 +80,8 @@ export default function Auth() {
       {/* Right panel - form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
-          <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center">
-              <HardHat className="w-6 h-6 text-accent-foreground" />
-            </div>
-            <span className="text-2xl font-bold">GEO3D</span>
+          <div className="lg:hidden mb-8">
+            <img src={logoGeo3d} alt="GEO3D" className="h-10" />
           </div>
 
           <h2 className="text-2xl font-bold mb-1">
