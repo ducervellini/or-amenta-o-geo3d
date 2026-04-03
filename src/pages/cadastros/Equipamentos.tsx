@@ -53,7 +53,13 @@ function calcEquip(f: EquipamentoForm) {
 }
 
 export default function Equipamentos() {
-  const { data, loading, create, update, remove } = useSupabaseCrud("equipamentos" as any);
+  const { data, isLoading: loading } = useSupabaseQuery("equipamentos");
+  const insertMut = useSupabaseInsert("equipamentos");
+  const updateMut = useSupabaseUpdate("equipamentos");
+  const deleteMut = useSupabaseDelete("equipamentos");
+  const create = (v: any) => insertMut.mutateAsync(v);
+  const update = (id: string, v: any) => updateMut.mutateAsync({ id, values: v });
+  const remove = (id: string) => deleteMut.mutateAsync(id);
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
