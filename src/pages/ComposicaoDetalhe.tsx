@@ -387,10 +387,20 @@ export default function ComposicaoDetalhe() {
 
         {/* Sidebar */}
         <div className="space-y-4">
+          {!isNew && (
+            <ControleStatus
+              composicaoId={id!}
+              status={status}
+              travado={travado}
+              onStatusChange={(s, t) => { setStatus(s); setTravado(t); }}
+            />
+          )}
+
           <Tabs value={sidebarTab} onValueChange={setSidebarTab}>
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="resumo">Custos</TabsTrigger>
-              <TabsTrigger value="bdi" className="gap-1"><BarChart3 className="w-3.5 h-3.5" />BDI / DRE</TabsTrigger>
+              <TabsTrigger value="bdi" className="gap-1"><BarChart3 className="w-3.5 h-3.5" />BDI</TabsTrigger>
+              <TabsTrigger value="historico" className="gap-1"><History className="w-3.5 h-3.5" />Histórico</TabsTrigger>
             </TabsList>
 
             <TabsContent value="resumo" className="space-y-4 pt-2">
@@ -408,6 +418,22 @@ export default function ComposicaoDetalhe() {
 
             <TabsContent value="bdi" className="pt-2">
               <PainelBDI custoDireto={resumo.custo_direto} onBdiCalculado={setResultadoBDI} />
+            </TabsContent>
+
+            <TabsContent value="historico" className="space-y-4 pt-2">
+              {!isNew && id && (
+                <>
+                  <HistoricoRevisoes
+                    composicaoId={id}
+                    dadosAtuais={{ ...resumo, itens: itens.length, status }}
+                  />
+                  <GerenciadorCenarios
+                    composicaoId={id}
+                    dadosAtuais={{ ...resumo, itens: itens.length, status }}
+                  />
+                  <TrilhaAuditoria registroId={id} />
+                </>
+              )}
             </TabsContent>
           </Tabs>
         </div>
