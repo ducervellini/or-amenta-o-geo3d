@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Mail, Lock, User, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import logoGeo3d from "@/assets/logo_GEO3D.png";
-import { toast } from "sonner";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
