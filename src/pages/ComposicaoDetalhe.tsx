@@ -57,6 +57,8 @@ export default function ComposicaoDetalhe() {
   const [descricao, setDescricao] = useState("");
   const [unidade, setUnidade] = useState("un");
   const [servicoId, setServicoId] = useState("_none_");
+  const [status, setStatus] = useState("rascunho");
+  const [travado, setTravado] = useState(false);
 
   // Service metrics
   const [tipoGeometria, setTipoGeometria] = useState("");
