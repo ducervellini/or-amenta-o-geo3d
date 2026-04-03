@@ -120,6 +120,7 @@ export type Database = {
           descricao: string | null
           id: string
           nome: string
+          regime_contratacao: string
           salario_base: number
           unidade_salarial: string
           updated_at: string
@@ -130,6 +131,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome: string
+          regime_contratacao?: string
           salario_base?: number
           unidade_salarial?: string
           updated_at?: string
@@ -140,6 +142,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome?: string
+          regime_contratacao?: string
           salario_base?: number
           unidade_salarial?: string
           updated_at?: string

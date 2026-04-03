@@ -5,6 +5,7 @@
 
 export interface ParametrosMaoDeObra {
   salario_base: number;
+  regime_contratacao: "clt" | "pj";
   encargos_percentual: number;
   beneficios_valor: number;
   alimentacao: number;
@@ -72,14 +73,24 @@ export function calcularMaoDeObra(
 ): ResultadoCalculo {
   const memoria: MemoriaCalculo[] = [];
 
+  const isPJ = params.regime_contratacao === "pj";
   const salarioMensal = params.salario_base;
-  memoria.push({ descricao: "Salário base mensal", formula: `R$ ${fmt(salarioMensal)}`, valor: salarioMensal });
+  memoria.push({ descricao: `Salário base mensal (${isPJ ? "PJ" : "CLT"})`, formula: `R$ ${fmt(salarioMensal)}`, valor: salarioMensal });
 
-  const encargosValor = salarioMensal * (params.encargos_percentual / 100);
-  memoria.push({ descricao: "Encargos sociais", formula: `${fmt(salarioMensal)} × ${fmt(params.encargos_percentual)}% = ${fmt(encargosValor)}`, valor: encargosValor });
+  const encargosValor = isPJ ? 0 : salarioMensal * (params.encargos_percentual / 100);
+  if (isPJ) {
+    memoria.push({ descricao: "Encargos sociais (PJ: isento)", formula: "R$ 0,00", valor: 0 });
+  } else {
+    memoria.push({ descricao: "Encargos sociais", formula: `${fmt(salarioMensal)} × ${fmt(params.encargos_percentual)}% = ${fmt(encargosValor)}`, valor: encargosValor });
+  }
 
-  const custoMensalBruto = salarioMensal + encargosValor + params.beneficios_valor;
-  memoria.push({ descricao: "Custo mensal bruto", formula: `${fmt(salarioMensal)} + ${fmt(encargosValor)} + ${fmt(params.beneficios_valor)} = ${fmt(custoMensalBruto)}`, valor: custoMensalBruto });
+  const beneficiosValor = isPJ ? 0 : params.beneficios_valor;
+  const custoMensalBruto = salarioMensal + encargosValor + beneficiosValor;
+  if (isPJ) {
+    memoria.push({ descricao: "Custo mensal bruto (PJ: sem benefícios)", formula: `R$ ${fmt(custoMensalBruto)}`, valor: custoMensalBruto });
+  } else {
+    memoria.push({ descricao: "Custo mensal bruto", formula: `${fmt(salarioMensal)} + ${fmt(encargosValor)} + ${fmt(beneficiosValor)} = ${fmt(custoMensalBruto)}`, valor: custoMensalBruto });
+  }
 
   const custoMensalCampo = params.alimentacao + params.hospedagem + params.transporte;
   memoria.push({ descricao: "Custos de campo (alim. + hosp. + transp.)", formula: `${fmt(params.alimentacao)} + ${fmt(params.hospedagem)} + ${fmt(params.transporte)} = ${fmt(custoMensalCampo)}`, valor: custoMensalCampo });
@@ -252,7 +263,7 @@ function fmt(n: number): string {
 
 export function getDefaultParamsMaoDeObra(): ParametrosMaoDeObra {
   return {
-    salario_base: 0, encargos_percentual: 0, beneficios_valor: 0,
+    salario_base: 0, regime_contratacao: "clt", encargos_percentual: 0, beneficios_valor: 0,
     alimentacao: 0, hospedagem: 0, transporte: 0,
     horas_mes: 176, dias_mes: 22,
     regime_dias_trabalho: 0, regime_dias_folga: 0,
