@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useSupabaseCrud } from "@/hooks/useSupabaseCrud";
+import { useSupabaseQuery, useSupabaseInsert, useSupabaseUpdate, useSupabaseDelete } from "@/hooks/useSupabaseCrud";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
