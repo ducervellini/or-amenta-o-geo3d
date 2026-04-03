@@ -296,6 +296,20 @@ export default function Veiculos() {
                     <p className="font-bold text-lg text-primary">{R(calc.totalMes)}</p>
                     <p className="text-xs text-muted-foreground">{R(calc.custoKmTotal)}/km × {form.km_mensal_estimado} km</p>
                   </div>
+                  {isProprio && calc.retornoCapitalKm > 0 && (
+                    <div className="col-span-2 md:col-span-4 pt-2 border-t border-dashed">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Custo líquido/km (- retorno capital)</p>
+                          <p className="font-semibold text-foreground">{R(calc.custoKmLiquido)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Custo líquido/mês (- retorno capital)</p>
+                          <p className="font-semibold text-foreground">{R(calc.totalMesLiquido)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
