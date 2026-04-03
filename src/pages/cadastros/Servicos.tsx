@@ -3,7 +3,7 @@ import { useSupabaseQuery } from "@/hooks/useSupabaseCrud";
 
 export default function Servicos() {
   const { data: mercados } = useSupabaseQuery("mercados");
-  const { data: modulos } = useSupabaseQuery("modulos");
+  const { data: areasEmpresa } = useSupabaseQuery("areas_empresa");
 
   return (
     <CrudPage
@@ -23,13 +23,13 @@ export default function Servicos() {
           },
         },
         {
-          key: "modulo_id",
-          label: "Módulo",
+          key: "area_empresa_id",
+          label: "Área da Empresa",
           render: (v) => {
-            const m = modulos?.find((m) => m.id === v);
+            const a = areasEmpresa?.find((a) => a.id === v);
             return (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
-                {m ? String(m.nome) : "-"}
+                {a ? String(a.nome) : "-"}
               </span>
             );
           },
@@ -43,7 +43,16 @@ export default function Servicos() {
             return <span className="capitalize">{labels[String(v)] || String(v)}</span>;
           },
         },
-        { key: "produtividade_padrao", label: "Prod. Padrão" },
+        {
+          key: "produtividade_padrao",
+          label: "Produtividade",
+          render: (v, row) => {
+            if (!v) return <span className="text-muted-foreground">-</span>;
+            const tempo = (row as Record<string, unknown>).unidade_tempo_produtividade || "hora";
+            const unidade = (row as Record<string, unknown>).unidade_medicao || "un";
+            return <span>{String(v)} {String(unidade)}/{String(tempo)}</span>;
+          },
+        },
       ]}
       formFields={[
         { name: "codigo", label: "Código", type: "text", required: true, placeholder: "SRV-001" },
@@ -57,13 +66,30 @@ export default function Servicos() {
           options: (mercados || []).map((m) => ({ label: String(m.nome), value: String(m.id) })),
         },
         {
-          name: "modulo_id",
-          label: "Módulo",
+          name: "area_empresa_id",
+          label: "Área da Empresa",
           type: "select",
           required: true,
-          options: (modulos || []).map((m) => ({ label: String(m.nome), value: String(m.id) })),
+          options: (areasEmpresa || []).map((a) => ({ label: String(a.nome), value: String(a.id) })),
         },
-        { name: "unidade_medicao", label: "Unidade de Medição", type: "text", required: true, placeholder: "ha, m, km, un" },
+        {
+          name: "unidade_medicao",
+          label: "Unidade de Medição",
+          type: "select",
+          required: true,
+          options: [
+            { label: "Hectare (ha)", value: "ha" },
+            { label: "Metro (m)", value: "m" },
+            { label: "Quilômetro (km)", value: "km" },
+            { label: "Metro quadrado (m²)", value: "m²" },
+            { label: "Metro cúbico (m³)", value: "m³" },
+            { label: "Unidade (un)", value: "un" },
+            { label: "Ponto (pt)", value: "pt" },
+            { label: "Litro (L)", value: "L" },
+            { label: "Tonelada (t)", value: "t" },
+            { label: "Metro linear (ml)", value: "ml" },
+          ],
+        },
         {
           name: "tipo_geometria",
           label: "Tipo de Geometria",
@@ -77,6 +103,17 @@ export default function Servicos() {
           ],
         },
         { name: "produtividade_padrao", label: "Produtividade Padrão", type: "number", step: "0.0001" },
+        {
+          name: "unidade_tempo_produtividade",
+          label: "Unidade de Tempo (Produtividade)",
+          type: "select",
+          options: [
+            { label: "Hora", value: "hora" },
+            { label: "Dia", value: "dia" },
+            { label: "Mês", value: "mes" },
+          ],
+          defaultValue: "hora",
+        },
       ]}
     />
   );
