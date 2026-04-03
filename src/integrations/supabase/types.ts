@@ -479,6 +479,42 @@ export type Database = {
           },
         ]
       }
+      modulos_areas_empresa: {
+        Row: {
+          area_empresa_id: string
+          created_at: string
+          id: string
+          modulo_id: string
+        }
+        Insert: {
+          area_empresa_id: string
+          created_at?: string
+          id?: string
+          modulo_id: string
+        }
+        Update: {
+          area_empresa_id?: string
+          created_at?: string
+          id?: string
+          modulo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modulos_areas_empresa_area_empresa_id_fkey"
+            columns: ["area_empresa_id"]
+            isOneToOne: false
+            referencedRelation: "areas_empresa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "modulos_areas_empresa_modulo_id_fkey"
+            columns: ["modulo_id"]
+            isOneToOne: false
+            referencedRelation: "modulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parametros_admin_central: {
         Row: {
           ativo: boolean
