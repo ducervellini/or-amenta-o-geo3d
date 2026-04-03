@@ -10,17 +10,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   ArrowLeft, Plus, Edit, Trash2, Users, Wrench, Truck, Package,
-  ChevronDown, ChevronUp, Save,
+  ChevronDown, ChevronUp, Save, BarChart3,
 } from "lucide-react";
 import { ComposicaoItemForm } from "@/components/composicao/ComposicaoItemForm";
 import { ResumoComposicao } from "@/components/composicao/ResumoComposicao";
 import { MemoriaCalculo } from "@/components/composicao/MemoriaCalculo";
+import { PainelBDI } from "@/components/composicao/PainelBDI";
+import { MetricasServicoForm } from "@/components/composicao/MetricasServicoForm";
 import {
   calcularMaoDeObra, calcularEquipamento, calcularVeiculo, calcularMaterial,
   calcularResumo,
   type ParametrosMaoDeObra, type ParametrosEquipamento, type ParametrosVeiculo, type ParametrosMaterial,
   getDefaultParamsMaoDeObra, getDefaultParamsEquipamento, getDefaultParamsVeiculo, getDefaultParamsMaterial,
 } from "@/lib/composicao-calculo";
+import { type ResultadoBDI } from "@/lib/bdi-calculo";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -48,17 +51,27 @@ export default function ComposicaoDetalhe() {
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
   const [unidade, setUnidade] = useState("un");
-  const [servicoId, setServicoId] = useState("");
+  const [servicoId, setServicoId] = useState("_none_");
+
+  // Service metrics
+  const [tipoGeometria, setTipoGeometria] = useState("");
+  const [metricas, setMetricas] = useState<Record<string, unknown>>({});
 
   // Items
   const [itens, setItens] = useState<Record<string, unknown>[]>([]);
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
+
+  // BDI result
+  const [resultadoBDI, setResultadoBDI] = useState<ResultadoBDI | null>(null);
 
   // Dialogs
   const [showItemForm, setShowItemForm] = useState(false);
   const [editingItem, setEditingItem] = useState<Record<string, unknown> | null>(null);
   const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
   const [tipoNovo, setTipoNovo] = useState<TipoInsumo>("mao_de_obra");
+
+  // Active sidebar tab
+  const [sidebarTab, setSidebarTab] = useState("resumo");
 
   const insertComposicao = useSupabaseInsert("composicoes");
   const updateComposicao = useSupabaseUpdate("composicoes");
@@ -76,7 +89,7 @@ export default function ComposicaoDetalhe() {
           setNome(comp.nome);
           setDescricao(comp.descricao || "");
           setUnidade(comp.unidade);
-          setServicoId(comp.servico_id || "");
+          setServicoId(comp.servico_id || "_none_");
         }
         const { data: items } = await (supabase.from as any)("composicao_itens").select("*").eq("composicao_id", id).order("created_at");
         if (items) setItens(items);
@@ -84,9 +97,22 @@ export default function ComposicaoDetalhe() {
     }
   }, [id, isNew]);
 
+  // Load service geometry type when service changes
+  useEffect(() => {
+    if (servicoId && servicoId !== "_none_") {
+      const servico = servicos?.find((s) => String(s.id) === servicoId);
+      if (servico) {
+        setTipoGeometria(String(servico.tipo_geometria || ""));
+        const premissas = (servico.premissas_padrao as Record<string, unknown>) || {};
+        setMetricas(premissas);
+      }
+    } else {
+      setTipoGeometria("");
+    }
+  }, [servicoId, servicos]);
+
   type ItemComCalculo = Record<string, unknown> & { resultado: { custo_unitario: number; custo_total: number; memoria: import("@/lib/composicao-calculo").MemoriaCalculo[] } };
 
-  // Calculate resultado for each item
   const itensComCalculo: ItemComCalculo[] = useMemo(() => {
     return itens.map((item): ItemComCalculo => {
       const tipo = String(item.tipo_insumo);
@@ -111,12 +137,11 @@ export default function ComposicaoDetalhe() {
     })));
   }, [itensComCalculo]);
 
-  // Save header
   const handleSaveHeader = async () => {
     if (!codigo || !nome) { toast.error("Código e nome são obrigatórios"); return; }
     const values = {
       codigo, nome, descricao, unidade,
-      servico_id: servicoId || null,
+      servico_id: servicoId === "_none_" ? null : servicoId,
       custo_unitario_total: resumo.custo_direto,
     };
     if (isNew) {
@@ -130,7 +155,6 @@ export default function ComposicaoDetalhe() {
     }
   };
 
-  // Save item
   const handleSaveItem = async (values: Record<string, unknown>) => {
     if (isNew) { toast.error("Salve a composição primeiro"); return; }
     if (editingItem) {
@@ -192,10 +216,26 @@ export default function ComposicaoDetalhe() {
         <Button variant="ghost" size="icon" onClick={() => navigate("/composicoes")}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="page-title">{isNew ? "Nova Composição" : nome || "Composição"}</h1>
           <p className="page-subtitle">Composição analítica de custos unitários</p>
         </div>
+        {!isNew && resultadoBDI && (
+          <div className="hidden md:flex items-center gap-4 text-right">
+            <div>
+              <div className="text-xs text-muted-foreground">Custo Direto</div>
+              <div className="font-mono font-semibold text-sm">R$ {fmt(resumo.custo_direto)}</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground">BDI</div>
+              <div className="font-mono font-semibold text-sm text-accent">{resultadoBDI.bdi_percentual.toFixed(2)}%</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground">Preço Final</div>
+              <div className="font-mono font-bold text-lg text-primary">R$ {fmt(resultadoBDI.preco_final_bdi)}</div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -230,7 +270,7 @@ export default function ComposicaoDetalhe() {
               <Select value={servicoId} onValueChange={setServicoId}>
                 <SelectTrigger><SelectValue placeholder="Avulsa (sem serviço)" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Avulsa</SelectItem>
+                  <SelectItem value="_none_">Avulsa (sem serviço)</SelectItem>
                   {(servicos || []).map((s) => (
                     <SelectItem key={String(s.id)} value={String(s.id)}>{String(s.nome)}</SelectItem>
                   ))}
@@ -242,6 +282,15 @@ export default function ComposicaoDetalhe() {
               {isNew ? "Criar Composição" : "Salvar"}
             </Button>
           </div>
+
+          {/* Service metrics */}
+          {tipoGeometria && (
+            <MetricasServicoForm
+              tipoGeometria={tipoGeometria}
+              metricas={metricas}
+              onChange={setMetricas}
+            />
+          )}
 
           {/* Items by group */}
           {!isNew && (
@@ -327,23 +376,31 @@ export default function ComposicaoDetalhe() {
           )}
         </div>
 
-        {/* Sidebar - Resumo */}
-        <div className="space-y-6">
-          <ResumoComposicao resumo={resumo} />
+        {/* Sidebar */}
+        <div className="space-y-4">
+          <Tabs value={sidebarTab} onValueChange={setSidebarTab}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="resumo">Custos</TabsTrigger>
+              <TabsTrigger value="bdi" className="gap-1"><BarChart3 className="w-3.5 h-3.5" />BDI / DRE</TabsTrigger>
+            </TabsList>
 
-          {!isNew && itensComCalculo.length > 0 && (
-            <div className="bg-card rounded-lg border shadow-sm p-5 space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Custo Unitário
-              </h3>
-              <div className="text-center">
-                <div className="text-3xl font-mono font-bold text-primary">
-                  R$ {fmt(resumo.custo_direto)}
+            <TabsContent value="resumo" className="space-y-4 pt-2">
+              <ResumoComposicao resumo={resumo} />
+              {!isNew && itensComCalculo.length > 0 && (
+                <div className="bg-card rounded-lg border shadow-sm p-5 space-y-3">
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Custo Unitário</h3>
+                  <div className="text-center">
+                    <div className="text-3xl font-mono font-bold text-primary">R$ {fmt(resumo.custo_direto)}</div>
+                    <div className="text-xs text-muted-foreground mt-1">por {unidade}</div>
+                  </div>
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">por {unidade}</div>
-              </div>
-            </div>
-          )}
+              )}
+            </TabsContent>
+
+            <TabsContent value="bdi" className="pt-2">
+              <PainelBDI custoDireto={resumo.custo_direto} onBdiCalculado={setResultadoBDI} />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 
