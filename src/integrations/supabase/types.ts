@@ -361,41 +361,71 @@ export type Database = {
         Row: {
           ativo: boolean
           codigo: string
+          combustivel_consumo_hora: number
+          combustivel_preco_litro: number
           created_at: string
           custo_hora_improdutiva: number
           custo_hora_produtiva: number
           depreciacao_hora: number
+          horas_improdutivas_mes: number
+          horas_produtivas_mes: number
           id: string
+          manutencao_hora: number
           nome: string
           potencia: string | null
+          tipo_propriedade: string
           unidade: string
           updated_at: string
+          valor_aluguel_hora: number
+          valor_aquisicao: number
+          valor_residual: number
+          vida_util_horas: number
         }
         Insert: {
           ativo?: boolean
           codigo: string
+          combustivel_consumo_hora?: number
+          combustivel_preco_litro?: number
           created_at?: string
           custo_hora_improdutiva?: number
           custo_hora_produtiva?: number
           depreciacao_hora?: number
+          horas_improdutivas_mes?: number
+          horas_produtivas_mes?: number
           id?: string
+          manutencao_hora?: number
           nome: string
           potencia?: string | null
+          tipo_propriedade?: string
           unidade?: string
           updated_at?: string
+          valor_aluguel_hora?: number
+          valor_aquisicao?: number
+          valor_residual?: number
+          vida_util_horas?: number
         }
         Update: {
           ativo?: boolean
           codigo?: string
+          combustivel_consumo_hora?: number
+          combustivel_preco_litro?: number
           created_at?: string
           custo_hora_improdutiva?: number
           custo_hora_produtiva?: number
           depreciacao_hora?: number
+          horas_improdutivas_mes?: number
+          horas_produtivas_mes?: number
           id?: string
+          manutencao_hora?: number
           nome?: string
           potencia?: string | null
+          tipo_propriedade?: string
           unidade?: string
           updated_at?: string
+          valor_aluguel_hora?: number
+          valor_aquisicao?: number
+          valor_residual?: number
+          vida_util_horas?: number
         }
         Relationships: []
       }
@@ -1106,38 +1136,89 @@ export type Database = {
         Row: {
           ativo: boolean
           codigo: string
+          combustivel_consumo_km: number
+          combustivel_preco_litro: number
           created_at: string
           custo_hora: number
           custo_km: number
+          horas_improdutivas_mes: number
+          horas_produtivas_mes: number
           id: string
+          km_mensal_estimado: number
+          lavagem_mensal: number
           manutencao_hora: number
+          manutencao_preventiva_mensal: number
           nome: string
+          oleo_troca_km: number
+          oleo_valor: number
+          pneus_valor: number
+          pneus_vida_util_km: number
+          seguro_mensal: number
+          tipo_propriedade: string
           unidade: string
           updated_at: string
+          valor_aluguel_mensal: number
+          valor_aquisicao: number
+          valor_residual: number
+          vida_util_km: number
         }
         Insert: {
           ativo?: boolean
           codigo: string
+          combustivel_consumo_km?: number
+          combustivel_preco_litro?: number
           created_at?: string
           custo_hora?: number
           custo_km?: number
+          horas_improdutivas_mes?: number
+          horas_produtivas_mes?: number
           id?: string
+          km_mensal_estimado?: number
+          lavagem_mensal?: number
           manutencao_hora?: number
+          manutencao_preventiva_mensal?: number
           nome: string
+          oleo_troca_km?: number
+          oleo_valor?: number
+          pneus_valor?: number
+          pneus_vida_util_km?: number
+          seguro_mensal?: number
+          tipo_propriedade?: string
           unidade?: string
           updated_at?: string
+          valor_aluguel_mensal?: number
+          valor_aquisicao?: number
+          valor_residual?: number
+          vida_util_km?: number
         }
         Update: {
           ativo?: boolean
           codigo?: string
+          combustivel_consumo_km?: number
+          combustivel_preco_litro?: number
           created_at?: string
           custo_hora?: number
           custo_km?: number
+          horas_improdutivas_mes?: number
+          horas_produtivas_mes?: number
           id?: string
+          km_mensal_estimado?: number
+          lavagem_mensal?: number
           manutencao_hora?: number
+          manutencao_preventiva_mensal?: number
           nome?: string
+          oleo_troca_km?: number
+          oleo_valor?: number
+          pneus_valor?: number
+          pneus_vida_util_km?: number
+          seguro_mensal?: number
+          tipo_propriedade?: string
           unidade?: string
           updated_at?: string
+          valor_aluguel_mensal?: number
+          valor_aquisicao?: number
+          valor_residual?: number
+          vida_util_km?: number
         }
         Relationships: []
       }
