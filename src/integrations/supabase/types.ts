@@ -808,6 +808,7 @@ export type Database = {
       }
       servicos: {
         Row: {
+          area_empresa_id: string | null
           ativo: boolean
           codigo: string
           created_at: string
@@ -815,15 +816,17 @@ export type Database = {
           fatores_dificuldade: Json | null
           id: string
           mercado_id: string
-          modulo_id: string
+          modulo_id: string | null
           nome: string
           premissas_padrao: Json | null
           produtividade_padrao: number | null
           tipo_geometria: string
           unidade_medicao: string
+          unidade_tempo_produtividade: string
           updated_at: string
         }
         Insert: {
+          area_empresa_id?: string | null
           ativo?: boolean
           codigo: string
           created_at?: string
@@ -831,15 +834,17 @@ export type Database = {
           fatores_dificuldade?: Json | null
           id?: string
           mercado_id: string
-          modulo_id: string
+          modulo_id?: string | null
           nome: string
           premissas_padrao?: Json | null
           produtividade_padrao?: number | null
           tipo_geometria?: string
           unidade_medicao?: string
+          unidade_tempo_produtividade?: string
           updated_at?: string
         }
         Update: {
+          area_empresa_id?: string | null
           ativo?: boolean
           codigo?: string
           created_at?: string
@@ -847,15 +852,23 @@ export type Database = {
           fatores_dificuldade?: Json | null
           id?: string
           mercado_id?: string
-          modulo_id?: string
+          modulo_id?: string | null
           nome?: string
           premissas_padrao?: Json | null
           produtividade_padrao?: number | null
           tipo_geometria?: string
           unidade_medicao?: string
+          unidade_tempo_produtividade?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "servicos_area_empresa_id_fkey"
+            columns: ["area_empresa_id"]
+            isOneToOne: false
+            referencedRelation: "areas_empresa"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "servicos_mercado_id_fkey"
             columns: ["mercado_id"]
