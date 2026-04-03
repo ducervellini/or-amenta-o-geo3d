@@ -38,14 +38,15 @@ function calcEquip(f: EquipamentoForm) {
   const retornoCapitalHora = isProprio && f.vida_util_horas > 0
     ? f.valor_residual / f.vida_util_horas : 0;
   const combHora = f.combustivel_consumo_hora * f.combustivel_preco_litro;
+  const hTotalMes = f.horas_produtivas_mes + f.horas_improdutivas_mes;
+  const aluguelHora = !isProprio && hTotalMes > 0 ? f.valor_aluguel_hora / hTotalMes : 0;
   const custoHora = isProprio
     ? depHora + f.manutencao_hora + combHora
-    : f.valor_aluguel_hora + f.manutencao_hora + combHora;
+    : aluguelHora + f.manutencao_hora + combHora;
   const custoHoraLiquido = custoHora - retornoCapitalHora;
-  const hTotalMes = f.horas_produtivas_mes + f.horas_improdutivas_mes;
   const custoMes = custoHora * hTotalMes;
   const custoMesLiquido = custoHoraLiquido * hTotalMes;
-  return { depHora, retornoCapitalHora, combHora, custoHora, custoHoraLiquido, custoMes, custoMesLiquido, isProprio };
+  return { depHora, retornoCapitalHora, combHora, aluguelHora, custoHora, custoHoraLiquido, custoMes, custoMesLiquido, isProprio };
 }
 
 function rowToForm(row: any): EquipamentoForm {
@@ -201,7 +202,7 @@ export default function Equipamentos() {
                   <div><Label>Vida Útil (horas)</Label><Input type="number" value={form.vida_util_horas || ""} onChange={e => setNum("vida_util_horas", e.target.value)} /></div>
                 </>
               ) : (
-                <div><Label>Aluguel/hora (R$)</Label><Input type="number" value={form.valor_aluguel_hora || ""} onChange={e => setNum("valor_aluguel_hora", e.target.value)} /></div>
+                <div><Label>Aluguel/mês (R$)</Label><Input type="number" value={form.valor_aluguel_hora || ""} onChange={e => setNum("valor_aluguel_hora", e.target.value)} /></div>
               )}
             </div>
 
@@ -278,7 +279,10 @@ export default function Equipamentos() {
                 <Row label="Retorno de capital/hora" value={R(dc.retornoCapitalHora)} formula={`${R(detailForm.valor_residual)} / ${detailForm.vida_util_horas.toLocaleString("pt-BR")} h`} highlight />
               </>
             ) : (
-              <Row label="Aluguel/hora" value={R(detailForm.valor_aluguel_hora)} />
+              <>
+                <Row label="Aluguel/mês" value={R(detailForm.valor_aluguel_hora)} />
+                <Row label="Aluguel/hora" value={R(dc.aluguelHora)} formula={`${R(detailForm.valor_aluguel_hora)} / ${detailForm.horas_produtivas_mes + detailForm.horas_improdutivas_mes} h`} highlight />
+              </>
             )}
 
             <Separator />
@@ -297,7 +301,7 @@ export default function Equipamentos() {
               <Row label="CUSTO / HORA" value={R(dc.custoHora)}
                 formula={dc.isProprio
                   ? `${R(dc.depHora)} + ${R(detailForm.manutencao_hora)} + ${R(dc.combHora)}`
-                  : `${R(detailForm.valor_aluguel_hora)} + ${R(detailForm.manutencao_hora)} + ${R(dc.combHora)}`}
+                  : `${R(dc.aluguelHora)} + ${R(detailForm.manutencao_hora)} + ${R(dc.combHora)}`}
                 large />
               <Row label="CUSTO / MÊS" value={R(dc.custoMes)}
                 formula={`${R(dc.custoHora)} × ${detailForm.horas_produtivas_mes + detailForm.horas_improdutivas_mes} h`}
