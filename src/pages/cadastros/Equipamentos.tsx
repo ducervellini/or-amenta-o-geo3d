@@ -299,7 +299,7 @@ export default function Equipamentos() {
               <Row label="CUSTO / HORA" value={R(dc.custoHora)}
                 formula={dc.isProprio
                   ? `${R(dc.depHora)} + ${R(detailForm.manutencao_hora)} + ${R(dc.combHora)}`
-                  : `${R(detailForm.valor_aluguel_hora)} + ${R(detailForm.manutencao_hora)} + ${R(dc.combHora)}`}
+                  : `${R(dc.aluguelHora)} + ${R(detailForm.manutencao_hora)} + ${R(dc.combHora)}`}
                 large />
               <Row label="CUSTO / MÊS" value={R(dc.custoMes)}
                 formula={`${R(dc.custoHora)} × ${detailForm.horas_produtivas_mes + detailForm.horas_improdutivas_mes} h`}
