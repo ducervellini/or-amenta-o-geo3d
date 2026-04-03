@@ -179,7 +179,7 @@ export default function Modulos() {
                   <th>Áreas da Empresa</th>
                   <th>Descrição</th>
                   <th>Status</th>
-                  <th className="text-right">Ações</th>
+                  <th className="text-center">Ações</th>
                 </tr>
               </thead>
               <tbody>
