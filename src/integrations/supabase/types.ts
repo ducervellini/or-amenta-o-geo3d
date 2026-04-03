@@ -14,7 +14,807 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      beneficios: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          tipo: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          tipo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          tipo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      cargos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          salario_base: number
+          unidade_salarial: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          salario_base?: number
+          unidade_salarial?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          salario_base?: number
+          unidade_salarial?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      combustiveis: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          preco_litro: number
+          tipo: string
+          unidade: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          preco_litro?: number
+          tipo?: string
+          unidade?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          preco_litro?: number
+          tipo?: string
+          unidade?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      composicao_itens: {
+        Row: {
+          coeficiente: number
+          composicao_id: string
+          created_at: string
+          custo_total: number
+          custo_unitario: number
+          id: string
+          insumo_id: string
+          quantidade: number
+          tipo_insumo: Database["public"]["Enums"]["tipo_insumo"]
+          updated_at: string
+        }
+        Insert: {
+          coeficiente?: number
+          composicao_id: string
+          created_at?: string
+          custo_total?: number
+          custo_unitario?: number
+          id?: string
+          insumo_id: string
+          quantidade?: number
+          tipo_insumo: Database["public"]["Enums"]["tipo_insumo"]
+          updated_at?: string
+        }
+        Update: {
+          coeficiente?: number
+          composicao_id?: string
+          created_at?: string
+          custo_total?: number
+          custo_unitario?: number
+          id?: string
+          insumo_id?: string
+          quantidade?: number
+          tipo_insumo?: Database["public"]["Enums"]["tipo_insumo"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "composicao_itens_composicao_id_fkey"
+            columns: ["composicao_id"]
+            isOneToOne: false
+            referencedRelation: "composicoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      composicoes: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          custo_unitario_total: number | null
+          descricao: string | null
+          id: string
+          nome: string
+          servico_id: string | null
+          unidade: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          custo_unitario_total?: number | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          servico_id?: string | null
+          unidade?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          custo_unitario_total?: number | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          servico_id?: string | null
+          unidade?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "composicoes_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "servicos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      encargos_sociais: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          grupo: string
+          id: string
+          nome: string
+          obrigatorio: boolean
+          percentual: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          grupo?: string
+          id?: string
+          nome: string
+          obrigatorio?: boolean
+          percentual?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          grupo?: string
+          id?: string
+          nome?: string
+          obrigatorio?: boolean
+          percentual?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      equipamentos: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          custo_hora_improdutiva: number
+          custo_hora_produtiva: number
+          depreciacao_hora: number
+          id: string
+          nome: string
+          potencia: string | null
+          unidade: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          custo_hora_improdutiva?: number
+          custo_hora_produtiva?: number
+          depreciacao_hora?: number
+          id?: string
+          nome: string
+          potencia?: string | null
+          unidade?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          custo_hora_improdutiva?: number
+          custo_hora_produtiva?: number
+          depreciacao_hora?: number
+          id?: string
+          nome?: string
+          potencia?: string | null
+          unidade?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      horarios_almoco: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          duracao_minutos: number
+          hora_fim: string
+          hora_inicio: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          duracao_minutos?: number
+          hora_fim?: string
+          hora_inicio?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          duracao_minutos?: number
+          hora_fim?: string
+          hora_inicio?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      jornadas_trabalho: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          dias_por_semana: number
+          horas_diarias: number
+          horas_por_mes: number
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          dias_por_semana?: number
+          horas_diarias?: number
+          horas_por_mes?: number
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          dias_por_semana?: number
+          horas_diarias?: number
+          horas_por_mes?: number
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      materiais: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          fornecedor: string | null
+          id: string
+          nome: string
+          preco_unitario: number
+          unidade: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          fornecedor?: string | null
+          id?: string
+          nome: string
+          preco_unitario?: number
+          unidade?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          fornecedor?: string | null
+          id?: string
+          nome?: string
+          preco_unitario?: number
+          unidade?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      mercados: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      modulos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          mercado_id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          mercado_id: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          mercado_id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modulos_mercado_id_fkey"
+            columns: ["mercado_id"]
+            isOneToOne: false
+            referencedRelation: "mercados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parametros_admin_central: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          percentual: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          percentual?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          percentual?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      parametros_admin_local: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          percentual: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          percentual?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          percentual?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      parametros_bdi: {
+        Row: {
+          ativo: boolean
+          bdi_calculado: number
+          componentes: Json
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          bdi_calculado?: number
+          componentes?: Json
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          bdi_calculado?: number
+          componentes?: Json
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      parametros_dre: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          estrutura: Json
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          estrutura?: Json
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          estrutura?: Json
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      parametros_financiamento: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          percentual: number
+          prazo_meses: number | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          percentual?: number
+          prazo_meses?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          percentual?: number
+          prazo_meses?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      parametros_margem: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          percentual_maximo: number
+          percentual_minimo: number
+          percentual_padrao: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          percentual_maximo?: number
+          percentual_minimo?: number
+          percentual_padrao?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          percentual_maximo?: number
+          percentual_minimo?: number
+          percentual_padrao?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      parametros_tributos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          percentual: number
+          sigla: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          percentual?: number
+          sigla: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          percentual?: number
+          sigla?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      regimes_operacionais: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          dias_folga: number
+          dias_trabalho: number
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          dias_folga: number
+          dias_trabalho: number
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          dias_folga?: number
+          dias_trabalho?: number
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      servicos: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          descricao: string | null
+          fatores_dificuldade: Json | null
+          id: string
+          mercado_id: string
+          modulo_id: string
+          nome: string
+          premissas_padrao: Json | null
+          produtividade_padrao: number | null
+          tipo_geometria: string
+          unidade_medicao: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          descricao?: string | null
+          fatores_dificuldade?: Json | null
+          id?: string
+          mercado_id: string
+          modulo_id: string
+          nome: string
+          premissas_padrao?: Json | null
+          produtividade_padrao?: number | null
+          tipo_geometria?: string
+          unidade_medicao?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          descricao?: string | null
+          fatores_dificuldade?: Json | null
+          id?: string
+          mercado_id?: string
+          modulo_id?: string
+          nome?: string
+          premissas_padrao?: Json | null
+          produtividade_padrao?: number | null
+          tipo_geometria?: string
+          unidade_medicao?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "servicos_mercado_id_fkey"
+            columns: ["mercado_id"]
+            isOneToOne: false
+            referencedRelation: "mercados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "servicos_modulo_id_fkey"
+            columns: ["modulo_id"]
+            isOneToOne: false
+            referencedRelation: "modulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      veiculos: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          custo_hora: number
+          custo_km: number
+          id: string
+          manutencao_hora: number
+          nome: string
+          unidade: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          custo_hora?: number
+          custo_km?: number
+          id?: string
+          manutencao_hora?: number
+          nome: string
+          unidade?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          custo_hora?: number
+          custo_km?: number
+          id?: string
+          manutencao_hora?: number
+          nome?: string
+          unidade?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +823,12 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      tipo_insumo:
+        | "mao_de_obra"
+        | "equipamento"
+        | "veiculo"
+        | "material"
+        | "combustivel"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +955,14 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      tipo_insumo: [
+        "mao_de_obra",
+        "equipamento",
+        "veiculo",
+        "material",
+        "combustivel",
+      ],
+    },
   },
 } as const
