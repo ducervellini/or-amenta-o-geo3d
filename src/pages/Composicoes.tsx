@@ -101,8 +101,8 @@ export default function Composicoes() {
                         <td className="font-semibold font-mono">
                           R$ {fmt(Number(c.custo_unitario_total) || 0)}
                         </td>
-                        <td className="text-right">
-                          <div className="flex items-center justify-end gap-1">
+                        <td className="text-center">
+                          <div className="flex items-center justify-center gap-1">
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/${c.id}`); }}>
                               <Eye className="w-4 h-4" />
                             </Button>

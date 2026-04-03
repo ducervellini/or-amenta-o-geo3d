@@ -155,8 +155,8 @@ export function CrudPage<T extends TableName>({
                           : String(row[col.key] ?? "-")}
                       </td>
                     ))}
-                    <td className="text-right">
-                      <div className="flex items-center justify-end gap-1">
+                    <td className="text-center">
+                      <div className="flex items-center justify-center gap-1">
                         <Button
                           variant="ghost"
                           size="icon"

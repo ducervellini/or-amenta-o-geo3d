@@ -203,8 +203,8 @@ export default function Modulos() {
                           {row.ativo ? "Ativo" : "Inativo"}
                         </span>
                       </td>
-                      <td className="text-right">
-                        <div className="flex items-center justify-end gap-1">
+                      <td className="text-center">
+                        <div className="flex items-center justify-center gap-1">
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(row)}>
                             <Edit className="w-4 h-4" />
                           </Button>
