@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useSupabaseQuery, useSupabaseInsert, useSupabaseUpdate, useSupabaseDelete } from "@/hooks/useSupabaseCrud";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,28 +7,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Pencil, Trash2, Search, Wrench, Calculator } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Wrench, Calculator, MoreHorizontal, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 const R = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 interface EquipamentoForm {
-  codigo: string;
-  nome: string;
-  potencia: string;
-  unidade: string;
+  codigo: string; nome: string; potencia: string; unidade: string;
   tipo_propriedade: string;
-  valor_aquisicao: number;
-  valor_residual: number;
-  vida_util_horas: number;
-  valor_aluguel_hora: number;
-  manutencao_hora: number;
-  combustivel_consumo_hora: number;
-  combustivel_preco_litro: number;
-  horas_produtivas_mes: number;
-  horas_improdutivas_mes: number;
+  valor_aquisicao: number; valor_residual: number; vida_util_horas: number;
+  valor_aluguel_hora: number; manutencao_hora: number;
+  combustivel_consumo_hora: number; combustivel_preco_litro: number;
+  horas_produtivas_mes: number; horas_improdutivas_mes: number;
 }
 
 const defaultForm: EquipamentoForm = {
@@ -44,26 +37,44 @@ function calcEquip(f: EquipamentoForm) {
   const depHora = isProprio && f.vida_util_horas > 0
     ? (f.valor_aquisicao - f.valor_residual) / f.vida_util_horas : 0;
   const combHora = f.combustivel_consumo_hora * f.combustivel_preco_litro;
-  const custoProd = isProprio
+  const custoHora = isProprio
     ? depHora + f.manutencao_hora + combHora
     : f.valor_aluguel_hora + f.manutencao_hora + combHora;
-  const custoImprod = isProprio ? depHora : f.valor_aluguel_hora;
-  const totalMes = (custoProd * f.horas_produtivas_mes) + (custoImprod * f.horas_improdutivas_mes);
-  return { depHora, combHora, custoProd, custoImprod, totalMes };
+  const hTotalMes = f.horas_produtivas_mes + f.horas_improdutivas_mes;
+  const custoMes = custoHora * hTotalMes;
+  return { depHora, combHora, custoHora, custoMes, isProprio };
+}
+
+function rowToForm(row: any): EquipamentoForm {
+  return {
+    codigo: row.codigo || "", nome: row.nome || "", potencia: row.potencia || "", unidade: row.unidade || "h",
+    tipo_propriedade: row.tipo_propriedade || "proprio",
+    valor_aquisicao: Number(row.valor_aquisicao) || 0, valor_residual: Number(row.valor_residual) || 0,
+    vida_util_horas: Number(row.vida_util_horas) || 10000,
+    valor_aluguel_hora: Number(row.valor_aluguel_hora) || 0,
+    manutencao_hora: Number(row.manutencao_hora) || 0,
+    combustivel_consumo_hora: Number(row.combustivel_consumo_hora) || 0,
+    combustivel_preco_litro: Number(row.combustivel_preco_litro) || 0,
+    horas_produtivas_mes: Number(row.horas_produtivas_mes) || 176,
+    horas_improdutivas_mes: Number(row.horas_improdutivas_mes) || 0,
+  };
 }
 
 export default function Equipamentos() {
-  const { data, isLoading: loading } = useSupabaseQuery("equipamentos");
+  const { data } = useSupabaseQuery("equipamentos");
   const insertMut = useSupabaseInsert("equipamentos");
   const updateMut = useSupabaseUpdate("equipamentos");
   const deleteMut = useSupabaseDelete("equipamentos");
   const create = (v: any) => insertMut.mutateAsync(v);
   const update = (id: string, v: any) => updateMut.mutateAsync({ id, values: v });
   const remove = (id: string) => deleteMut.mutateAsync(id);
+
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<EquipamentoForm>({ ...defaultForm });
+  const [detailForm, setDetailForm] = useState<EquipamentoForm>({ ...defaultForm });
 
   const filtered = useMemo(() => {
     if (!data) return [];
@@ -76,30 +87,16 @@ export default function Equipamentos() {
   const calc = calcEquip(form);
 
   const openNew = () => { setEditId(null); setForm({ ...defaultForm }); setDialogOpen(true); };
-  const openEdit = (row: any) => {
-    setEditId(row.id);
-    setForm({
-      codigo: row.codigo || "", nome: row.nome || "", potencia: row.potencia || "", unidade: row.unidade || "h",
-      tipo_propriedade: row.tipo_propriedade || "proprio",
-      valor_aquisicao: Number(row.valor_aquisicao) || 0, valor_residual: Number(row.valor_residual) || 0,
-      vida_util_horas: Number(row.vida_util_horas) || 10000,
-      valor_aluguel_hora: Number(row.valor_aluguel_hora) || 0,
-      manutencao_hora: Number(row.manutencao_hora) || 0,
-      combustivel_consumo_hora: Number(row.combustivel_consumo_hora) || 0,
-      combustivel_preco_litro: Number(row.combustivel_preco_litro) || 0,
-      horas_produtivas_mes: Number(row.horas_produtivas_mes) || 176,
-      horas_improdutivas_mes: Number(row.horas_improdutivas_mes) || 0,
-    });
-    setDialogOpen(true);
-  };
+  const openEdit = (row: any) => { setEditId(row.id); setForm(rowToForm(row)); setDialogOpen(true); };
+  const openDetail = (row: any) => { setDetailForm(rowToForm(row)); setDetailOpen(true); };
 
   const handleSave = async () => {
     if (!form.codigo || !form.nome) { toast.error("Código e nome são obrigatórios"); return; }
     const c = calcEquip(form);
     const payload = {
       ...form,
-      custo_hora_produtiva: c.custoProd,
-      custo_hora_improdutiva: c.custoImprod,
+      custo_hora_produtiva: c.custoHora,
+      custo_hora_improdutiva: c.custoHora,
       depreciacao_hora: c.depHora,
     };
     if (editId) await update(editId, payload);
@@ -108,13 +105,14 @@ export default function Equipamentos() {
   };
 
   const isProprio = form.tipo_propriedade === "proprio";
+  const dc = calcEquip(detailForm);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Equipamentos</h1>
-          <p className="text-muted-foreground">Cadastro com cálculo automático de depreciação e custo/hora</p>
+          <p className="text-muted-foreground">Cadastro com cálculo automático de custo/hora e custo/mês</p>
         </div>
         <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Novo Equipamento</Button>
       </div>
@@ -131,64 +129,60 @@ export default function Equipamentos() {
               <TableHead>Código</TableHead>
               <TableHead>Equipamento</TableHead>
               <TableHead>Tipo</TableHead>
-              <TableHead className="text-right">Deprec./h</TableHead>
-              <TableHead className="text-right">Custo/h Prod.</TableHead>
-              <TableHead className="text-right">Custo/h Improd.</TableHead>
+              <TableHead className="text-right">Custo/hora</TableHead>
               <TableHead className="text-right">Custo/mês</TableHead>
               <TableHead className="w-24">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.map((row: any) => {
-              const rc = calcEquip({
-                ...defaultForm,
-                tipo_propriedade: row.tipo_propriedade || "proprio",
-                valor_aquisicao: Number(row.valor_aquisicao) || 0,
-                valor_residual: Number(row.valor_residual) || 0,
-                vida_util_horas: Number(row.vida_util_horas) || 10000,
-                valor_aluguel_hora: Number(row.valor_aluguel_hora) || 0,
-                manutencao_hora: Number(row.manutencao_hora) || 0,
-                combustivel_consumo_hora: Number(row.combustivel_consumo_hora) || 0,
-                combustivel_preco_litro: Number(row.combustivel_preco_litro) || 0,
-                horas_produtivas_mes: Number(row.horas_produtivas_mes) || 176,
-                horas_improdutivas_mes: Number(row.horas_improdutivas_mes) || 0,
-              });
+              const rc = calcEquip(rowToForm(row));
               return (
                 <TableRow key={row.id}>
                   <TableCell className="font-medium text-accent">{row.codigo}</TableCell>
                   <TableCell className="font-medium">{row.nome}</TableCell>
                   <TableCell>
-                    <Badge variant={row.tipo_propriedade === "proprio" ? "default" : "secondary"}>
-                      {row.tipo_propriedade === "proprio" ? "Próprio" : "Alugado"}
+                    <Badge variant={row.tipo_propriedade === "proprio" || !row.tipo_propriedade ? "default" : "secondary"}>
+                      {row.tipo_propriedade === "proprio" || !row.tipo_propriedade ? "Próprio" : "Alugado"}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right">{R(rc.depHora)}</TableCell>
-                  <TableCell className="text-right font-medium">{R(rc.custoProd)}</TableCell>
-                  <TableCell className="text-right">{R(rc.custoImprod)}</TableCell>
-                  <TableCell className="text-right font-medium">{R(rc.totalMes)}</TableCell>
+                  <TableCell className="text-right font-medium">{R(rc.custoHora)}</TableCell>
+                  <TableCell className="text-right font-medium">{R(rc.custoMes)}</TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => openEdit(row)}><Pencil className="h-4 w-4" /></Button>
-                      <Button size="icon" variant="ghost" onClick={() => remove(row.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openEdit(row)}>
+                          <Pencil className="h-4 w-4 mr-2" />Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openDetail(row)}>
+                          <FileText className="h-4 w-4 mr-2" />Ver cálculo detalhado
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => remove(row.id)}>
+                          <Trash2 className="h-4 w-4 mr-2" />Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               );
             })}
             {filtered.length === 0 && (
-              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhum equipamento cadastrado</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum equipamento cadastrado</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
       </Card>
 
+      {/* Dialog de edição/criação */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Wrench className="h-5 w-5" />{editId ? "Editar" : "Novo"} Equipamento</DialogTitle>
           </DialogHeader>
           <div className="grid gap-6">
-            {/* Identificação */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div><Label>Código *</Label><Input value={form.codigo} onChange={e => setField("codigo", e.target.value)} placeholder="EQ-001" /></div>
               <div className="col-span-2"><Label>Nome *</Label><Input value={form.nome} onChange={e => setField("nome", e.target.value)} /></div>
@@ -197,7 +191,6 @@ export default function Equipamentos() {
 
             <Separator />
 
-            {/* Propriedade */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <Label>Tipo de Propriedade</Label>
@@ -222,7 +215,6 @@ export default function Equipamentos() {
 
             <Separator />
 
-            {/* Custos operacionais */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div><Label>Manutenção/hora (R$)</Label><Input type="number" value={form.manutencao_hora || ""} onChange={e => setNum("manutencao_hora", e.target.value)} /></div>
               <div><Label>Consumo combustível (L/h)</Label><Input type="number" value={form.combustivel_consumo_hora || ""} onChange={e => setNum("combustivel_consumo_hora", e.target.value)} /></div>
@@ -231,7 +223,6 @@ export default function Equipamentos() {
 
             <Separator />
 
-            {/* Utilização */}
             <div className="grid grid-cols-2 gap-4">
               <div><Label>Horas produtivas/mês</Label><Input type="number" value={form.horas_produtivas_mes || ""} onChange={e => setNum("horas_produtivas_mes", e.target.value)} /></div>
               <div><Label>Horas improdutivas/mês</Label><Input type="number" value={form.horas_improdutivas_mes || ""} onChange={e => setNum("horas_improdutivas_mes", e.target.value)} /></div>
@@ -239,36 +230,17 @@ export default function Equipamentos() {
 
             <Separator />
 
-            {/* Resumo calculado */}
+            {/* Resumo simplificado */}
             <Card className="bg-muted/50 border-primary/20">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2"><Calculator className="h-4 w-4" />Cálculos Automáticos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  {isProprio && (
-                    <div>
-                      <p className="text-muted-foreground">Depreciação/hora</p>
-                      <p className="font-bold text-foreground">{R(calc.depHora)}</p>
-                      <p className="text-xs text-muted-foreground">(Aquisição - Residual) / Vida útil</p>
-                    </div>
-                  )}
+              <CardContent className="pt-4">
+                <div className="grid grid-cols-2 gap-6 text-center">
                   <div>
-                    <p className="text-muted-foreground">Combustível/hora</p>
-                    <p className="font-bold text-foreground">{R(calc.combHora)}</p>
+                    <p className="text-sm text-muted-foreground">Custo/hora</p>
+                    <p className="text-2xl font-bold text-primary">{R(calc.custoHora)}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Custo/h Produtiva</p>
-                    <p className="font-bold text-lg text-primary">{R(calc.custoProd)}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Custo/h Improdutiva</p>
-                    <p className="font-bold text-foreground">{R(calc.custoImprod)}</p>
-                  </div>
-                  <div className="col-span-2 md:col-span-4 pt-2 border-t">
-                    <p className="text-muted-foreground">Custo mensal estimado</p>
-                    <p className="font-bold text-lg text-primary">{R(calc.totalMes)}</p>
-                    <p className="text-xs text-muted-foreground">({form.horas_produtivas_mes}h prod × {R(calc.custoProd)}) + ({form.horas_improdutivas_mes}h improd × {R(calc.custoImprod)})</p>
+                    <p className="text-sm text-muted-foreground">Custo/mês</p>
+                    <p className="text-2xl font-bold text-primary">{R(calc.custoMes)}</p>
                   </div>
                 </div>
               </CardContent>
@@ -281,6 +253,66 @@ export default function Equipamentos() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de cálculo detalhado */}
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Calculator className="h-5 w-5" />Cálculo Detalhado — {detailForm.nome}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <div className="font-medium text-muted-foreground uppercase text-xs tracking-wide">
+              {detailForm.tipo_propriedade === "proprio" ? "Equipamento Próprio" : "Equipamento Alugado"}
+            </div>
+
+            {dc.isProprio ? (
+              <>
+                <Row label="Valor de aquisição" value={R(detailForm.valor_aquisicao)} />
+                <Row label="Valor residual" value={R(detailForm.valor_residual)} />
+                <Row label="Vida útil" value={`${detailForm.vida_util_horas.toLocaleString("pt-BR")} horas`} />
+                <Row label="Depreciação/hora" value={R(dc.depHora)} formula={`(${R(detailForm.valor_aquisicao)} - ${R(detailForm.valor_residual)}) / ${detailForm.vida_util_horas.toLocaleString("pt-BR")} h`} highlight />
+              </>
+            ) : (
+              <Row label="Aluguel/hora" value={R(detailForm.valor_aluguel_hora)} />
+            )}
+
+            <Separator />
+            <Row label="Manutenção/hora" value={R(detailForm.manutencao_hora)} />
+            <Row label="Consumo combustível" value={`${detailForm.combustivel_consumo_hora} L/h`} />
+            <Row label="Preço combustível" value={`${R(detailForm.combustivel_preco_litro)}/L`} />
+            <Row label="Combustível/hora" value={R(dc.combHora)} formula={`${detailForm.combustivel_consumo_hora} L × ${R(detailForm.combustivel_preco_litro)}`} highlight />
+
+            <Separator />
+            <Row label="Horas produtivas/mês" value={`${detailForm.horas_produtivas_mes} h`} />
+            <Row label="Horas improdutivas/mês" value={`${detailForm.horas_improdutivas_mes} h`} />
+            <Row label="Total horas/mês" value={`${detailForm.horas_produtivas_mes + detailForm.horas_improdutivas_mes} h`} />
+
+            <Separator />
+            <div className="bg-primary/10 rounded-lg p-4 space-y-2">
+              <Row label="CUSTO / HORA" value={R(dc.custoHora)}
+                formula={dc.isProprio
+                  ? `${R(dc.depHora)} + ${R(detailForm.manutencao_hora)} + ${R(dc.combHora)}`
+                  : `${R(detailForm.valor_aluguel_hora)} + ${R(detailForm.manutencao_hora)} + ${R(dc.combHora)}`}
+                large />
+              <Row label="CUSTO / MÊS" value={R(dc.custoMes)}
+                formula={`${R(dc.custoHora)} × ${detailForm.horas_produtivas_mes + detailForm.horas_improdutivas_mes} h`}
+                large />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function Row({ label, value, formula, highlight, large }: { label: string; value: string; formula?: string; highlight?: boolean; large?: boolean }) {
+  return (
+    <div className={`flex justify-between items-start ${large ? "pt-1" : ""}`}>
+      <div>
+        <p className={`${large ? "font-bold text-foreground" : "text-muted-foreground"}`}>{label}</p>
+        {formula && <p className="text-xs text-muted-foreground/70">{formula}</p>}
+      </div>
+      <p className={`${large ? "text-lg font-bold text-primary" : highlight ? "font-semibold text-foreground" : "text-foreground"}`}>{value}</p>
     </div>
   );
 }
