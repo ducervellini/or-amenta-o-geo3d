@@ -279,7 +279,8 @@ export default function Equipamentos() {
                 <Row label="Retorno de capital/hora" value={R(dc.retornoCapitalHora)} formula={`${R(detailForm.valor_residual)} / ${detailForm.vida_util_horas.toLocaleString("pt-BR")} h`} highlight />
               </>
             ) : (
-              <Row label="Aluguel/hora" value={R(detailForm.valor_aluguel_hora)} />
+              <Row label="Aluguel/mês" value={R(detailForm.valor_aluguel_hora)} />
+              <Row label="Aluguel/hora" value={R(dc.aluguelHora)} formula={`${R(detailForm.valor_aluguel_hora)} / ${detailForm.horas_produtivas_mes + detailForm.horas_improdutivas_mes} h`} highlight />
             )}
 
             <Separator />
