@@ -5,6 +5,7 @@
 
 export interface ParametrosMaoDeObra {
   salario_base: number;
+  regime_contratacao: "clt" | "pj";
   encargos_percentual: number;
   beneficios_valor: number;
   alimentacao: number;
