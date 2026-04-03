@@ -84,9 +84,11 @@ export default function ComposicaoDetalhe() {
     }
   }, [id, isNew]);
 
+  type ItemComCalculo = Record<string, unknown> & { resultado: { custo_unitario: number; custo_total: number; memoria: import("@/lib/composicao-calculo").MemoriaCalculo[] } };
+
   // Calculate resultado for each item
-  const itensComCalculo = useMemo(() => {
-    return itens.map((item) => {
+  const itensComCalculo: ItemComCalculo[] = useMemo(() => {
+    return itens.map((item): ItemComCalculo => {
       const tipo = String(item.tipo_insumo);
       const params = (item.parametros || {}) as Record<string, unknown>;
       const qtd = Number(item.quantidade) || 1;
