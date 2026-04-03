@@ -302,6 +302,14 @@ export default function Equipamentos() {
               <Row label="CUSTO / MÊS" value={R(dc.custoMes)}
                 formula={`${R(dc.custoHora)} × ${detailForm.horas_produtivas_mes + detailForm.horas_improdutivas_mes} h`}
                 large />
+              {dc.isProprio && dc.retornoCapitalHora > 0 && (
+                <>
+                  <Separator />
+                  <Row label="Retorno de capital/hora" value={`- ${R(dc.retornoCapitalHora)}`} formula={`Valor de revenda diluído na vida útil`} />
+                  <Row label="CUSTO LÍQUIDO / HORA" value={R(dc.custoHoraLiquido)} large />
+                  <Row label="CUSTO LÍQUIDO / MÊS" value={R(dc.custoMesLiquido)} large />
+                </>
+              )}
             </div>
           </div>
         </DialogContent>

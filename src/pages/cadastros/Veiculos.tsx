@@ -44,6 +44,7 @@ const defaultForm: VeiculoForm = {
 function calcVeic(f: VeiculoForm) {
   const isProprio = f.tipo_propriedade === "proprio";
   const depKm = isProprio && f.vida_util_km > 0 ? (f.valor_aquisicao - f.valor_residual) / f.vida_util_km : 0;
+  const retornoCapitalKm = isProprio && f.vida_util_km > 0 ? f.valor_residual / f.vida_util_km : 0;
   const combKm = f.combustivel_consumo_km * f.combustivel_preco_litro;
   const pneusKm = f.pneus_vida_util_km > 0 ? f.pneus_valor / f.pneus_vida_util_km : 0;
   const oleoKm = f.oleo_troca_km > 0 ? f.oleo_valor / f.oleo_troca_km : 0;
@@ -56,12 +57,14 @@ function calcVeic(f: VeiculoForm) {
   const aluguelKm = isProprio ? 0 : f.valor_aluguel_mensal / km;
 
   const custoKmTotal = custoKm + seguroKm + manutKm + lavagemKm + aluguelKm;
+  const custoKmLiquido = custoKmTotal - retornoCapitalKm;
 
   const hTotalMes = f.horas_produtivas_mes + f.horas_improdutivas_mes;
   const custoHora = hTotalMes > 0 ? (custoKmTotal * km) / hTotalMes : 0;
   const totalMes = custoKmTotal * km;
+  const totalMesLiquido = custoKmLiquido * km;
 
-  return { depKm, combKm, pneusKm, oleoKm, custoKm, custoKmTotal, custoHora, totalMes, seguroKm, manutKm, lavagemKm, aluguelKm };
+  return { depKm, retornoCapitalKm, combKm, pneusKm, oleoKm, custoKm, custoKmTotal, custoKmLiquido, custoHora, totalMes, totalMesLiquido, seguroKm, manutKm, lavagemKm, aluguelKm, isProprio };
 }
 
 export default function Veiculos() {
