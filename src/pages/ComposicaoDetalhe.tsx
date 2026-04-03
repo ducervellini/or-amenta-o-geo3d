@@ -95,6 +95,8 @@ export default function ComposicaoDetalhe() {
           setDescricao(comp.descricao || "");
           setUnidade(comp.unidade);
           setServicoId(comp.servico_id || "_none_");
+          setStatus(comp.status || "rascunho");
+          setTravado(comp.travado || false);
         }
         const { data: items } = await (supabase.from as any)("composicao_itens").select("*").eq("composicao_id", id).order("created_at");
         if (items) setItens(items);
