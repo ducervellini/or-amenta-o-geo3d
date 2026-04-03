@@ -292,13 +292,36 @@ function NumField({ label, value, onChange, step = "0.01" }: { label: string; va
 
 function ParamsMaoDeObra({ params, onChange }: { params: ParametrosMaoDeObra; onChange: (p: ParametrosMaoDeObra) => void }) {
   const set = (k: keyof ParametrosMaoDeObra, v: number) => onChange({ ...params, [k]: v });
+  const isPJ = params.regime_contratacao === "pj";
   return (
     <div className="space-y-3">
+      <div className="text-xs font-semibold text-muted-foreground uppercase">Regime de Contratação</div>
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant={!isPJ ? "default" : "outline"}
+          className="text-xs flex-1"
+          onClick={() => onChange({ ...params, regime_contratacao: "clt" })}
+        >
+          CLT (com encargos e benefícios)
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={isPJ ? "default" : "outline"}
+          className="text-xs flex-1"
+          onClick={() => onChange({ ...params, regime_contratacao: "pj", encargos_percentual: 0, beneficios_valor: 0 })}
+        >
+          PJ (apenas salário)
+        </Button>
+      </div>
       <div className="text-xs font-semibold text-muted-foreground uppercase">Remuneração</div>
       <div className="grid grid-cols-3 gap-2">
         <NumField label="Salário Base (R$/mês)" value={params.salario_base} onChange={(v) => set("salario_base", v)} />
-        <NumField label="Encargos (%)" value={params.encargos_percentual} onChange={(v) => set("encargos_percentual", v)} />
-        <NumField label="Benefícios (R$/mês)" value={params.beneficios_valor} onChange={(v) => set("beneficios_valor", v)} />
+        {!isPJ && <NumField label="Encargos (%)" value={params.encargos_percentual} onChange={(v) => set("encargos_percentual", v)} />}
+        {!isPJ && <NumField label="Benefícios (R$/mês)" value={params.beneficios_valor} onChange={(v) => set("beneficios_valor", v)} />}
+        {isPJ && <div className="col-span-2 flex items-end text-xs text-muted-foreground pb-2">PJ: sem encargos e sem benefícios</div>}
       </div>
       <div className="text-xs font-semibold text-muted-foreground uppercase">Custos de Campo</div>
       <div className="grid grid-cols-3 gap-2">
