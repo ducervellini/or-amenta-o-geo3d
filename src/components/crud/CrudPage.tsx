@@ -142,7 +142,7 @@ export function CrudPage<T extends TableName>({
                   {columns.map((col) => (
                     <th key={col.key}>{col.label}</th>
                   ))}
-                  <th className="text-right">Ações</th>
+                  <th className="text-center">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -155,8 +155,8 @@ export function CrudPage<T extends TableName>({
                           : String(row[col.key] ?? "-")}
                       </td>
                     ))}
-                    <td className="text-right">
-                      <div className="flex items-center justify-end gap-1">
+                    <td className="text-center">
+                      <div className="flex items-center justify-center gap-1">
                         <Button
                           variant="ghost"
                           size="icon"
