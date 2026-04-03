@@ -47,7 +47,7 @@ const navigation: NavItem[] = [
     children: [
       { label: "Mercados", path: "/cadastros/mercados" },
       { label: "Áreas da Empresa", path: "/cadastros/areas-empresa" },
-      { label: "Módulos", path: "/cadastros/modulos" },
+      { label: "Departamentos", path: "/cadastros/departamentos" },
       { label: "Serviços", path: "/cadastros/servicos" },
     ],
   },

@@ -6,13 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -39,12 +32,12 @@ export default function Modulos() {
   const [formOpen, setFormOpen] = useState(false);
   const [editItem, setEditItem] = useState<Record<string, unknown> | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [formValues, setFormValues] = useState({ nome: "", mercado_id: "", descricao: "" });
+  const [formValues, setFormValues] = useState({ nome: "", descricao: "" });
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [moduloAreas, setModuloAreas] = useState<Record<string, string[]>>({});
   const [areasVersion, setAreasVersion] = useState(0);
   const { data: modulos, isLoading } = useSupabaseQuery("modulos");
-  const { data: mercados } = useSupabaseQuery("mercados");
+  
   const { data: areas } = useSupabaseQuery("areas_empresa");
   const insertMutation = useSupabaseInsert("modulos");
   const updateMutation = useSupabaseUpdate("modulos");
@@ -73,7 +66,7 @@ export default function Modulos() {
 
   const openCreate = () => {
     setEditItem(null);
-    setFormValues({ nome: "", mercado_id: "", descricao: "" });
+    setFormValues({ nome: "", descricao: "" });
     setSelectedAreas([]);
     setFormOpen(true);
   };
@@ -82,7 +75,6 @@ export default function Modulos() {
     setEditItem(item);
     setFormValues({
       nome: String(item.nome || ""),
-      mercado_id: String(item.mercado_id || ""),
       descricao: String(item.descricao || ""),
     });
     setSelectedAreas(moduloAreas[item.id as string] || []);
@@ -150,8 +142,8 @@ export default function Modulos() {
     <div className="page-container animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="page-title">Módulos</h1>
-          <p className="page-subtitle">Cadastro de módulos de serviço</p>
+          <h1 className="page-title">Departamentos</h1>
+          <p className="page-subtitle">Cadastro de departamentos</p>
         </div>
         <Button className="gap-2" onClick={openCreate}>
           <Plus className="w-4 h-4" /> Novo
@@ -184,7 +176,7 @@ export default function Modulos() {
               <thead>
                 <tr>
                   <th>Nome</th>
-                  <th>Mercado</th>
+                  <th>Áreas da Empresa</th>
                   <th>Áreas da Empresa</th>
                   <th>Descrição</th>
                   <th>Status</th>
@@ -193,16 +185,10 @@ export default function Modulos() {
               </thead>
               <tbody>
                 {filtered.map((row: any) => {
-                  const mercado = (mercados || []).find((m: any) => m.id === row.mercado_id);
                   const areaNames = getAreaNames(row.id);
                   return (
                     <tr key={row.id}>
                       <td><span className="font-medium">{row.nome}</span></td>
-                      <td>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
-                          {mercado ? String((mercado as any).nome) : "-"}
-                        </span>
-                      </td>
                       <td>
                         <div className="flex flex-wrap gap-1">
                           {areaNames.length > 0 ? areaNames.map((name) => (
@@ -241,23 +227,12 @@ export default function Modulos() {
       <Dialog open={formOpen} onOpenChange={(open) => { setFormOpen(open); if (!open) setEditItem(null); }}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editItem ? "Editar Módulo" : "Novo Módulo"}</DialogTitle>
+            <DialogTitle>{editItem ? "Editar Departamento" : "Novo Departamento"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="nome">Nome</Label>
               <Input id="nome" value={formValues.nome} onChange={(e) => setFormValues((v) => ({ ...v, nome: e.target.value }))} placeholder="Ex: Topografia" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="mercado_id">Mercado</Label>
-              <Select value={formValues.mercado_id} onValueChange={(v) => setFormValues((prev) => ({ ...prev, mercado_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                <SelectContent>
-                  {(mercados || []).map((m: any) => (
-                    <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <div className="space-y-2">
               <Label>Áreas da Empresa</Label>

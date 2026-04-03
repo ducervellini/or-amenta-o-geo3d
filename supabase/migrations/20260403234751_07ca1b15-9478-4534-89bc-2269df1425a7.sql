@@ -1,0 +1,1 @@
+ALTER TABLE public.modulos ALTER COLUMN mercado_id DROP NOT NULL;
