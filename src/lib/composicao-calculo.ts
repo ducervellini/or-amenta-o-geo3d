@@ -73,14 +73,24 @@ export function calcularMaoDeObra(
 ): ResultadoCalculo {
   const memoria: MemoriaCalculo[] = [];
 
+  const isPJ = params.regime_contratacao === "pj";
   const salarioMensal = params.salario_base;
-  memoria.push({ descricao: "Salário base mensal", formula: `R$ ${fmt(salarioMensal)}`, valor: salarioMensal });
+  memoria.push({ descricao: `Salário base mensal (${isPJ ? "PJ" : "CLT"})`, formula: `R$ ${fmt(salarioMensal)}`, valor: salarioMensal });
 
-  const encargosValor = salarioMensal * (params.encargos_percentual / 100);
-  memoria.push({ descricao: "Encargos sociais", formula: `${fmt(salarioMensal)} × ${fmt(params.encargos_percentual)}% = ${fmt(encargosValor)}`, valor: encargosValor });
+  const encargosValor = isPJ ? 0 : salarioMensal * (params.encargos_percentual / 100);
+  if (isPJ) {
+    memoria.push({ descricao: "Encargos sociais (PJ: isento)", formula: "R$ 0,00", valor: 0 });
+  } else {
+    memoria.push({ descricao: "Encargos sociais", formula: `${fmt(salarioMensal)} × ${fmt(params.encargos_percentual)}% = ${fmt(encargosValor)}`, valor: encargosValor });
+  }
 
-  const custoMensalBruto = salarioMensal + encargosValor + params.beneficios_valor;
-  memoria.push({ descricao: "Custo mensal bruto", formula: `${fmt(salarioMensal)} + ${fmt(encargosValor)} + ${fmt(params.beneficios_valor)} = ${fmt(custoMensalBruto)}`, valor: custoMensalBruto });
+  const beneficiosValor = isPJ ? 0 : params.beneficios_valor;
+  const custoMensalBruto = salarioMensal + encargosValor + beneficiosValor;
+  if (isPJ) {
+    memoria.push({ descricao: "Custo mensal bruto (PJ: sem benefícios)", formula: `R$ ${fmt(custoMensalBruto)}`, valor: custoMensalBruto });
+  } else {
+    memoria.push({ descricao: "Custo mensal bruto", formula: `${fmt(salarioMensal)} + ${fmt(encargosValor)} + ${fmt(beneficiosValor)} = ${fmt(custoMensalBruto)}`, valor: custoMensalBruto });
+  }
 
   const custoMensalCampo = params.alimentacao + params.hospedagem + params.transporte;
   memoria.push({ descricao: "Custos de campo (alim. + hosp. + transp.)", formula: `${fmt(params.alimentacao)} + ${fmt(params.hospedagem)} + ${fmt(params.transporte)} = ${fmt(custoMensalCampo)}`, valor: custoMensalCampo });
