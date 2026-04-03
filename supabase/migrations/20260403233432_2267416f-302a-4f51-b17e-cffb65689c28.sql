@@ -1,0 +1,1 @@
+ALTER TABLE public.materiais ADD COLUMN duracao_meses numeric NOT NULL DEFAULT 0;

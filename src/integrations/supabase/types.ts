@@ -530,6 +530,7 @@ export type Database = {
           ativo: boolean
           codigo: string
           created_at: string
+          duracao_meses: number
           fornecedor: string | null
           id: string
           nome: string
@@ -541,6 +542,7 @@ export type Database = {
           ativo?: boolean
           codigo: string
           created_at?: string
+          duracao_meses?: number
           fornecedor?: string | null
           id?: string
           nome: string
@@ -552,6 +554,7 @@ export type Database = {
           ativo?: boolean
           codigo?: string
           created_at?: string
+          duracao_meses?: number
           fornecedor?: string | null
           id?: string
           nome?: string
