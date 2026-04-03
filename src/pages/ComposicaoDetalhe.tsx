@@ -148,6 +148,7 @@ export default function ComposicaoDetalhe() {
 
   const handleSaveHeader = async () => {
     if (!codigo || !nome) { toast.error("Código e nome são obrigatórios"); return; }
+    if (travado) { toast.error("Orçamento travado — não é possível editar"); return; }
     const values = {
       codigo, nome, descricao, unidade,
       servico_id: servicoId === "_none_" ? null : servicoId,
@@ -156,11 +157,14 @@ export default function ComposicaoDetalhe() {
     if (isNew) {
       insertComposicao.mutate(values, {
         onSuccess: (data: Record<string, unknown>) => {
+          registrarAuditoria("composicoes", String(data.id), "criar", null, values);
           navigate(`/composicoes/${data.id}`, { replace: true });
         },
       });
     } else {
-      updateComposicao.mutate({ id: id!, values });
+      updateComposicao.mutate({ id: id!, values }, {
+        onSuccess: () => { registrarAuditoria("composicoes", id!, "editar", null, values); },
+      });
     }
   };
 
