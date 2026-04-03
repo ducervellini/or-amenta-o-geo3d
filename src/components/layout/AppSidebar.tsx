@@ -46,6 +46,7 @@ const navigation: NavItem[] = [
     icon: FolderTree,
     children: [
       { label: "Mercados", path: "/cadastros/mercados" },
+      { label: "Áreas da Empresa", path: "/cadastros/areas-empresa" },
       { label: "Módulos", path: "/cadastros/modulos" },
       { label: "Serviços", path: "/cadastros/servicos" },
     ],
