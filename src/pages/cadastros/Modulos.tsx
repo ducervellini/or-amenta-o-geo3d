@@ -177,7 +177,6 @@ export default function Modulos() {
                 <tr>
                   <th>Nome</th>
                   <th>Áreas da Empresa</th>
-                  <th>Áreas da Empresa</th>
                   <th>Descrição</th>
                   <th>Status</th>
                   <th className="text-right">Ações</th>
