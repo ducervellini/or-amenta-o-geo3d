@@ -3,14 +3,13 @@ import { useSupabaseQuery, useSupabaseInsert, useSupabaseUpdate, useSupabaseDele
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Pencil, Trash2, Search, Wrench, Calculator, MoreHorizontal, FileText } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Wrench, Calculator, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 const R = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -149,22 +148,11 @@ export default function Equipamentos() {
                   <TableCell className="text-right font-medium">{R(rc.custoHora)}</TableCell>
                   <TableCell className="text-right font-medium">{R(rc.custoMes)}</TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openEdit(row)}>
-                          <Pencil className="h-4 w-4 mr-2" />Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => openDetail(row)}>
-                          <FileText className="h-4 w-4 mr-2" />Ver cálculo detalhado
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => remove(row.id)}>
-                          <Trash2 className="h-4 w-4 mr-2" />Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex gap-1">
+                      <Button size="icon" variant="ghost" title="Editar" onClick={() => openEdit(row)}><Pencil className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" title="Ver cálculo detalhado" onClick={() => openDetail(row)}><FileText className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" title="Excluir" onClick={() => remove(row.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               );
