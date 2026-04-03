@@ -148,22 +148,11 @@ export default function Equipamentos() {
                   <TableCell className="text-right font-medium">{R(rc.custoHora)}</TableCell>
                   <TableCell className="text-right font-medium">{R(rc.custoMes)}</TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openEdit(row)}>
-                          <Pencil className="h-4 w-4 mr-2" />Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => openDetail(row)}>
-                          <FileText className="h-4 w-4 mr-2" />Ver cálculo detalhado
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => remove(row.id)}>
-                          <Trash2 className="h-4 w-4 mr-2" />Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex gap-1">
+                      <Button size="icon" variant="ghost" title="Editar" onClick={() => openEdit(row)}><Pencil className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" title="Ver cálculo detalhado" onClick={() => openDetail(row)}><FileText className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" title="Excluir" onClick={() => remove(row.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               );
