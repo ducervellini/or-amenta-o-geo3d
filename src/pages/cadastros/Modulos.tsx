@@ -42,7 +42,7 @@ export default function Modulos() {
   const [formValues, setFormValues] = useState({ nome: "", mercado_id: "", descricao: "" });
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [moduloAreas, setModuloAreas] = useState<Record<string, string[]>>({});
-
+  const [areasVersion, setAreasVersion] = useState(0);
   const { data: modulos, isLoading } = useSupabaseQuery("modulos");
   const { data: mercados } = useSupabaseQuery("mercados");
   const { data: areas } = useSupabaseQuery("areas_empresa");
@@ -65,7 +65,7 @@ export default function Modulos() {
       }
     };
     loadAreas();
-  }, [modulos]);
+  }, [modulos, areasVersion]);
 
   const filtered = (modulos || []).filter((row: any) =>
     !search || String(row.nome || "").toLowerCase().includes(search.toLowerCase())
@@ -90,14 +90,13 @@ export default function Modulos() {
   };
 
   const saveAreas = async (moduloId: string) => {
-    // Delete existing
     await (supabase.from as any)("modulos_areas_empresa").delete().eq("modulo_id", moduloId);
-    // Insert new
     if (selectedAreas.length > 0) {
       await (supabase.from as any)("modulos_areas_empresa").insert(
         selectedAreas.map((areaId) => ({ modulo_id: moduloId, area_empresa_id: areaId }))
       );
     }
+    setAreasVersion((v) => v + 1);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
