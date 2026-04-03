@@ -3,7 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { HardHat, Mail, Lock, User, Loader2 } from "lucide-react";
+import { Mail, Lock, User, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import logoGeo3d from "@/assets/logo_GEO3D.png";
 import { toast } from "sonner";
 
 export default function Auth() {
