@@ -42,7 +42,7 @@ export default function Modulos() {
   const [formValues, setFormValues] = useState({ nome: "", mercado_id: "", descricao: "" });
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [moduloAreas, setModuloAreas] = useState<Record<string, string[]>>({});
-
+  const [areasVersion, setAreasVersion] = useState(0);
   const { data: modulos, isLoading } = useSupabaseQuery("modulos");
   const { data: mercados } = useSupabaseQuery("mercados");
   const { data: areas } = useSupabaseQuery("areas_empresa");
