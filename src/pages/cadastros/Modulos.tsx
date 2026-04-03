@@ -242,17 +242,6 @@ export default function Modulos() {
               <Input id="nome" value={formValues.nome} onChange={(e) => setFormValues((v) => ({ ...v, nome: e.target.value }))} placeholder="Ex: Topografia" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="mercado_id">Mercado</Label>
-              <Select value={formValues.mercado_id} onValueChange={(v) => setFormValues((prev) => ({ ...prev, mercado_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                <SelectContent>
-                  {(mercados || []).map((m: any) => (
-                    <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
               <Label>Áreas da Empresa</Label>
               <div className="border rounded-md p-3 space-y-2 max-h-40 overflow-y-auto">
                 {(areas || []).length === 0 ? (
