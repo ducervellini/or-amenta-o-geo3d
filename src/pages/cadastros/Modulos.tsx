@@ -65,7 +65,7 @@ export default function Modulos() {
       }
     };
     loadAreas();
-  }, [modulos]);
+  }, [modulos, areasVersion]);
 
   const filtered = (modulos || []).filter((row: any) =>
     !search || String(row.nome || "").toLowerCase().includes(search.toLowerCase())
