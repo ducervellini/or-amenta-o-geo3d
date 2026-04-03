@@ -235,6 +235,18 @@ export default function Equipamentos() {
                     <p className="text-2xl font-bold text-primary">{R(calc.custoMes)}</p>
                   </div>
                 </div>
+                {isProprio && calc.retornoCapitalHora > 0 && (
+                  <div className="grid grid-cols-2 gap-6 text-center pt-3 mt-3 border-t border-dashed">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Custo líquido/hora (- retorno capital)</p>
+                      <p className="text-lg font-semibold text-foreground">{R(calc.custoHoraLiquido)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Custo líquido/mês (- retorno capital)</p>
+                      <p className="text-lg font-semibold text-foreground">{R(calc.custoMesLiquido)}</p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
