@@ -41,6 +41,45 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_log: {
+        Row: {
+          acao: string
+          created_at: string
+          dados_anteriores: Json | null
+          dados_novos: Json | null
+          id: string
+          ip_address: string | null
+          registro_id: string | null
+          tabela: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          dados_anteriores?: Json | null
+          dados_novos?: Json | null
+          id?: string
+          ip_address?: string | null
+          registro_id?: string | null
+          tabela: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          dados_anteriores?: Json | null
+          dados_novos?: Json | null
+          id?: string
+          ip_address?: string | null
+          registro_id?: string | null
+          tabela?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       beneficios: {
         Row: {
           ativo: boolean
@@ -219,38 +258,53 @@ export type Database = {
       }
       composicoes: {
         Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
           ativo: boolean
           codigo: string
           created_at: string
+          created_by: string | null
           custo_unitario_total: number | null
           descricao: string | null
           id: string
           nome: string
           servico_id: string | null
+          status: string
+          travado: boolean
           unidade: string
           updated_at: string
         }
         Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
           ativo?: boolean
           codigo: string
           created_at?: string
+          created_by?: string | null
           custo_unitario_total?: number | null
           descricao?: string | null
           id?: string
           nome: string
           servico_id?: string | null
+          status?: string
+          travado?: boolean
           unidade?: string
           updated_at?: string
         }
         Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
           ativo?: boolean
           codigo?: string
           created_at?: string
+          created_by?: string | null
           custo_unitario_total?: number | null
           descricao?: string | null
           id?: string
           nome?: string
           servico_id?: string | null
+          status?: string
+          travado?: boolean
           unidade?: string
           updated_at?: string
         }
@@ -339,6 +393,36 @@ export type Database = {
           potencia?: string | null
           unidade?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      historico_aprendizado: {
+        Row: {
+          created_at: string
+          dados: Json
+          id: string
+          metricas: Json | null
+          referencia_id: string | null
+          tags: string[] | null
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          dados?: Json
+          id?: string
+          metricas?: Json | null
+          referencia_id?: string | null
+          tags?: string[] | null
+          tipo: string
+        }
+        Update: {
+          created_at?: string
+          dados?: Json
+          id?: string
+          metricas?: Json | null
+          referencia_id?: string | null
+          tags?: string[] | null
+          tipo?: string
         }
         Relationships: []
       }
@@ -541,6 +625,88 @@ export type Database = {
             columns: ["modulo_id"]
             isOneToOne: false
             referencedRelation: "modulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orcamento_cenarios: {
+        Row: {
+          ativo: boolean
+          composicao_id: string
+          created_at: string
+          dados: Json
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          composicao_id: string
+          created_at?: string
+          dados?: Json
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          composicao_id?: string
+          created_at?: string
+          dados?: Json
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orcamento_cenarios_composicao_id_fkey"
+            columns: ["composicao_id"]
+            isOneToOne: false
+            referencedRelation: "composicoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orcamento_revisoes: {
+        Row: {
+          composicao_id: string
+          created_at: string
+          dados: Json
+          id: string
+          observacao: string | null
+          user_id: string | null
+          versao: number
+        }
+        Insert: {
+          composicao_id: string
+          created_at?: string
+          dados?: Json
+          id?: string
+          observacao?: string | null
+          user_id?: string | null
+          versao?: number
+        }
+        Update: {
+          composicao_id?: string
+          created_at?: string
+          dados?: Json
+          id?: string
+          observacao?: string | null
+          user_id?: string | null
+          versao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orcamento_revisoes_composicao_id_fkey"
+            columns: ["composicao_id"]
+            isOneToOne: false
+            referencedRelation: "composicoes"
             referencedColumns: ["id"]
           },
         ]
