@@ -10,13 +10,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   ArrowLeft, Plus, Edit, Trash2, Users, Wrench, Truck, Package,
-  ChevronDown, ChevronUp, Save, BarChart3,
+  ChevronDown, ChevronUp, Save, BarChart3, History, Layers, Shield,
 } from "lucide-react";
 import { ComposicaoItemForm } from "@/components/composicao/ComposicaoItemForm";
 import { ResumoComposicao } from "@/components/composicao/ResumoComposicao";
 import { MemoriaCalculo } from "@/components/composicao/MemoriaCalculo";
 import { PainelBDI } from "@/components/composicao/PainelBDI";
 import { MetricasServicoForm } from "@/components/composicao/MetricasServicoForm";
+import { HistoricoRevisoes } from "@/components/composicao/HistoricoRevisoes";
+import { GerenciadorCenarios } from "@/components/composicao/GerenciadorCenarios";
+import { ControleStatus } from "@/components/composicao/ControleStatus";
+import { TrilhaAuditoria } from "@/components/composicao/TrilhaAuditoria";
+import { registrarAuditoria } from "@/lib/audit";
 import {
   calcularMaoDeObra, calcularEquipamento, calcularVeiculo, calcularMaterial,
   calcularResumo,
@@ -52,6 +57,8 @@ export default function ComposicaoDetalhe() {
   const [descricao, setDescricao] = useState("");
   const [unidade, setUnidade] = useState("un");
   const [servicoId, setServicoId] = useState("_none_");
+  const [status, setStatus] = useState("rascunho");
+  const [travado, setTravado] = useState(false);
 
   // Service metrics
   const [tipoGeometria, setTipoGeometria] = useState("");
@@ -90,6 +97,8 @@ export default function ComposicaoDetalhe() {
           setDescricao(comp.descricao || "");
           setUnidade(comp.unidade);
           setServicoId(comp.servico_id || "_none_");
+          setStatus(comp.status || "rascunho");
+          setTravado(comp.travado || false);
         }
         const { data: items } = await (supabase.from as any)("composicao_itens").select("*").eq("composicao_id", id).order("created_at");
         if (items) setItens(items);
@@ -139,6 +148,7 @@ export default function ComposicaoDetalhe() {
 
   const handleSaveHeader = async () => {
     if (!codigo || !nome) { toast.error("Código e nome são obrigatórios"); return; }
+    if (travado) { toast.error("Orçamento travado — não é possível editar"); return; }
     const values = {
       codigo, nome, descricao, unidade,
       servico_id: servicoId === "_none_" ? null : servicoId,
@@ -147,11 +157,14 @@ export default function ComposicaoDetalhe() {
     if (isNew) {
       insertComposicao.mutate(values, {
         onSuccess: (data: Record<string, unknown>) => {
+          registrarAuditoria("composicoes", String(data.id), "criar", null, values);
           navigate(`/composicoes/${data.id}`, { replace: true });
         },
       });
     } else {
-      updateComposicao.mutate({ id: id!, values });
+      updateComposicao.mutate({ id: id!, values }, {
+        onSuccess: () => { registrarAuditoria("composicoes", id!, "editar", null, values); },
+      });
     }
   };
 
@@ -378,10 +391,20 @@ export default function ComposicaoDetalhe() {
 
         {/* Sidebar */}
         <div className="space-y-4">
+          {!isNew && (
+            <ControleStatus
+              composicaoId={id!}
+              status={status}
+              travado={travado}
+              onStatusChange={(s, t) => { setStatus(s); setTravado(t); }}
+            />
+          )}
+
           <Tabs value={sidebarTab} onValueChange={setSidebarTab}>
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="resumo">Custos</TabsTrigger>
-              <TabsTrigger value="bdi" className="gap-1"><BarChart3 className="w-3.5 h-3.5" />BDI / DRE</TabsTrigger>
+              <TabsTrigger value="bdi" className="gap-1"><BarChart3 className="w-3.5 h-3.5" />BDI</TabsTrigger>
+              <TabsTrigger value="historico" className="gap-1"><History className="w-3.5 h-3.5" />Histórico</TabsTrigger>
             </TabsList>
 
             <TabsContent value="resumo" className="space-y-4 pt-2">
@@ -399,6 +422,22 @@ export default function ComposicaoDetalhe() {
 
             <TabsContent value="bdi" className="pt-2">
               <PainelBDI custoDireto={resumo.custo_direto} onBdiCalculado={setResultadoBDI} />
+            </TabsContent>
+
+            <TabsContent value="historico" className="space-y-4 pt-2">
+              {!isNew && id && (
+                <>
+                  <HistoricoRevisoes
+                    composicaoId={id}
+                    dadosAtuais={{ ...resumo, itens: itens.length, status }}
+                  />
+                  <GerenciadorCenarios
+                    composicaoId={id}
+                    dadosAtuais={{ ...resumo, itens: itens.length, status }}
+                  />
+                  <TrilhaAuditoria registroId={id} />
+                </>
+              )}
             </TabsContent>
           </Tabs>
         </div>
