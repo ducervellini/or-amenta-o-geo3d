@@ -82,7 +82,6 @@ export default function Modulos() {
     setEditItem(item);
     setFormValues({
       nome: String(item.nome || ""),
-      mercado_id: String(item.mercado_id || ""),
       descricao: String(item.descricao || ""),
     });
     setSelectedAreas(moduloAreas[item.id as string] || []);
