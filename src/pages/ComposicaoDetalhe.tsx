@@ -10,13 +10,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   ArrowLeft, Plus, Edit, Trash2, Users, Wrench, Truck, Package,
-  ChevronDown, ChevronUp, Save, BarChart3,
+  ChevronDown, ChevronUp, Save, BarChart3, History, Layers, Shield,
 } from "lucide-react";
 import { ComposicaoItemForm } from "@/components/composicao/ComposicaoItemForm";
 import { ResumoComposicao } from "@/components/composicao/ResumoComposicao";
 import { MemoriaCalculo } from "@/components/composicao/MemoriaCalculo";
 import { PainelBDI } from "@/components/composicao/PainelBDI";
 import { MetricasServicoForm } from "@/components/composicao/MetricasServicoForm";
+import { HistoricoRevisoes } from "@/components/composicao/HistoricoRevisoes";
+import { GerenciadorCenarios } from "@/components/composicao/GerenciadorCenarios";
+import { ControleStatus } from "@/components/composicao/ControleStatus";
+import { TrilhaAuditoria } from "@/components/composicao/TrilhaAuditoria";
+import { registrarAuditoria } from "@/lib/audit";
 import {
   calcularMaoDeObra, calcularEquipamento, calcularVeiculo, calcularMaterial,
   calcularResumo,
