@@ -23,7 +23,7 @@ import Veiculos from "./pages/cadastros/Veiculos";
 import Materiais from "./pages/cadastros/Materiais";
 import Combustiveis from "./pages/cadastros/Combustiveis";
 import Composicoes from "./pages/Composicoes";
-import Orcamentos from "./pages/Orcamentos";
+import ComposicaoDetalhe from "./pages/ComposicaoDetalhe";
 import ParametrosAdminLocal from "./pages/parametros/AdminLocal";
 import ParametrosAdminCentral from "./pages/parametros/AdminCentral";
 import ParametrosFinanciamento from "./pages/parametros/Financiamento";
