@@ -93,7 +93,7 @@ export default function Orcamentos() {
                 <th>Responsável</th>
                 <th>Valor Total</th>
                 <th>Status</th>
-                <th className="text-right">Ações</th>
+                <th className="text-center">Ações</th>
               </tr>
             </thead>
             <tbody>
