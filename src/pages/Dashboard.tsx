@@ -1,90 +1,155 @@
-import { FileText, Layers, TrendingUp, Clock, ArrowUpRight, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useMemo } from "react";
+import { useSupabaseQuery } from "@/hooks/useSupabaseCrud";
 import { useNavigate } from "react-router-dom";
+import {
+  DollarSign, Layers, Users, BarChart3, Package, Wrench, Plus,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 
-const stats = [
-  { label: "Orçamentos Ativos", value: "12", icon: FileText, change: "+3 este mês", color: "text-accent" },
-  { label: "Composições", value: "148", icon: Layers, change: "24 novas", color: "text-info" },
-  { label: "Valor Total", value: "R$ 4.2M", icon: TrendingUp, change: "+18%", color: "text-success" },
-  { label: "Pendentes", value: "5", icon: Clock, change: "2 urgentes", color: "text-warning" },
-];
-
-const recentBudgets = [
-  { id: "ORC-2026-001", client: "Prefeitura Municipal", desc: "Pavimentação Av. Central", value: "R$ 1.250.000", status: "Em andamento" },
-  { id: "ORC-2026-002", client: "Construtora ABC", desc: "Terraplanagem Lote 14", value: "R$ 890.000", status: "Revisão" },
-  { id: "ORC-2026-003", client: "DNIT", desc: "Sondagem BR-101 km 42-58", value: "R$ 2.100.000", status: "Finalizado" },
-];
+const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+const COLORS = ["hsl(210, 80%, 55%)", "hsl(40, 85%, 55%)", "hsl(150, 60%, 45%)", "hsl(280, 60%, 55%)", "hsl(0, 70%, 55%)", "hsl(190, 70%, 45%)"];
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { data: composicoes } = useSupabaseQuery("composicoes");
+  const { data: servicos } = useSupabaseQuery("servicos");
+  const { data: equipamentos } = useSupabaseQuery("equipamentos");
+  const { data: veiculos } = useSupabaseQuery("veiculos");
+  const { data: materiais } = useSupabaseQuery("materiais");
+  const { data: cargos } = useSupabaseQuery("cargos");
+
+  const stats = useMemo(() => {
+    const totalComposicoes = composicoes?.length || 0;
+    const custoTotal = (composicoes || []).reduce((s, c) => s + (Number(c.custo_unitario_total) || 0), 0);
+    const totalServicos = servicos?.length || 0;
+    const totalEquipamentos = (equipamentos?.length || 0) + (veiculos?.length || 0);
+    const totalCargos = cargos?.length || 0;
+    const totalMateriais = materiais?.length || 0;
+    return { totalComposicoes, custoTotal, totalServicos, totalEquipamentos, totalCargos, totalMateriais };
+  }, [composicoes, servicos, equipamentos, veiculos, cargos, materiais]);
+
+  const topComposicoes = useMemo(() => {
+    return (composicoes || [])
+      .filter((c) => Number(c.custo_unitario_total) > 0)
+      .sort((a, b) => Number(b.custo_unitario_total) - Number(a.custo_unitario_total))
+      .slice(0, 5);
+  }, [composicoes]);
+
+  const chartData = useMemo(() => {
+    return topComposicoes.map((c) => ({
+      nome: String(c.nome).substring(0, 25),
+      custo: Number(c.custo_unitario_total) || 0,
+    }));
+  }, [topComposicoes]);
+
+  const cadastrosData = [
+    { name: "Cargos", value: stats.totalCargos },
+    { name: "Equip./Veíc.", value: stats.totalEquipamentos },
+    { name: "Materiais", value: stats.totalMateriais },
+    { name: "Serviços", value: stats.totalServicos },
+  ].filter((d) => d.value > 0);
 
   return (
     <div className="page-container animate-fade-in">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">Visão geral dos orçamentos e composições</p>
+          <h1 className="page-title">Dashboard Executivo</h1>
+          <p className="page-subtitle">Visão geral do sistema de orçamentação</p>
         </div>
-        <Button onClick={() => navigate("/orcamentos")} className="gap-2">
+        <Button onClick={() => navigate("/composicoes/novo")} className="gap-2">
           <Plus className="w-4 h-4" />
-          Novo Orçamento
+          Nova Composição
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {stats.map((stat) => (
-          <div key={stat.label} className="stat-card">
-            <div className="flex items-center justify-between mb-3">
-              <stat.icon className={cn("w-5 h-5", stat.color)} />
-              <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
-            </div>
-            <p className="text-2xl font-bold">{stat.value}</p>
-            <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
-            <p className="text-xs text-muted-foreground mt-2">{stat.change}</p>
-          </div>
-        ))}
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+        <KpiCard icon={Layers} label="Composições" value={stats.totalComposicoes} />
+        <KpiCard icon={DollarSign} label="Custo Total" value={`R$ ${fmt(stats.custoTotal)}`} />
+        <KpiCard icon={BarChart3} label="Serviços" value={stats.totalServicos} />
+        <KpiCard icon={Users} label="Cargos" value={stats.totalCargos} />
+        <KpiCard icon={Wrench} label="Equip./Veíc." value={stats.totalEquipamentos} />
+        <KpiCard icon={Package} label="Materiais" value={stats.totalMateriais} />
       </div>
 
-      {/* Recent budgets */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Top composições */}
+        <div className="bg-card rounded-lg border shadow-sm p-5">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">Top Composições por Custo</h3>
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis type="number" tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
+                <YAxis dataKey="nome" type="category" width={140} tick={{ fontSize: 10 }} />
+                <Tooltip formatter={(value: number) => `R$ ${fmt(value)}`} />
+                <Bar dataKey="custo" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[250px] text-muted-foreground text-sm">Nenhuma composição com custo cadastrado</div>
+          )}
+        </div>
+
+        {/* Pie chart */}
+        <div className="bg-card rounded-lg border shadow-sm p-5">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">Distribuição de Cadastros</h3>
+          {cadastrosData.length > 0 ? (
+            <div className="flex items-center gap-4">
+              <ResponsiveContainer width="50%" height={250}>
+                <PieChart>
+                  <Pie data={cadastrosData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} innerRadius={50}>
+                    {cadastrosData.map((_, i) => (
+                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="space-y-2">
+                {cadastrosData.map((d, i) => (
+                  <div key={d.name} className="flex items-center gap-2 text-sm">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                    <span>{d.name}: <strong>{d.value}</strong></span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-[250px] text-muted-foreground text-sm">Nenhum cadastro realizado</div>
+          )}
+        </div>
+      </div>
+
+      {/* Recent composições table */}
       <div className="bg-card rounded-lg border shadow-sm">
-        <div className="p-5 border-b">
-          <h2 className="text-lg font-semibold">Orçamentos Recentes</h2>
+        <div className="p-4 border-b">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Composições Recentes</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr>
                 <th>Código</th>
-                <th>Cliente</th>
-                <th>Descrição</th>
-                <th>Valor</th>
-                <th>Status</th>
+                <th>Nome</th>
+                <th>Unidade</th>
+                <th>Custo Unitário</th>
               </tr>
             </thead>
             <tbody>
-              {recentBudgets.map((b) => (
-                <tr key={b.id} className="cursor-pointer">
-                  <td className="font-medium text-accent">{b.id}</td>
-                  <td>{b.client}</td>
-                  <td>{b.desc}</td>
-                  <td className="font-medium">{b.value}</td>
-                  <td>
-                    <span
-                      className={cn(
-                        "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
-                        b.status === "Finalizado"
-                          ? "bg-success/10 text-success"
-                          : b.status === "Revisão"
-                          ? "bg-warning/10 text-warning"
-                          : "bg-info/10 text-info"
-                      )}
-                    >
-                      {b.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {(composicoes || []).length === 0 ? (
+                <tr><td colSpan={4} className="text-center py-6 text-muted-foreground text-sm">Nenhuma composição cadastrada</td></tr>
+              ) : (
+                (composicoes || []).slice(0, 10).map((c) => (
+                  <tr key={String(c.id)} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/composicoes/${c.id}`)}>
+                    <td className="font-medium text-accent">{String(c.codigo)}</td>
+                    <td className="font-medium">{String(c.nome)}</td>
+                    <td>{String(c.unidade)}</td>
+                    <td className="font-mono font-semibold">R$ {fmt(Number(c.custo_unitario_total) || 0)}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -93,6 +158,14 @@ export default function Dashboard() {
   );
 }
 
-function cn(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(" ");
+function KpiCard({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | number }) {
+  return (
+    <div className="bg-card rounded-lg border shadow-sm p-4 space-y-2">
+      <div className="flex items-center gap-2">
+        <Icon className="w-4 h-4 text-muted-foreground" />
+        <span className="text-xs text-muted-foreground uppercase tracking-wider">{label}</span>
+      </div>
+      <div className="font-mono font-bold text-lg truncate">{value}</div>
+    </div>
+  );
 }
