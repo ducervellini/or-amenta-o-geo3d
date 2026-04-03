@@ -206,7 +206,7 @@ export default function Modulos() {
                       <td>
                         <div className="flex flex-wrap gap-1">
                           {areaNames.length > 0 ? areaNames.map((name) => (
-                            <span key={name} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent/20 text-accent-foreground">
+                            <span key={name} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
                               {name}
                             </span>
                           )) : <span className="text-muted-foreground text-xs">-</span>}
