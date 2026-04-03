@@ -71,7 +71,7 @@ export default function Composicoes() {
                   <th>Serviço</th>
                   <th>Unidade</th>
                   <th>Custo Unitário</th>
-                  <th className="text-right">Ações</th>
+                  <th className="text-center">Ações</th>
                 </tr>
               </thead>
               <tbody>
