@@ -44,7 +44,7 @@ export default function Modulos() {
   const [moduloAreas, setModuloAreas] = useState<Record<string, string[]>>({});
   const [areasVersion, setAreasVersion] = useState(0);
   const { data: modulos, isLoading } = useSupabaseQuery("modulos");
-  const { data: mercados } = useSupabaseQuery("mercados");
+  
   const { data: areas } = useSupabaseQuery("areas_empresa");
   const insertMutation = useSupabaseInsert("modulos");
   const updateMutation = useSupabaseUpdate("modulos");
