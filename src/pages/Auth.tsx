@@ -3,8 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { HardHat, Mail, Lock, User, Loader2 } from "lucide-react";
+import { Mail, Lock, User, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import logoGeo3d from "@/assets/logo_GEO3D.png";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -47,14 +48,9 @@ export default function Auth() {
       <div className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-accent/20" />
         <div className="relative z-10 flex flex-col justify-center px-16 text-primary-foreground">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center">
-              <HardHat className="w-7 h-7 text-accent-foreground" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">GEO3D</h1>
-              <p className="text-xs uppercase tracking-[0.3em] text-primary-foreground/70">Orçamentação Técnica</p>
-            </div>
+          <div className="mb-8">
+            <img src={logoGeo3d} alt="GEO3D" className="h-12 mb-4" />
+            <p className="text-xs uppercase tracking-[0.3em] text-primary-foreground/70">Orçamentação Técnica</p>
           </div>
           <h2 className="text-2xl font-semibold mb-4">
             Sistema de Orçamentação de Engenharia
@@ -83,11 +79,8 @@ export default function Auth() {
       {/* Right panel - form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
-          <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center">
-              <HardHat className="w-6 h-6 text-accent-foreground" />
-            </div>
-            <span className="text-2xl font-bold">GEO3D</span>
+          <div className="lg:hidden mb-8">
+            <img src={logoGeo3d} alt="GEO3D" className="h-10" />
           </div>
 
           <h2 className="text-2xl font-bold mb-1">
