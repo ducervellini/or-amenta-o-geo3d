@@ -38,9 +38,11 @@ function calcEquip(f: EquipamentoForm) {
   const retornoCapitalHora = isProprio && f.vida_util_horas > 0
     ? f.valor_residual / f.vida_util_horas : 0;
   const combHora = f.combustivel_consumo_hora * f.combustivel_preco_litro;
+  const hTotalMes = f.horas_produtivas_mes + f.horas_improdutivas_mes;
+  const aluguelHora = !isProprio && hTotalMes > 0 ? f.valor_aluguel_hora / hTotalMes : 0;
   const custoHora = isProprio
     ? depHora + f.manutencao_hora + combHora
-    : f.valor_aluguel_hora + f.manutencao_hora + combHora;
+    : aluguelHora + f.manutencao_hora + combHora;
   const custoHoraLiquido = custoHora - retornoCapitalHora;
   const hTotalMes = f.horas_produtivas_mes + f.horas_improdutivas_mes;
   const custoMes = custoHora * hTotalMes;
