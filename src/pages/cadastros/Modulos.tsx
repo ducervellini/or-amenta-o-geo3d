@@ -73,7 +73,7 @@ export default function Modulos() {
 
   const openCreate = () => {
     setEditItem(null);
-    setFormValues({ nome: "", mercado_id: "", descricao: "" });
+    setFormValues({ nome: "", descricao: "" });
     setSelectedAreas([]);
     setFormOpen(true);
   };
