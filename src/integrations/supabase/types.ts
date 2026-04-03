@@ -144,38 +144,68 @@ export type Database = {
         Row: {
           coeficiente: number
           composicao_id: string
+          consumo: number | null
           created_at: string
           custo_total: number
           custo_unitario: number
+          depreciacao: number | null
+          descricao: string | null
+          fator_utilizacao: number | null
+          grupo_custo: string | null
           id: string
           insumo_id: string
+          manutencao: number | null
+          observacoes: string | null
+          parametros: Json | null
           quantidade: number
           tipo_insumo: Database["public"]["Enums"]["tipo_insumo"]
+          unidade: string | null
           updated_at: string
+          vida_util: number | null
         }
         Insert: {
           coeficiente?: number
           composicao_id: string
+          consumo?: number | null
           created_at?: string
           custo_total?: number
           custo_unitario?: number
+          depreciacao?: number | null
+          descricao?: string | null
+          fator_utilizacao?: number | null
+          grupo_custo?: string | null
           id?: string
           insumo_id: string
+          manutencao?: number | null
+          observacoes?: string | null
+          parametros?: Json | null
           quantidade?: number
           tipo_insumo: Database["public"]["Enums"]["tipo_insumo"]
+          unidade?: string | null
           updated_at?: string
+          vida_util?: number | null
         }
         Update: {
           coeficiente?: number
           composicao_id?: string
+          consumo?: number | null
           created_at?: string
           custo_total?: number
           custo_unitario?: number
+          depreciacao?: number | null
+          descricao?: string | null
+          fator_utilizacao?: number | null
+          grupo_custo?: string | null
           id?: string
           insumo_id?: string
+          manutencao?: number | null
+          observacoes?: string | null
+          parametros?: Json | null
           quantidade?: number
           tipo_insumo?: Database["public"]["Enums"]["tipo_insumo"]
+          unidade?: string | null
           updated_at?: string
+          vida_util?: number | null
         }
         Relationships: [
           {

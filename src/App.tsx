@@ -23,6 +23,7 @@ import Veiculos from "./pages/cadastros/Veiculos";
 import Materiais from "./pages/cadastros/Materiais";
 import Combustiveis from "./pages/cadastros/Combustiveis";
 import Composicoes from "./pages/Composicoes";
+import ComposicaoDetalhe from "./pages/ComposicaoDetalhe";
 import Orcamentos from "./pages/Orcamentos";
 import ParametrosAdminLocal from "./pages/parametros/AdminLocal";
 import ParametrosAdminCentral from "./pages/parametros/AdminCentral";
@@ -69,6 +70,7 @@ const App = () => (
               <Route path="/cadastros/materiais" element={<Materiais />} />
               <Route path="/cadastros/combustiveis" element={<Combustiveis />} />
               <Route path="/composicoes" element={<Composicoes />} />
+              <Route path="/composicoes/:id" element={<ComposicaoDetalhe />} />
               <Route path="/orcamentos" element={<Orcamentos />} />
               <Route path="/parametros/admin-local" element={<ParametrosAdminLocal />} />
               <Route path="/parametros/admin-central" element={<ParametrosAdminCentral />} />
