@@ -260,9 +260,10 @@ export default function Equipamentos() {
             {dc.isProprio ? (
               <>
                 <Row label="Valor de aquisição" value={R(detailForm.valor_aquisicao)} />
-                <Row label="Valor residual" value={R(detailForm.valor_residual)} />
+                <Row label="Valor de revenda (futuro)" value={R(detailForm.valor_residual)} />
                 <Row label="Vida útil" value={`${detailForm.vida_util_horas.toLocaleString("pt-BR")} horas`} />
                 <Row label="Depreciação/hora" value={R(dc.depHora)} formula={`(${R(detailForm.valor_aquisicao)} - ${R(detailForm.valor_residual)}) / ${detailForm.vida_util_horas.toLocaleString("pt-BR")} h`} highlight />
+                <Row label="Retorno de capital/hora" value={R(dc.retornoCapitalHora)} formula={`${R(detailForm.valor_residual)} / ${detailForm.vida_util_horas.toLocaleString("pt-BR")} h`} highlight />
               </>
             ) : (
               <Row label="Aluguel/hora" value={R(detailForm.valor_aluguel_hora)} />
