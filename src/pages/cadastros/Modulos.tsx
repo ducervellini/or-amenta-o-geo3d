@@ -234,7 +234,7 @@ export default function Modulos() {
       <Dialog open={formOpen} onOpenChange={(open) => { setFormOpen(open); if (!open) setEditItem(null); }}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editItem ? "Editar Módulo" : "Novo Módulo"}</DialogTitle>
+            <DialogTitle>{editItem ? "Editar Departamento" : "Novo Departamento"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
