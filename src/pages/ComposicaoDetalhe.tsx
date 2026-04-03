@@ -1,0 +1,373 @@
+import { useState, useEffect, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useSupabaseQuery, useSupabaseInsert, useSupabaseUpdate, useSupabaseDelete } from "@/hooks/useSupabaseCrud";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import {
+  ArrowLeft, Plus, Edit, Trash2, Users, Wrench, Truck, Package,
+  ChevronDown, ChevronUp, Save,
+} from "lucide-react";
+import { ComposicaoItemForm } from "@/components/composicao/ComposicaoItemForm";
+import { ResumoComposicao } from "@/components/composicao/ResumoComposicao";
+import { MemoriaCalculo } from "@/components/composicao/MemoriaCalculo";
+import {
+  calcularMaoDeObra, calcularEquipamento, calcularVeiculo, calcularMaterial,
+  calcularResumo,
+  type ParametrosMaoDeObra, type ParametrosEquipamento, type ParametrosVeiculo, type ParametrosMaterial,
+  getDefaultParamsMaoDeObra, getDefaultParamsEquipamento, getDefaultParamsVeiculo, getDefaultParamsMaterial,
+} from "@/lib/composicao-calculo";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+type TipoInsumo = "mao_de_obra" | "equipamento" | "veiculo" | "material";
+
+const tipoIcons: Record<string, React.ElementType> = {
+  mao_de_obra: Users, equipamento: Wrench, veiculo: Truck, material: Package, combustivel: Package,
+};
+const tipoLabels: Record<string, string> = {
+  mao_de_obra: "Mão de Obra", equipamento: "Equipamento", veiculo: "Veículo", material: "Material", combustivel: "Material",
+};
+const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+
+export default function ComposicaoDetalhe() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const isNew = id === "novo";
+
+  const { data: servicos } = useSupabaseQuery("servicos");
+
+  // Composition header
+  const [codigo, setCodigo] = useState("");
+  const [nome, setNome] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [unidade, setUnidade] = useState("un");
+  const [servicoId, setServicoId] = useState("");
+
+  // Items
+  const [itens, setItens] = useState<Record<string, unknown>[]>([]);
+  const [expandedItem, setExpandedItem] = useState<string | null>(null);
+
+  // Dialogs
+  const [showItemForm, setShowItemForm] = useState(false);
+  const [editingItem, setEditingItem] = useState<Record<string, unknown> | null>(null);
+  const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
+  const [tipoNovo, setTipoNovo] = useState<TipoInsumo>("mao_de_obra");
+
+  const insertComposicao = useSupabaseInsert("composicoes");
+  const updateComposicao = useSupabaseUpdate("composicoes");
+  const insertItem = useSupabaseInsert("composicao_itens");
+  const updateItem = useSupabaseUpdate("composicao_itens");
+  const deleteItem = useSupabaseDelete("composicao_itens");
+
+  // Load existing composition
+  useEffect(() => {
+    if (!isNew && id) {
+      (async () => {
+        const { data: comp } = await (supabase.from as any)("composicoes").select("*").eq("id", id).single();
+        if (comp) {
+          setCodigo(comp.codigo);
+          setNome(comp.nome);
+          setDescricao(comp.descricao || "");
+          setUnidade(comp.unidade);
+          setServicoId(comp.servico_id || "");
+        }
+        const { data: items } = await (supabase.from as any)("composicao_itens").select("*").eq("composicao_id", id).order("created_at");
+        if (items) setItens(items);
+      })();
+    }
+  }, [id, isNew]);
+
+  // Calculate resultado for each item
+  const itensComCalculo = useMemo(() => {
+    return itens.map((item) => {
+      const tipo = String(item.tipo_insumo);
+      const params = (item.parametros || {}) as Record<string, unknown>;
+      const qtd = Number(item.quantidade) || 1;
+      const coef = Number(item.coeficiente) || 1;
+      try {
+        if (tipo === "mao_de_obra") return { ...item, resultado: calcularMaoDeObra({ ...getDefaultParamsMaoDeObra(), ...params } as ParametrosMaoDeObra, qtd, coef) };
+        if (tipo === "equipamento") return { ...item, resultado: calcularEquipamento({ ...getDefaultParamsEquipamento(), ...params } as ParametrosEquipamento, qtd, coef) };
+        if (tipo === "veiculo") return { ...item, resultado: calcularVeiculo({ ...getDefaultParamsVeiculo(), ...params } as ParametrosVeiculo, qtd, coef) };
+        return { ...item, resultado: calcularMaterial({ ...getDefaultParamsMaterial(), ...params } as ParametrosMaterial, qtd, coef) };
+      } catch {
+        return { ...item, resultado: { custo_unitario: Number(item.custo_unitario) || 0, custo_total: Number(item.custo_total) || 0, memoria: [] } };
+      }
+    });
+  }, [itens]);
+
+  const resumo = useMemo(() => {
+    return calcularResumo(itensComCalculo.map((i) => ({
+      tipo_insumo: String(i.tipo_insumo),
+      custo_total: i.resultado.custo_total,
+    })));
+  }, [itensComCalculo]);
+
+  // Save header
+  const handleSaveHeader = async () => {
+    if (!codigo || !nome) { toast.error("Código e nome são obrigatórios"); return; }
+    const values = {
+      codigo, nome, descricao, unidade,
+      servico_id: servicoId || null,
+      custo_unitario_total: resumo.custo_direto,
+    };
+    if (isNew) {
+      insertComposicao.mutate(values, {
+        onSuccess: (data: Record<string, unknown>) => {
+          navigate(`/composicoes/${data.id}`, { replace: true });
+        },
+      });
+    } else {
+      updateComposicao.mutate({ id: id!, values });
+    }
+  };
+
+  // Save item
+  const handleSaveItem = async (values: Record<string, unknown>) => {
+    if (isNew) { toast.error("Salve a composição primeiro"); return; }
+    if (editingItem) {
+      updateItem.mutate({ id: String(editingItem.id), values }, {
+        onSuccess: () => {
+          setItens((prev) => prev.map((i) => (i.id === editingItem.id ? { ...i, ...values } : i)));
+          setShowItemForm(false);
+          setEditingItem(null);
+          updateTotalComposicao();
+        },
+      });
+    } else {
+      insertItem.mutate({ ...values, composicao_id: id }, {
+        onSuccess: (data: Record<string, unknown>) => {
+          setItens((prev) => [...prev, data]);
+          setShowItemForm(false);
+          updateTotalComposicao();
+        },
+      });
+    }
+  };
+
+  const handleDeleteItem = () => {
+    if (!deletingItemId) return;
+    deleteItem.mutate(deletingItemId, {
+      onSuccess: () => {
+        setItens((prev) => prev.filter((i) => i.id !== deletingItemId));
+        setDeletingItemId(null);
+        updateTotalComposicao();
+      },
+    });
+  };
+
+  const updateTotalComposicao = () => {
+    if (!isNew && id) {
+      setTimeout(() => {
+        const total = itensComCalculo.reduce((s, i) => s + i.resultado.custo_total, 0);
+        updateComposicao.mutate({ id: id!, values: { custo_unitario_total: total } });
+      }, 500);
+    }
+  };
+
+  const groupedItems = useMemo(() => {
+    const groups: Record<string, typeof itensComCalculo> = {
+      mao_de_obra: [], equipamento: [], veiculo: [], material: [],
+    };
+    itensComCalculo.forEach((i) => {
+      const tipo = String(i.tipo_insumo);
+      if (tipo in groups) groups[tipo].push(i);
+      else groups.material.push(i);
+    });
+    return groups;
+  }, [itensComCalculo]);
+
+  return (
+    <div className="page-container animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/composicoes")}>
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <div>
+          <h1 className="page-title">{isNew ? "Nova Composição" : nome || "Composição"}</h1>
+          <p className="page-subtitle">Composição analítica de custos unitários</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Info card */}
+          <div className="bg-card rounded-lg border shadow-sm p-5 space-y-4">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Dados da Composição</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Código</Label>
+                <Input value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="COMP-001" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Unidade</Label>
+                <Select value={unidade} onValueChange={setUnidade}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["ha","m","km","m²","m³","un","pt","L","t","ml","h","dia","mês"].map((u) => (
+                      <SelectItem key={u} value={u}>{u}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Nome</Label>
+              <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome da composição" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Serviço (opcional)</Label>
+              <Select value={servicoId} onValueChange={setServicoId}>
+                <SelectTrigger><SelectValue placeholder="Avulsa (sem serviço)" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Avulsa</SelectItem>
+                  {(servicos || []).map((s) => (
+                    <SelectItem key={String(s.id)} value={String(s.id)}>{String(s.nome)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={handleSaveHeader} className="gap-2" disabled={insertComposicao.isPending || updateComposicao.isPending}>
+              <Save className="w-4 h-4" />
+              {isNew ? "Criar Composição" : "Salvar"}
+            </Button>
+          </div>
+
+          {/* Items by group */}
+          {!isNew && (
+            <Tabs defaultValue="mao_de_obra" className="w-full">
+              <div className="flex items-center justify-between mb-3">
+                <TabsList>
+                  <TabsTrigger value="mao_de_obra" className="gap-1.5"><Users className="w-3.5 h-3.5" />M.O.</TabsTrigger>
+                  <TabsTrigger value="equipamento" className="gap-1.5"><Wrench className="w-3.5 h-3.5" />Equip.</TabsTrigger>
+                  <TabsTrigger value="veiculo" className="gap-1.5"><Truck className="w-3.5 h-3.5" />Veíc.</TabsTrigger>
+                  <TabsTrigger value="material" className="gap-1.5"><Package className="w-3.5 h-3.5" />Mat.</TabsTrigger>
+                </TabsList>
+              </div>
+
+              {(["mao_de_obra", "equipamento", "veiculo", "material"] as const).map((tipo) => (
+                <TabsContent key={tipo} value={tipo} className="space-y-3">
+                  <div className="flex justify-end">
+                    <Button size="sm" className="gap-1.5" onClick={() => { setTipoNovo(tipo); setEditingItem(null); setShowItemForm(true); }}>
+                      <Plus className="w-3.5 h-3.5" />
+                      Adicionar {tipoLabels[tipo]}
+                    </Button>
+                  </div>
+
+                  {groupedItems[tipo].length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground text-sm">
+                      Nenhum item de {tipoLabels[tipo].toLowerCase()} adicionado
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {groupedItems[tipo].map((item) => {
+                        const isExpanded = expandedItem === String(item.id);
+                        const Icon = tipoIcons[String(item.tipo_insumo)] || Package;
+                        return (
+                          <div key={String(item.id)} className="bg-card rounded-lg border shadow-sm overflow-hidden">
+                            <div
+                              className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                              onClick={() => setExpandedItem(isExpanded ? null : String(item.id))}
+                            >
+                              <div className="flex items-center gap-3">
+                                <Icon className="w-4 h-4 text-muted-foreground" />
+                                <div>
+                                  <div className="font-medium text-sm">{String(item.descricao) || "Sem descrição"}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    Qtd: {fmt(Number(item.quantidade))} × Coef: {fmt(Number(item.coeficiente))}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <div className="text-right">
+                                  <div className="text-xs text-muted-foreground">Custo Total</div>
+                                  <div className="font-mono font-semibold text-sm">R$ {fmt(item.resultado.custo_total)}</div>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setEditingItem(item); setTipoNovo(String(item.tipo_insumo) as TipoInsumo); setShowItemForm(true); }}>
+                                    <Edit className="w-3.5 h-3.5" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); setDeletingItemId(String(item.id)); }}>
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </Button>
+                                  {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                </div>
+                              </div>
+                            </div>
+                            {isExpanded && (
+                              <div className="px-4 pb-4 border-t">
+                                <div className="pt-3">
+                                  <MemoriaCalculo memoria={item.resultado.memoria} />
+                                  {item.observacoes && (
+                                    <div className="mt-2 text-xs text-muted-foreground bg-muted/30 rounded p-2">
+                                      <span className="font-semibold">Obs:</span> {String(item.observacoes)}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </TabsContent>
+              ))}
+            </Tabs>
+          )}
+        </div>
+
+        {/* Sidebar - Resumo */}
+        <div className="space-y-6">
+          <ResumoComposicao resumo={resumo} />
+
+          {!isNew && itensComCalculo.length > 0 && (
+            <div className="bg-card rounded-lg border shadow-sm p-5 space-y-3">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                Custo Unitário
+              </h3>
+              <div className="text-center">
+                <div className="text-3xl font-mono font-bold text-primary">
+                  R$ {fmt(resumo.custo_direto)}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">por {unidade}</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Item Form Dialog */}
+      <ComposicaoItemForm
+        open={showItemForm}
+        onOpenChange={setShowItemForm}
+        tipoInicial={tipoNovo}
+        initialValues={editingItem || undefined}
+        onSubmit={handleSaveItem}
+        loading={insertItem.isPending || updateItem.isPending}
+      />
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deletingItemId} onOpenChange={() => setDeletingItemId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover item?</AlertDialogTitle>
+            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteItem}>Remover</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
