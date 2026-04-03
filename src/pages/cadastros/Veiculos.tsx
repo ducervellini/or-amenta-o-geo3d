@@ -44,6 +44,7 @@ const defaultForm: VeiculoForm = {
 function calcVeic(f: VeiculoForm) {
   const isProprio = f.tipo_propriedade === "proprio";
   const depKm = isProprio && f.vida_util_km > 0 ? (f.valor_aquisicao - f.valor_residual) / f.vida_util_km : 0;
+  const retornoCapitalKm = isProprio && f.vida_util_km > 0 ? f.valor_residual / f.vida_util_km : 0;
   const combKm = f.combustivel_consumo_km * f.combustivel_preco_litro;
   const pneusKm = f.pneus_vida_util_km > 0 ? f.pneus_valor / f.pneus_vida_util_km : 0;
   const oleoKm = f.oleo_troca_km > 0 ? f.oleo_valor / f.oleo_troca_km : 0;
@@ -56,12 +57,14 @@ function calcVeic(f: VeiculoForm) {
   const aluguelKm = isProprio ? 0 : f.valor_aluguel_mensal / km;
 
   const custoKmTotal = custoKm + seguroKm + manutKm + lavagemKm + aluguelKm;
+  const custoKmLiquido = custoKmTotal - retornoCapitalKm;
 
   const hTotalMes = f.horas_produtivas_mes + f.horas_improdutivas_mes;
   const custoHora = hTotalMes > 0 ? (custoKmTotal * km) / hTotalMes : 0;
   const totalMes = custoKmTotal * km;
+  const totalMesLiquido = custoKmLiquido * km;
 
-  return { depKm, combKm, pneusKm, oleoKm, custoKm, custoKmTotal, custoHora, totalMes, seguroKm, manutKm, lavagemKm, aluguelKm };
+  return { depKm, retornoCapitalKm, combKm, pneusKm, oleoKm, custoKm, custoKmTotal, custoKmLiquido, custoHora, totalMes, totalMesLiquido, seguroKm, manutKm, lavagemKm, aluguelKm, isProprio };
 }
 
 export default function Veiculos() {
@@ -215,7 +218,7 @@ export default function Veiculos() {
                   {isProprio ? (
                     <>
                       <div><Label>Valor Aquisição (R$)</Label><Input type="number" value={form.valor_aquisicao || ""} onChange={e => setNum("valor_aquisicao", e.target.value)} /></div>
-                      <div><Label>Valor Residual (R$)</Label><Input type="number" value={form.valor_residual || ""} onChange={e => setNum("valor_residual", e.target.value)} /></div>
+                      <div><Label>Valor de Revenda (R$)</Label><Input type="number" value={form.valor_residual || ""} onChange={e => setNum("valor_residual", e.target.value)} placeholder="Valor futuro de venda" /></div>
                       <div><Label>Vida Útil (km)</Label><Input type="number" value={form.vida_util_km || ""} onChange={e => setNum("vida_util_km", e.target.value)} /></div>
                     </>
                   ) : (
@@ -293,6 +296,20 @@ export default function Veiculos() {
                     <p className="font-bold text-lg text-primary">{R(calc.totalMes)}</p>
                     <p className="text-xs text-muted-foreground">{R(calc.custoKmTotal)}/km × {form.km_mensal_estimado} km</p>
                   </div>
+                  {isProprio && calc.retornoCapitalKm > 0 && (
+                    <div className="col-span-2 md:col-span-4 pt-2 border-t border-dashed">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Custo líquido/km (- retorno capital)</p>
+                          <p className="font-semibold text-foreground">{R(calc.custoKmLiquido)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Custo líquido/mês (- retorno capital)</p>
+                          <p className="font-semibold text-foreground">{R(calc.totalMesLiquido)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

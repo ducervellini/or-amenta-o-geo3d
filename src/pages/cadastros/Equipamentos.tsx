@@ -35,13 +35,17 @@ function calcEquip(f: EquipamentoForm) {
   const isProprio = f.tipo_propriedade === "proprio";
   const depHora = isProprio && f.vida_util_horas > 0
     ? (f.valor_aquisicao - f.valor_residual) / f.vida_util_horas : 0;
+  const retornoCapitalHora = isProprio && f.vida_util_horas > 0
+    ? f.valor_residual / f.vida_util_horas : 0;
   const combHora = f.combustivel_consumo_hora * f.combustivel_preco_litro;
   const custoHora = isProprio
     ? depHora + f.manutencao_hora + combHora
     : f.valor_aluguel_hora + f.manutencao_hora + combHora;
+  const custoHoraLiquido = custoHora - retornoCapitalHora;
   const hTotalMes = f.horas_produtivas_mes + f.horas_improdutivas_mes;
   const custoMes = custoHora * hTotalMes;
-  return { depHora, combHora, custoHora, custoMes, isProprio };
+  const custoMesLiquido = custoHoraLiquido * hTotalMes;
+  return { depHora, retornoCapitalHora, combHora, custoHora, custoHoraLiquido, custoMes, custoMesLiquido, isProprio };
 }
 
 function rowToForm(row: any): EquipamentoForm {
@@ -193,7 +197,7 @@ export default function Equipamentos() {
               {isProprio ? (
                 <>
                   <div><Label>Valor Aquisição (R$)</Label><Input type="number" value={form.valor_aquisicao || ""} onChange={e => setNum("valor_aquisicao", e.target.value)} /></div>
-                  <div><Label>Valor Residual (R$)</Label><Input type="number" value={form.valor_residual || ""} onChange={e => setNum("valor_residual", e.target.value)} /></div>
+                  <div><Label>Valor de Revenda (R$)</Label><Input type="number" value={form.valor_residual || ""} onChange={e => setNum("valor_residual", e.target.value)} placeholder="Valor futuro de venda" /></div>
                   <div><Label>Vida Útil (horas)</Label><Input type="number" value={form.vida_util_horas || ""} onChange={e => setNum("vida_util_horas", e.target.value)} /></div>
                 </>
               ) : (
@@ -231,6 +235,18 @@ export default function Equipamentos() {
                     <p className="text-2xl font-bold text-primary">{R(calc.custoMes)}</p>
                   </div>
                 </div>
+                {isProprio && calc.retornoCapitalHora > 0 && (
+                  <div className="grid grid-cols-2 gap-6 text-center pt-3 mt-3 border-t border-dashed">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Custo líquido/hora (- retorno capital)</p>
+                      <p className="text-lg font-semibold text-foreground">{R(calc.custoHoraLiquido)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Custo líquido/mês (- retorno capital)</p>
+                      <p className="text-lg font-semibold text-foreground">{R(calc.custoMesLiquido)}</p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -256,9 +272,10 @@ export default function Equipamentos() {
             {dc.isProprio ? (
               <>
                 <Row label="Valor de aquisição" value={R(detailForm.valor_aquisicao)} />
-                <Row label="Valor residual" value={R(detailForm.valor_residual)} />
+                <Row label="Valor de revenda (futuro)" value={R(detailForm.valor_residual)} />
                 <Row label="Vida útil" value={`${detailForm.vida_util_horas.toLocaleString("pt-BR")} horas`} />
                 <Row label="Depreciação/hora" value={R(dc.depHora)} formula={`(${R(detailForm.valor_aquisicao)} - ${R(detailForm.valor_residual)}) / ${detailForm.vida_util_horas.toLocaleString("pt-BR")} h`} highlight />
+                <Row label="Retorno de capital/hora" value={R(dc.retornoCapitalHora)} formula={`${R(detailForm.valor_residual)} / ${detailForm.vida_util_horas.toLocaleString("pt-BR")} h`} highlight />
               </>
             ) : (
               <Row label="Aluguel/hora" value={R(detailForm.valor_aluguel_hora)} />
@@ -285,6 +302,14 @@ export default function Equipamentos() {
               <Row label="CUSTO / MÊS" value={R(dc.custoMes)}
                 formula={`${R(dc.custoHora)} × ${detailForm.horas_produtivas_mes + detailForm.horas_improdutivas_mes} h`}
                 large />
+              {dc.isProprio && dc.retornoCapitalHora > 0 && (
+                <>
+                  <Separator />
+                  <Row label="Retorno de capital/hora" value={`- ${R(dc.retornoCapitalHora)}`} formula={`Valor de revenda diluído na vida útil`} />
+                  <Row label="CUSTO LÍQUIDO / HORA" value={R(dc.custoHoraLiquido)} large />
+                  <Row label="CUSTO LÍQUIDO / MÊS" value={R(dc.custoMesLiquido)} large />
+                </>
+              )}
             </div>
           </div>
         </DialogContent>
