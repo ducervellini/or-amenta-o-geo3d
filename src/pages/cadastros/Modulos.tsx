@@ -39,7 +39,7 @@ export default function Modulos() {
   const [formOpen, setFormOpen] = useState(false);
   const [editItem, setEditItem] = useState<Record<string, unknown> | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [formValues, setFormValues] = useState({ nome: "", mercado_id: "", descricao: "" });
+  const [formValues, setFormValues] = useState({ nome: "", descricao: "" });
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [moduloAreas, setModuloAreas] = useState<Record<string, string[]>>({});
   const [areasVersion, setAreasVersion] = useState(0);
