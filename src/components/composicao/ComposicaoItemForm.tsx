@@ -83,13 +83,16 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
       const cargo = cargos?.find((c) => c.id === id);
       if (cargo) {
         setDescricao(String(cargo.nome));
-        const totalEncargos = (encargos || []).filter((e) => e.ativo).reduce((s, e) => s + Number(e.percentual), 0);
-        const totalBeneficios = (beneficios || []).filter((b) => b.ativo).reduce((s, b) => s + Number(b.valor), 0);
+        const regimeContratacao = String((cargo as any).regime_contratacao || "clt");
+        const isPJ = regimeContratacao === "pj";
+        const totalEncargos = isPJ ? 0 : (encargos || []).filter((e) => e.ativo).reduce((s, e) => s + Number(e.percentual), 0);
+        const totalBeneficios = isPJ ? 0 : (beneficios || []).filter((b) => b.ativo).reduce((s, b) => s + Number(b.valor), 0);
         const jornada = jornadas?.[0];
         const regime = regimes?.[0];
         setParamsMO((prev) => ({
           ...prev,
           salario_base: Number(cargo.salario_base),
+          regime_contratacao: regimeContratacao as "clt" | "pj",
           encargos_percentual: totalEncargos,
           beneficios_valor: totalBeneficios,
           horas_mes: jornada ? Number(jornada.horas_por_mes) : 176,
