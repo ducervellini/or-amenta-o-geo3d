@@ -142,7 +142,7 @@ export function CrudPage<T extends TableName>({
                   {columns.map((col) => (
                     <th key={col.key}>{col.label}</th>
                   ))}
-                  <th className="text-right">Ações</th>
+                  <th className="text-center">Ações</th>
                 </tr>
               </thead>
               <tbody>
