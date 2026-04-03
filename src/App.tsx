@@ -5,12 +5,26 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
-import MaoDeObra from "./pages/cadastros/MaoDeObra";
+import Mercados from "./pages/cadastros/Mercados";
+import Modulos from "./pages/cadastros/Modulos";
+import Servicos from "./pages/cadastros/Servicos";
+import Cargos from "./pages/cadastros/Cargos";
+import EncargosSociais from "./pages/cadastros/EncargosSociais";
+import Beneficios from "./pages/cadastros/Beneficios";
+import JornadasTrabalho from "./pages/cadastros/JornadasTrabalho";
+import RegimesOperacionais from "./pages/cadastros/RegimesOperacionais";
+import HorariosAlmoco from "./pages/cadastros/HorariosAlmoco";
 import Equipamentos from "./pages/cadastros/Equipamentos";
 import Veiculos from "./pages/cadastros/Veiculos";
 import Materiais from "./pages/cadastros/Materiais";
+import Combustiveis from "./pages/cadastros/Combustiveis";
 import Composicoes from "./pages/Composicoes";
 import Orcamentos from "./pages/Orcamentos";
+import ParametrosAdminLocal from "./pages/parametros/AdminLocal";
+import ParametrosAdminCentral from "./pages/parametros/AdminCentral";
+import ParametrosFinanciamento from "./pages/parametros/Financiamento";
+import ParametrosTributos from "./pages/parametros/Tributos";
+import ParametrosMargem from "./pages/parametros/Margem";
 import BDI from "./pages/BDI";
 import DRE from "./pages/DRE";
 import Configuracoes from "./pages/Configuracoes";
@@ -27,12 +41,33 @@ const App = () => (
         <Routes>
           <Route element={<AppLayout />}>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/cadastros/mao-de-obra" element={<MaoDeObra />} />
+            {/* Hierarquia */}
+            <Route path="/cadastros/mercados" element={<Mercados />} />
+            <Route path="/cadastros/modulos" element={<Modulos />} />
+            <Route path="/cadastros/servicos" element={<Servicos />} />
+            {/* Mão de Obra */}
+            <Route path="/cadastros/mao-de-obra" element={<Cargos />} />
+            <Route path="/cadastros/cargos" element={<Cargos />} />
+            <Route path="/cadastros/encargos-sociais" element={<EncargosSociais />} />
+            <Route path="/cadastros/beneficios" element={<Beneficios />} />
+            <Route path="/cadastros/jornadas" element={<JornadasTrabalho />} />
+            <Route path="/cadastros/regimes" element={<RegimesOperacionais />} />
+            <Route path="/cadastros/horarios-almoco" element={<HorariosAlmoco />} />
+            {/* Insumos */}
             <Route path="/cadastros/equipamentos" element={<Equipamentos />} />
             <Route path="/cadastros/veiculos" element={<Veiculos />} />
             <Route path="/cadastros/materiais" element={<Materiais />} />
+            <Route path="/cadastros/combustiveis" element={<Combustiveis />} />
+            {/* Composições e Orçamentos */}
             <Route path="/composicoes" element={<Composicoes />} />
             <Route path="/orcamentos" element={<Orcamentos />} />
+            {/* Parâmetros */}
+            <Route path="/parametros/admin-local" element={<ParametrosAdminLocal />} />
+            <Route path="/parametros/admin-central" element={<ParametrosAdminCentral />} />
+            <Route path="/parametros/financiamento" element={<ParametrosFinanciamento />} />
+            <Route path="/parametros/tributos" element={<ParametrosTributos />} />
+            <Route path="/parametros/margem" element={<ParametrosMargem />} />
+            {/* Formação de Preço */}
             <Route path="/bdi" element={<BDI />} />
             <Route path="/dre" element={<DRE />} />
             <Route path="/configuracoes" element={<Configuracoes />} />

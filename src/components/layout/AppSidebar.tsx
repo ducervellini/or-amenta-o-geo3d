@@ -3,7 +3,6 @@ import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  Users,
   Truck,
   Wrench,
   Package,
@@ -14,31 +13,77 @@ import {
   ChevronLeft,
   Layers,
   DollarSign,
-  Building2,
   HardHat,
+  Users,
+  Globe,
+  FolderTree,
+  Briefcase,
+  Clock,
+  Calendar,
+  Coffee,
+  Fuel,
+  Building,
+  Building2,
+  Landmark,
+  Receipt,
+  TrendingUp,
+  PieChart,
+  BarChart3,
 } from "lucide-react";
 
 interface NavItem {
   label: string;
   path?: string;
   icon: React.ElementType;
-  children?: { label: string; path: string }[];
+  children?: { label: string; path: string; icon?: React.ElementType }[];
 }
 
 const navigation: NavItem[] = [
   { label: "Dashboard", path: "/", icon: LayoutDashboard },
   {
-    label: "Cadastros",
+    label: "Hierarquia",
+    icon: FolderTree,
+    children: [
+      { label: "Mercados", path: "/cadastros/mercados" },
+      { label: "Módulos", path: "/cadastros/modulos" },
+      { label: "Serviços", path: "/cadastros/servicos" },
+    ],
+  },
+  {
+    label: "Mão de Obra",
+    icon: Users,
+    children: [
+      { label: "Cargos e Salários", path: "/cadastros/cargos" },
+      { label: "Encargos Sociais", path: "/cadastros/encargos-sociais" },
+      { label: "Benefícios", path: "/cadastros/beneficios" },
+      { label: "Jornadas", path: "/cadastros/jornadas" },
+      { label: "Regimes Operacionais", path: "/cadastros/regimes" },
+      { label: "Horários Almoço", path: "/cadastros/horarios-almoco" },
+    ],
+  },
+  {
+    label: "Insumos",
     icon: Package,
     children: [
-      { label: "Mão de Obra", path: "/cadastros/mao-de-obra" },
       { label: "Equipamentos", path: "/cadastros/equipamentos" },
       { label: "Veículos", path: "/cadastros/veiculos" },
       { label: "Materiais", path: "/cadastros/materiais" },
+      { label: "Combustíveis", path: "/cadastros/combustiveis" },
     ],
   },
   { label: "Composições", path: "/composicoes", icon: Layers },
   { label: "Orçamentos", path: "/orcamentos", icon: FileText },
+  {
+    label: "Parâmetros",
+    icon: Settings,
+    children: [
+      { label: "Admin. Local", path: "/parametros/admin-local" },
+      { label: "Admin. Central", path: "/parametros/admin-central" },
+      { label: "Financiamento", path: "/parametros/financiamento" },
+      { label: "Tributos", path: "/parametros/tributos" },
+      { label: "Margem de Lucro", path: "/parametros/margem" },
+    ],
+  },
   { label: "BDI", path: "/bdi", icon: Calculator },
   { label: "DRE", path: "/dre", icon: DollarSign },
   { label: "Configurações", path: "/configuracoes", icon: Settings },
@@ -50,7 +95,7 @@ interface AppSidebarProps {
 }
 
 export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
-  const [openMenus, setOpenMenus] = useState<string[]>(["Cadastros"]);
+  const [openMenus, setOpenMenus] = useState<string[]>(["Hierarquia"]);
   const location = useLocation();
 
   const toggleMenu = (label: string) => {
@@ -70,7 +115,6 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
         collapsed ? "w-16" : "w-64"
       )}
     >
-      {/* Logo */}
       <div className="flex items-center h-16 px-4 border-b border-sidebar-border shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
@@ -78,19 +122,14 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
           </div>
           {!collapsed && (
             <div>
-              <span className="text-sidebar-foreground font-bold text-lg tracking-tight">
-                GEO3D
-              </span>
-              <span className="block text-[10px] text-sidebar-muted uppercase tracking-widest">
-                Orçamentação
-              </span>
+              <span className="text-sidebar-foreground font-bold text-lg tracking-tight">GEO3D</span>
+              <span className="block text-[10px] text-sidebar-muted uppercase tracking-widest">Orçamentação</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
+      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
         {navigation.map((item) => {
           if (item.children) {
             const open = openMenus.includes(item.label) && !collapsed;
@@ -100,33 +139,28 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                 <button
                   onClick={() => !collapsed && toggleMenu(item.label)}
                   className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors",
+                    "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
                     childActive
                       ? "text-sidebar-primary-foreground bg-sidebar-accent"
                       : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
                 >
-                  <item.icon className="w-5 h-5 shrink-0" />
+                  <item.icon className="w-4 h-4 shrink-0" />
                   {!collapsed && (
                     <>
-                      <span className="flex-1 text-left">{item.label}</span>
-                      <ChevronDown
-                        className={cn(
-                          "w-4 h-4 transition-transform",
-                          open && "rotate-180"
-                        )}
-                      />
+                      <span className="flex-1 text-left text-xs font-medium">{item.label}</span>
+                      <ChevronDown className={cn("w-3 h-3 transition-transform", open && "rotate-180")} />
                     </>
                   )}
                 </button>
                 {open && (
-                  <div className="ml-5 mt-1 space-y-0.5 border-l border-sidebar-border pl-3">
+                  <div className="ml-4 mt-0.5 space-y-0.5 border-l border-sidebar-border pl-3">
                     {item.children.map((child) => (
                       <NavLink
                         key={child.path}
                         to={child.path}
                         className={cn(
-                          "block px-3 py-2 rounded-md text-sm transition-colors",
+                          "block px-3 py-1.5 rounded-md text-xs transition-colors",
                           isActive(child.path)
                             ? "bg-sidebar-primary text-sidebar-primary-foreground"
                             : "text-sidebar-foreground hover:bg-sidebar-accent"
@@ -146,31 +180,25 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               key={item.path}
               to={item.path!}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors",
+                "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
                 isActive(item.path!)
                   ? "bg-sidebar-primary text-sidebar-primary-foreground"
                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
             >
-              <item.icon className="w-5 h-5 shrink-0" />
-              {!collapsed && <span>{item.label}</span>}
+              <item.icon className="w-4 h-4 shrink-0" />
+              {!collapsed && <span className="text-xs font-medium">{item.label}</span>}
             </NavLink>
           );
         })}
       </nav>
 
-      {/* Collapse toggle */}
       <div className="p-3 border-t border-sidebar-border">
         <button
           onClick={onToggle}
           className="w-full flex items-center justify-center py-2 rounded-md text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
         >
-          <ChevronLeft
-            className={cn(
-              "w-5 h-5 transition-transform",
-              collapsed && "rotate-180"
-            )}
-          />
+          <ChevronLeft className={cn("w-5 h-5 transition-transform", collapsed && "rotate-180")} />
         </button>
       </div>
     </aside>

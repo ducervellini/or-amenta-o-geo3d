@@ -1,11 +1,11 @@
 import { CrudPage } from "@/components/crud/CrudPage";
 
-export default function MaoDeObra() {
+export default function Cargos() {
   return (
     <CrudPage
       table="cargos"
-      title="Mão de Obra"
-      subtitle="Cadastro de profissionais e custos unitários"
+      title="Cargos e Mão de Obra"
+      subtitle="Cadastro de cargos, funções e salários base"
       searchField="nome"
       columns={[
         { key: "nome", label: "Cargo / Função", render: (v) => <span className="font-medium">{String(v)}</span> },
@@ -14,15 +14,22 @@ export default function MaoDeObra() {
           label: "Salário Base",
           render: (v) => `R$ ${Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
         },
-        { key: "unidade_salarial", label: "Tipo", render: (v) => <span className="capitalize">{String(v)}</span> },
+        {
+          key: "unidade_salarial",
+          label: "Tipo",
+          render: (v) => {
+            const labels: Record<string, string> = { mensal: "Mensal", hora: "Hora", diaria: "Diária" };
+            return <span className="capitalize">{labels[String(v)] || String(v)}</span>;
+          },
+        },
         { key: "descricao", label: "Descrição" },
       ]}
       formFields={[
-        { name: "nome", label: "Cargo / Função", type: "text", required: true },
+        { name: "nome", label: "Cargo / Função", type: "text", required: true, placeholder: "Engenheiro Civil Sênior" },
         { name: "salario_base", label: "Salário Base (R$)", type: "number", required: true },
         {
           name: "unidade_salarial",
-          label: "Tipo",
+          label: "Tipo Salarial",
           type: "select",
           options: [
             { label: "Mensal", value: "mensal" },
