@@ -9,6 +9,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Mercados from "./pages/cadastros/Mercados";
+import AreasEmpresa from "./pages/cadastros/AreasEmpresa";
 import Modulos from "./pages/cadastros/Modulos";
 import Servicos from "./pages/cadastros/Servicos";
 import Cargos from "./pages/cadastros/Cargos";
