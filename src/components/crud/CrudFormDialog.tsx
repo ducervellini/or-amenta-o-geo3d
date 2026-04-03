@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,6 +39,14 @@ interface CrudFormDialogProps {
   loading?: boolean;
 }
 
+function buildDefaults(fields: FieldConfig[], initialValues?: Record<string, unknown>) {
+  const defaults: Record<string, unknown> = {};
+  fields.forEach((f) => {
+    defaults[f.name] = initialValues?.[f.name] ?? f.defaultValue ?? (f.type === "number" ? 0 : "");
+  });
+  return defaults;
+}
+
 export function CrudFormDialog({
   open,
   onOpenChange,
@@ -48,13 +56,13 @@ export function CrudFormDialog({
   onSubmit,
   loading,
 }: CrudFormDialogProps) {
-  const [values, setValues] = useState<Record<string, unknown>>(() => {
-    const defaults: Record<string, unknown> = {};
-    fields.forEach((f) => {
-      defaults[f.name] = initialValues?.[f.name] ?? f.defaultValue ?? (f.type === "number" ? 0 : "");
-    });
-    return defaults;
-  });
+  const [values, setValues] = useState<Record<string, unknown>>(() => buildDefaults(fields, initialValues));
+
+  useEffect(() => {
+    if (open) {
+      setValues(buildDefaults(fields, initialValues));
+    }
+  }, [open, initialValues]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
