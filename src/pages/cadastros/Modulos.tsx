@@ -149,8 +149,8 @@ export default function Modulos() {
     <div className="page-container animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="page-title">Módulos</h1>
-          <p className="page-subtitle">Cadastro de módulos de serviço</p>
+          <h1 className="page-title">Departamentos</h1>
+          <p className="page-subtitle">Cadastro de departamentos</p>
         </div>
         <Button className="gap-2" onClick={openCreate}>
           <Plus className="w-4 h-4" /> Novo
