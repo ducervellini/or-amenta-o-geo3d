@@ -44,10 +44,9 @@ function calcEquip(f: EquipamentoForm) {
     ? depHora + f.manutencao_hora + combHora
     : aluguelHora + f.manutencao_hora + combHora;
   const custoHoraLiquido = custoHora - retornoCapitalHora;
-  const hTotalMes = f.horas_produtivas_mes + f.horas_improdutivas_mes;
   const custoMes = custoHora * hTotalMes;
   const custoMesLiquido = custoHoraLiquido * hTotalMes;
-  return { depHora, retornoCapitalHora, combHora, custoHora, custoHoraLiquido, custoMes, custoMesLiquido, isProprio };
+  return { depHora, retornoCapitalHora, combHora, aluguelHora, custoHora, custoHoraLiquido, custoMes, custoMesLiquido, isProprio };
 }
 
 function rowToForm(row: any): EquipamentoForm {
