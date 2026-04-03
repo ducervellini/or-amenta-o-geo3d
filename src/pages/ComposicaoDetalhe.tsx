@@ -267,7 +267,7 @@ export default function ComposicaoDetalhe() {
                 <Select value={unidade} onValueChange={setUnidade}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {["ha","m","km","m²","m³","un","pt","L","t","ml","h","dia","mês"].map((u) => (
+                    {["ha","m","km","km²","m²","m³","un","pt","L","t","ml","h","dia","mês","propriedades","unidades","pontos","cadastros","imóveis","amostras","torres","marcos","vértices","bandeiras","plantas","travessias","seções","piquetes","relatórios","laudos"].map((u) => (
                       <SelectItem key={u} value={u}>{u}</SelectItem>
                     ))}
                   </SelectContent>
