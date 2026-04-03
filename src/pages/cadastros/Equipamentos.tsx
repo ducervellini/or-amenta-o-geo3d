@@ -202,7 +202,7 @@ export default function Equipamentos() {
                   <div><Label>Vida Útil (horas)</Label><Input type="number" value={form.vida_util_horas || ""} onChange={e => setNum("vida_util_horas", e.target.value)} /></div>
                 </>
               ) : (
-                <div><Label>Aluguel/hora (R$)</Label><Input type="number" value={form.valor_aluguel_hora || ""} onChange={e => setNum("valor_aluguel_hora", e.target.value)} /></div>
+                <div><Label>Aluguel/mês (R$)</Label><Input type="number" value={form.valor_aluguel_hora || ""} onChange={e => setNum("valor_aluguel_hora", e.target.value)} /></div>
               )}
             </div>
 
