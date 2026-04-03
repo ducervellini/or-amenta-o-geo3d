@@ -183,7 +183,7 @@ export default function Modulos() {
               <thead>
                 <tr>
                   <th>Nome</th>
-                  <th>Mercado</th>
+                  <th>Áreas da Empresa</th>
                   <th>Áreas da Empresa</th>
                   <th>Descrição</th>
                   <th>Status</th>
