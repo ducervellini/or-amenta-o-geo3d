@@ -253,7 +253,7 @@ function fmt(n: number): string {
 
 export function getDefaultParamsMaoDeObra(): ParametrosMaoDeObra {
   return {
-    salario_base: 0, encargos_percentual: 0, beneficios_valor: 0,
+    salario_base: 0, regime_contratacao: "clt", encargos_percentual: 0, beneficios_valor: 0,
     alimentacao: 0, hospedagem: 0, transporte: 0,
     horas_mes: 176, dias_mes: 22,
     regime_dias_trabalho: 0, regime_dias_folga: 0,
