@@ -218,7 +218,7 @@ export default function Veiculos() {
                   {isProprio ? (
                     <>
                       <div><Label>Valor Aquisição (R$)</Label><Input type="number" value={form.valor_aquisicao || ""} onChange={e => setNum("valor_aquisicao", e.target.value)} /></div>
-                      <div><Label>Valor Residual (R$)</Label><Input type="number" value={form.valor_residual || ""} onChange={e => setNum("valor_residual", e.target.value)} /></div>
+                      <div><Label>Valor de Revenda (R$)</Label><Input type="number" value={form.valor_residual || ""} onChange={e => setNum("valor_residual", e.target.value)} placeholder="Valor futuro de venda" /></div>
                       <div><Label>Vida Útil (km)</Label><Input type="number" value={form.vida_util_km || ""} onChange={e => setNum("vida_util_km", e.target.value)} /></div>
                     </>
                   ) : (
