@@ -12,6 +12,7 @@ export default function Materiais() {
         { key: "nome", label: "Material", render: (v) => <span className="font-medium">{String(v)}</span> },
         { key: "unidade", label: "Unidade" },
         { key: "preco_unitario", label: "Preço Unitário", render: (v) => `R$ ${Number(v).toFixed(2)}` },
+        { key: "duracao_meses", label: "Duração (meses)", render: (v) => Number(v) > 0 ? `${Number(v)} meses` : "—" },
         { key: "fornecedor", label: "Fornecedor" },
       ]}
       formFields={[
@@ -19,6 +20,7 @@ export default function Materiais() {
         { name: "nome", label: "Nome", type: "text", required: true },
         { name: "unidade", label: "Unidade", type: "text", required: true, placeholder: "m³, kg, un" },
         { name: "preco_unitario", label: "Preço Unitário (R$)", type: "number", required: true },
+        { name: "duracao_meses", label: "Duração (meses)", type: "number" },
         { name: "fornecedor", label: "Fornecedor", type: "text" },
       ]}
     />
