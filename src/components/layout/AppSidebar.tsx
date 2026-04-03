@@ -118,14 +118,9 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
     >
       <div className="flex items-center h-16 px-4 border-b border-sidebar-border shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
-            <HardHat className="w-5 h-5 text-sidebar-primary-foreground" />
-          </div>
+          <img src={logoGeo3d} alt="GEO3D" className={cn("h-7 object-contain", collapsed ? "h-6" : "h-7")} />
           {!collapsed && (
-            <div>
-              <span className="text-sidebar-foreground font-bold text-lg tracking-tight">GEO3D</span>
-              <span className="block text-[10px] text-sidebar-muted uppercase tracking-widest">Orçamentação</span>
-            </div>
+            <span className="block text-[10px] text-sidebar-muted uppercase tracking-widest">Orçamentação</span>
           )}
         </div>
       </div>
