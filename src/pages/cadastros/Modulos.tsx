@@ -192,16 +192,10 @@ export default function Modulos() {
               </thead>
               <tbody>
                 {filtered.map((row: any) => {
-                  const mercado = (mercados || []).find((m: any) => m.id === row.mercado_id);
                   const areaNames = getAreaNames(row.id);
                   return (
                     <tr key={row.id}>
                       <td><span className="font-medium">{row.nome}</span></td>
-                      <td>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
-                          {mercado ? String((mercado as any).nome) : "-"}
-                        </span>
-                      </td>
                       <td>
                         <div className="flex flex-wrap gap-1">
                           {areaNames.length > 0 ? areaNames.map((name) => (
