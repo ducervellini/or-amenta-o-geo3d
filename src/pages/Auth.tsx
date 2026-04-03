@@ -11,6 +11,11 @@ import logoGeo3d from "@/assets/logo_GEO3D.png";
 
 export default function Auth() {
   const { session, loading: authLoading } = useAuth();
+  const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
 
   if (authLoading) {
     return (
@@ -23,11 +28,6 @@ export default function Auth() {
   if (session) {
     return <Navigate to="/" replace />;
   }
-  const [isLogin, setIsLogin] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
