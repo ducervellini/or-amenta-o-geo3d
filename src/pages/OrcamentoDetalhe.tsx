@@ -163,8 +163,11 @@ export default function OrcamentoDetalhe() {
     if (!bdiData?.componentes) return [];
     const comp = bdiData.componentes;
     if (Array.isArray(comp)) return comp;
-    // If object format
-    return Object.entries(comp).map(([nome, percentual]) => ({ nome, percentual: Number(percentual) }));
+    // Object format: { "AC": { label, descricao, percentual }, ... }
+    return Object.entries(comp).map(([_key, val]: [string, any]) => ({
+      nome: val?.label || _key,
+      percentual: Number(val?.percentual ?? val ?? 0),
+    }));
   }, [bdiData]);
 
   // ── Custo dos serviços por tipo de insumo ──
