@@ -77,20 +77,9 @@ const navigation: NavItem[] = [
   { label: "Composições", path: "/composicoes", icon: Layers },
   { label: "Oportunidades", path: "/oportunidades", icon: Briefcase },
   { label: "ADM Local", path: "/mobilizacao", icon: Building },
-  { label: "Orçamentos", path: "/orcamentos", icon: FileText },
-  {
-    label: "Parâmetros",
-    icon: Settings,
-    children: [
-      { label: "Admin. Local", path: "/parametros/admin-local" },
-      { label: "Admin. Central", path: "/parametros/admin-central" },
-      { label: "Financiamento", path: "/parametros/financiamento" },
-      { label: "Tributos", path: "/parametros/tributos" },
-      { label: "Margem de Lucro", path: "/parametros/margem" },
-    ],
-  },
   { label: "BDI", path: "/bdi", icon: Calculator },
   { label: "DRE", path: "/dre", icon: DollarSign },
+  { label: "Orçamentos", path: "/orcamentos", icon: FileText },
   { label: "Configurações", path: "/configuracoes", icon: Settings },
 ];
 
