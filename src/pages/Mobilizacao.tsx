@@ -1395,15 +1395,21 @@ export default function Mobilizacao() {
                   <div className="space-y-1.5">
                     {CATEGORIAS_DESLOCAMENTO.map((cat) => {
                       const valor = custosDeslocamentoPorCategoria[cat.value] || 0;
+                      const valorMes = custoMesPorCategoria[cat.value] || 0;
                       if (valor <= 0) return null;
                       const CatIcon = ICON_MAP[cat.value] || Users;
                       return (
-                        <div key={cat.value} className="flex items-center justify-between text-xs">
-                          <span className="flex items-center gap-1.5">
-                            <CatIcon className="w-3 h-3 text-muted-foreground" />
-                            {cat.label}
-                          </span>
-                          <span className="font-medium">{fmt(valor)}</span>
+                        <div key={cat.value} className="text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="flex items-center gap-1.5">
+                              <CatIcon className="w-3 h-3 text-muted-foreground" />
+                              {cat.label}
+                            </span>
+                            <span className="font-medium">{fmt(valor)}</span>
+                          </div>
+                          <div className="flex justify-end text-[10px] text-muted-foreground">
+                            {fmt(valorMes)}/mês
+                          </div>
                         </div>
                       );
                     })}
@@ -1424,6 +1430,10 @@ export default function Mobilizacao() {
 
                 {/* Totais */}
                 <div className="space-y-2">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Total/Mês</span>
+                    <span className="font-medium">{fmt(Object.values(custoMesPorCategoria).reduce((a, b) => a + b, 0))}</span>
+                  </div>
                   <div className="flex justify-between text-sm font-bold text-primary">
                     <span>Custo Total</span>
                     <span>{fmt(custoDeslocamentosTotal + custoMobDesmobTotal)}</span>
