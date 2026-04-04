@@ -9,6 +9,7 @@ import {
   useSupabaseDelete,
 } from "@/hooks/useSupabaseCrud";
 import { Database } from "@/integrations/supabase/types";
+import { SortableHeader, useTableSort } from "@/components/ui/sortable-header";
 import {
   AlertDialog,
   AlertDialogAction,
