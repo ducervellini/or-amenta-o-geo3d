@@ -524,6 +524,11 @@ export default function Mobilizacao() {
       const meses = item.meses_hospedagem ?? duracaoMeses;
       return item.valor_unitario * item.quantidade * meses;
     }
+    // Pedágios, passagens: valor × quantidade (livre)
+    if (item.categoria === "pedagios" || item.categoria === "passagens") {
+      return item.valor_unitario * item.quantidade;
+    }
+    // Diversos: mantém frequência
     switch (item.frequencia) {
       case "diario": return item.valor_unitario * item.quantidade * diasProdutivos;
       case "mensal": return item.valor_unitario * item.quantidade * duracaoMeses;
