@@ -500,12 +500,12 @@ export default function Mobilizacao() {
     if (item.categoria === "combustivel" && item.veiculo_id) {
       const veic = (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id);
       const mediaKmL = veic?.media_km_l || 0;
-      const precoComb = item.preco_combustivel || 0;
-      const custoKm = mediaKmL > 0 ? precoComb / mediaKmL : 0;
-      const custoDia = custoKm * (item.km_dia || 0);
-      if (item.frequencia === "diario") return custoDia * diasProdutivos * item.quantidade;
-      if (item.frequencia === "mensal") return custoDia * diasProdutivosMes * item.quantidade * duracaoMeses;
-      return custoDia * item.quantidade;
+      const precoComb = veic?.combustivel_preco_litro || 0;
+      const custoKmComb = mediaKmL > 0 ? precoComb / mediaKmL : 0;
+      const custoKmVeic = Number(veic?.custo_km || 0);
+      const custoKmTotal = custoKmComb + custoKmVeic;
+      const kmMes = (item.km_dia || 0) * diasProdutivosMes;
+      return custoKmTotal * kmMes * item.quantidade * duracaoMeses;
     }
     if (item.categoria === "hospedagem") {
       // valor_unitario = diária; frequência sempre diário
