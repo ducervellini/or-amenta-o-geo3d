@@ -1052,8 +1052,8 @@ export default function Mobilizacao() {
                         <span className="font-medium">{fmt(alojamentoMobiliarMobilia * alojamentoMobiliarQtd * (1 - alojamentoMobiliarRevenda / 100))}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Amortização/mês ({duracaoMeses}m):</span>
-                        <span className="font-medium">{fmt(duracaoMeses > 0 ? (alojamentoMobiliarMobilia * alojamentoMobiliarQtd * (1 - alojamentoMobiliarRevenda / 100)) / duracaoMeses : 0)}</span>
+                        <span className="text-muted-foreground">Amortização/mês ({duracaoHospedagemMeses}m):</span>
+                        <span className="font-medium">{fmt(duracaoHospedagemMeses > 0 ? (alojamentoMobiliarMobilia * alojamentoMobiliarQtd * (1 - alojamentoMobiliarRevenda / 100)) / duracaoHospedagemMeses : 0)}</span>
                       </div>
                       <Separator className="my-1" />
                       <div className="flex justify-between text-xs font-bold">
