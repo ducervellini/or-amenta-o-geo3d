@@ -674,10 +674,10 @@ export default function Mobilizacao() {
                   <div className="text-xs text-muted-foreground pb-2 space-y-0.5">
                     <div>Fim previsto: {new Date(dataFim).toLocaleDateString("pt-BR")}</div>
                     <div className="inline-flex items-center gap-1">
-                      <Sun className="w-3 h-3 text-primary" /> {diasProdutivos} produtivos
+                      <Sun className="w-3 h-3 text-primary" /> {diasProdutivos} produtivos ({diasProdutivosMes}/mês)
                     </div>
                     <div className="inline-flex items-center gap-1">
-                      <Cloud className="w-3 h-3 text-muted-foreground" /> {diasImprodutivos} improdutivos
+                      <Cloud className="w-3 h-3 text-muted-foreground" /> {diasImprodutivos} improdutivos ({diasImprodutivosMes}/mês)
                     </div>
                   </div>
                 </div>
