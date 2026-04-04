@@ -552,7 +552,7 @@ export default function Mobilizacao() {
       let custoMes = 0;
       if (item.categoria === "hospedagem") {
         if (isHotelType(item.tipo_hospedagem)) {
-          custoMes = item.valor_unitario * item.quantidade * diasTrabalho;
+          custoMes = duracaoMeses > 0 ? (item.valor_unitario * item.quantidade) / duracaoMeses : 0;
         } else {
           custoMes = item.valor_unitario * item.quantidade;
         }
