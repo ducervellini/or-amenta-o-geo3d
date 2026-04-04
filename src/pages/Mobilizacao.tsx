@@ -870,11 +870,11 @@ export default function Mobilizacao() {
                 <div className="flex items-end">
                   <div className="text-xs text-muted-foreground pb-2">
                     <span className="inline-flex items-center gap-1">
-                      <Sun className="w-3 h-3 text-primary" /> {diasProdutivos} dias produtivos
+                      <Sun className="w-3 h-3 text-primary" /> {diasProdutivosMes}/mês · {diasProdutivos} total
                     </span>
                     <br />
                     <span className="inline-flex items-center gap-1">
-                      <Cloud className="w-3 h-3 text-primary" /> {diasImprodutivos} dias improdutivos
+                      <Cloud className="w-3 h-3 text-primary" /> {diasImprodutivosMes}/mês · {diasImprodutivos} total
                     </span>
                   </div>
                 </div>
