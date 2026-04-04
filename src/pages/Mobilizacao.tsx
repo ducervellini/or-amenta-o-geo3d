@@ -1013,11 +1013,6 @@ export default function Mobilizacao() {
                           </Select>
                         </div>
 
-                        {/* ── VEÍCULO ── */}
-                        {item.categoria === "veiculo" && (
-                          <>
-                            <div>
-                              <Label className="text-[10px]">Tipo</Label>
                               <Select value={item.tipo_veiculo || "alugado"} onValueChange={(v) => updateDeslocamento(item._key, "tipo_veiculo", v)}>
                                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                                 <SelectContent>
