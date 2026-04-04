@@ -250,16 +250,16 @@ export default function Mobilizacao() {
   const [modoLocalizacao, setModoLocalizacao] = useState<"manual" | "arquivo">("manual");
   const [municipio, setMunicipio] = useState("");
   const [estado, setEstado] = useState("");
-  const [lat, setLat] = useState(-15.78);
-  const [lng, setLng] = useState(-47.93);
-  const [baseEndereco, setBaseEndereco] = useState("");
+  const [lat, setLat] = useState<number | null>(null);
+  const [lng, setLng] = useState<number | null>(null);
+  const [geocodificando, setGeocodificando] = useState(false);
   const [arquivoGeo, setArquivoGeo] = useState("");
   const [geoJsonData, setGeoJsonData] = useState<FeatureCollection | null>(null);
   const [loadingGeo, setLoadingGeo] = useState(false);
   const [loadingMunicipios, setLoadingMunicipios] = useState(false);
   const [geoProgress, setGeoProgress] = useState("");
-  const [baseLat, setBaseLat] = useState(-15.78);
-  const [baseLng, setBaseLng] = useState(-47.93);
+  const [baseLat, setBaseLat] = useState<number | null>(null);
+  const [baseLng, setBaseLng] = useState<number | null>(null);
   const [diasTrabalho, setDiasTrabalho] = useState(30);
   const [jornadaDiaria, setJornadaDiaria] = useState(8);
   const [diasChuvaMes, setDiasChuvaMes] = useState(5);
@@ -267,16 +267,47 @@ export default function Mobilizacao() {
   const [distanciaBase, setDistanciaBase] = useState(50);
   const [distanciaMedia, setDistanciaMedia] = useState(30);
 
-  // Datas do projeto
+  // Alimentação
+  const [alimentacaoLocal, setAlimentacaoLocal] = useState<"local" | "cidade">("local");
+  const [distanciaCidadeAlimentacao, setDistanciaCidadeAlimentacao] = useState(0);
+  const [cidadeAlimentacao, setCidadeAlimentacao] = useState("");
+
+  // Datas do projeto (data início = hoje)
   const [dataInicio, setDataInicio] = useState(() => {
-    const d = new Date();
-    return d.toISOString().split("T")[0];
+    return new Date().toISOString().split("T")[0];
   });
-  const [dataFim, setDataFim] = useState(() => {
-    const d = new Date();
-    d.setMonth(d.getMonth() + 3);
+  const [duracaoMeses, setDuracaoMeses] = useState(3);
+  const dataFim = useMemo(() => {
+    const d = new Date(dataInicio);
+    d.setMonth(d.getMonth() + duracaoMeses);
     return d.toISOString().split("T")[0];
-  });
+  }, [dataInicio, duracaoMeses]);
+
+  // Auto-geocode município/estado
+  const geocodeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!municipio || !estado || modoLocalizacao !== "manual") return;
+    if (geocodeTimeout.current) clearTimeout(geocodeTimeout.current);
+    geocodeTimeout.current = setTimeout(async () => {
+      setGeocodificando(true);
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(municipio + ", " + estado + ", Brasil")}&format=json&limit=1`,
+          { headers: { "User-Agent": "MobilizacaoApp/1.0" } }
+        );
+        const data = await res.json();
+        if (data?.[0]) {
+          setLat(parseFloat(data[0].lat));
+          setLng(parseFloat(data[0].lon));
+        }
+      } catch (e) {
+        console.error("Geocode error:", e);
+      } finally {
+        setGeocodificando(false);
+      }
+    }, 1000);
+    return () => { if (geocodeTimeout.current) clearTimeout(geocodeTimeout.current); };
+  }, [municipio, estado, modoLocalizacao]);
 
   // Municípios na rota
   const [municipiosRota, setMunicipiosRota] = useState<MunicipioRota[]>([]);
@@ -321,7 +352,7 @@ export default function Mobilizacao() {
   // ── Pluviometria INMET ──
   const buscarPluviometria = async () => {
     if (!lat || !lng) {
-      toast.error("Informe latitude e longitude do projeto");
+      toast.error("Informe o município/estado ou importe um arquivo geográfico");
       return;
     }
     setLoadingPluv(true);
@@ -413,15 +444,15 @@ export default function Mobilizacao() {
             <Card>
               <CardContent className="p-0">
                 <div className="h-[300px] rounded-lg overflow-hidden">
-                  <LeafletMap
-                    projectLat={lat}
-                    projectLng={lng}
-                    baseLat={baseLat}
-                    baseLng={baseLng}
-                    municipio={municipio}
-                    baseEndereco={baseEndereco}
-                    geoJsonData={geoJsonData}
-                  />
+                    <LeafletMap
+                      projectLat={lat || -15.78}
+                      projectLng={lng || -47.93}
+                      baseLat={baseLat || lat || -15.78}
+                      baseLng={baseLng || lng || -47.93}
+                      municipio={municipio}
+                      baseEndereco=""
+                      geoJsonData={geoJsonData}
+                    />
                 </div>
               </CardContent>
             </Card>
@@ -530,39 +561,23 @@ export default function Mobilizacao() {
                 </TabsContent>
 
                 <TabsContent value="manual" className="mt-3">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     <div className="col-span-2">
                       <Label className="text-xs">Município</Label>
-                      <Input value={municipio} onChange={(e) => setMunicipio(e.target.value)} placeholder="Ex: São Paulo" />
+                      <Input value={municipio} onChange={(e) => setMunicipio(e.target.value)} placeholder="Ex: Presidente Prudente" />
                     </div>
                     <div>
                       <Label className="text-xs">Estado</Label>
-                      <Input value={estado} onChange={(e) => setEstado(e.target.value)} placeholder="SP" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Latitude</Label>
-                      <Input type="number" value={lat} onChange={(e) => setLat(Number(e.target.value))} step="0.0001" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Longitude</Label>
-                      <Input type="number" value={lng} onChange={(e) => setLng(Number(e.target.value))} step="0.0001" />
+                      <Input value={estado} onChange={(e) => setEstado(e.target.value)} placeholder="SP" maxLength={2} />
                     </div>
                   </div>
+                  {lat && lng && (
+                    <p className="text-[10px] text-muted-foreground mt-2">
+                      📍 Coordenadas: {lat.toFixed(4)}, {lng.toFixed(4)}
+                    </p>
+                  )}
                 </TabsContent>
               </Tabs>
-
-              {/* Ponto de Partida (sempre visível) */}
-              <Separator className="my-3" />
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="col-span-2">
-                  <Label className="text-xs">Endereço da Base (ponto de partida)</Label>
-                  <Input value={baseEndereco} onChange={(e) => setBaseEndereco(e.target.value)} placeholder="Endereço ou cidade de origem" />
-                </div>
-                <div>
-                  <Label className="text-xs">Dist. Base→Projeto (km)</Label>
-                  <Input type="number" value={distanciaBase} onChange={(e) => setDistanciaBase(Number(e.target.value))} />
-                </div>
-              </div>
 
               {/* Datas do Projeto */}
               <Separator className="my-3" />
@@ -574,16 +589,23 @@ export default function Mobilizacao() {
                   <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
                 </div>
                 <div>
-                  <Label className="text-xs flex items-center gap-1">
-                    <Calendar className="w-3 h-3" /> Data Fim
-                  </Label>
-                  <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+                  <Label className="text-xs">Duração (meses)</Label>
+                  <Input type="number" value={duracaoMeses} onChange={(e) => setDuracaoMeses(Number(e.target.value))} min={1} max={120} />
                 </div>
                 <div className="flex items-end">
                   <div className="text-xs text-muted-foreground pb-2">
+                    Fim previsto: {new Date(dataFim).toLocaleDateString("pt-BR")}
+                    <br />
                     Duração: {Math.round((new Date(dataFim).getTime() - new Date(dataInicio).getTime()) / (1000 * 60 * 60 * 24))} dias
                   </div>
                 </div>
+                {geocodificando && (
+                  <div className="flex items-end pb-2">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Loader2 className="w-3 h-3 animate-spin" /> Geocodificando...
+                    </span>
+                  </div>
+                )}
               </div>
             </Section>
 
@@ -763,6 +785,59 @@ export default function Mobilizacao() {
                   </div>
                 </div>
               </div>
+
+              {/* Alimentação */}
+              <Separator className="my-3" />
+              <div className="space-y-3">
+                <Label className="text-xs font-medium flex items-center gap-1.5">
+                  <Utensils className="w-3.5 h-3.5 text-primary" /> Alimentação da Equipe
+                </Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div
+                    className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${alimentacaoLocal === "local" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}
+                    onClick={() => setAlimentacaoLocal("local")}
+                  >
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <Utensils className="w-4 h-4" />
+                      No local do projeto
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Refeições preparadas/servidas no canteiro. Sem deslocamento adicional.
+                    </p>
+                  </div>
+                  <div
+                    className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${alimentacaoLocal === "cidade" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}
+                    onClick={() => setAlimentacaoLocal("cidade")}
+                  >
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <Navigation className="w-4 h-4" />
+                      Município mais próximo
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Equipe se desloca até a cidade. Tempo e km adicionais contabilizados.
+                    </p>
+                  </div>
+                </div>
+                {alimentacaoLocal === "cidade" && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-3 rounded-lg bg-muted/30 border">
+                    <div>
+                      <Label className="text-[10px]">Cidade para alimentação</Label>
+                      <Input className="h-8 text-xs" value={cidadeAlimentacao} onChange={(e) => setCidadeAlimentacao(e.target.value)} placeholder="Ex: Presidente Prudente" />
+                    </div>
+                    <div>
+                      <Label className="text-[10px]">Dist. ida (km)</Label>
+                      <Input className="h-8 text-xs" type="number" value={distanciaCidadeAlimentacao} onChange={(e) => setDistanciaCidadeAlimentacao(Number(e.target.value))} />
+                    </div>
+                    <div className="flex items-end">
+                      <div className="text-[10px] text-muted-foreground pb-1.5">
+                        <span className="font-medium text-foreground">{(distanciaCidadeAlimentacao * 2).toFixed(0)} km/dia</span> ida+volta
+                        <br />
+                        <span className="font-medium text-foreground">{((distanciaCidadeAlimentacao * 2) / 60).toFixed(1)}h</span> aprox. (60km/h)
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </Section>
 
             {/* Clima */}
@@ -790,12 +865,12 @@ export default function Mobilizacao() {
               </div>
               {pluviometria && (
                 <p className="text-[10px] text-primary mt-2">
-                  ✓ Dias de chuva/mês baseados em dados históricos INMET (estação {pluviometria.estacao.nome})
+                  ✓ Dias de chuva/mês baseados em dados históricos NASA POWER ({pluviometria.estacao.nome})
                 </p>
               )}
               {!pluviometria && (
                 <p className="text-[10px] text-muted-foreground mt-2">
-                  ⓘ Use "Análise Pluviométrica" acima para preencher automaticamente com dados históricos INMET.
+                  ⓘ Use "Análise Pluviométrica" acima para preencher automaticamente com dados históricos.
                 </p>
               )}
             </Section>
