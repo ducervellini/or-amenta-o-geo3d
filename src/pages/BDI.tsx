@@ -69,7 +69,7 @@ export default function BDI() {
     setItems(updated);
   };
 
-  const { bdiCalc, bdiPercent, ac, sg, r, df, l, tributos } = calcBdi(items);
+  const { bdiCalc, bdiPercent, ac, sg, r, df, com, l, tributos } = calcBdi(items);
 
   const handleSave = async () => {
     if (!nome.trim()) return toast.error("Informe um nome para a configuração");
