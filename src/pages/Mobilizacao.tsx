@@ -344,7 +344,7 @@ export default function Mobilizacao() {
       }
     } catch (err: any) {
       console.error("Erro pluviometria:", err);
-      toast.error("Erro ao consultar INMET: " + (err.message || "tente novamente"));
+      toast.error("Erro ao consultar dados pluviométricos: " + (err.message || "tente novamente"));
     } finally {
       setLoadingPluv(false);
     }
