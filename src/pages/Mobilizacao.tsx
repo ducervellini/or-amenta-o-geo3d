@@ -1101,15 +1101,76 @@ export default function Mobilizacao() {
                 <div className="flex items-end">
                   <div className="text-xs text-muted-foreground pb-2 space-y-0.5">
                     <div>Fim previsto: {new Date(dataFim).toLocaleDateString("pt-BR")}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dias de chuva e improdutivos */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 p-3 rounded-lg border bg-muted/30">
+                <div>
+                  <Label className="text-xs flex items-center gap-1">
+                    <CloudRain className="w-3 h-3 text-blue-500" /> Dias c/ Chuva/Mês
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      value={diasChuvaMes}
+                      className="bg-muted cursor-not-allowed"
+                      readOnly
+                      tabIndex={-1}
+                    />
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Info className="w-3.5 h-3.5 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs max-w-48">Valor obtido da análise pluviométrica (NASA POWER). Use a seção de pluviometria para atualizar.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs flex items-center gap-1">
+                    <Cloud className="w-3 h-3 text-destructive" /> Dias Improdutivos/Mês
+                  </Label>
+                  <Input
+                    type="number"
+                    value={diasImprodutivosUsuario}
+                    onChange={(e) => {
+                      const v = Math.max(0, Math.min(Number(e.target.value), diasTrabalho));
+                      setDiasImprodutivosUsuario(v);
+                    }}
+                    min={0}
+                    max={diasTrabalho}
+                  />
+                  {diasImprodutivosUsuario < diasChuvaMes && (
+                    <p className="text-[10px] text-amber-600 mt-0.5">
+                      ⚠ Menor que dias de chuva ({diasChuvaMes}d)
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label className="text-xs flex items-center gap-1">
+                    <Sun className="w-3 h-3 text-primary" /> Dias Produtivos/Mês
+                  </Label>
+                  <div className="h-10 flex items-center px-3 rounded-md border bg-muted text-sm font-bold text-primary">
+                    {diasProdutivosMes}
+                  </div>
+                </div>
+                <div className="flex items-end">
+                  <div className="text-xs text-muted-foreground pb-2 space-y-0.5">
                     <div className="inline-flex items-center gap-1">
-                      <Sun className="w-3 h-3 text-primary" /> {diasProdutivos} produtivos ({diasProdutivosMes}/mês)
+                      <Sun className="w-3 h-3 text-primary" /> Total: <span className="font-bold text-primary">{diasProdutivos}</span> produtivos
                     </div>
                     <div className="inline-flex items-center gap-1">
-                      <Cloud className="w-3 h-3 text-muted-foreground" /> {diasImprodutivos} improdutivos ({diasImprodutivosMes}/mês)
+                      <Cloud className="w-3 h-3 text-destructive" /> Total: <span className="font-bold text-destructive">{diasImprodutivos}</span> improdutivos
                     </div>
                   </div>
                 </div>
               </div>
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div>
                   <Label className="text-xs">Jornada Diária (h)</Label>
