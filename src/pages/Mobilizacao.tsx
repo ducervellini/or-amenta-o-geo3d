@@ -444,15 +444,22 @@ export default function Mobilizacao() {
             <Card>
               <CardContent className="p-0">
                 <div className="h-[300px] rounded-lg overflow-hidden">
+                  {lat && lng ? (
                     <LeafletMap
-                      projectLat={lat || -15.78}
-                      projectLng={lng || -47.93}
-                      baseLat={baseLat || lat || -15.78}
-                      baseLng={baseLng || lng || -47.93}
+                      projectLat={lat}
+                      projectLng={lng}
+                      baseLat={baseLat || lat}
+                      baseLng={baseLng || lng}
                       municipio={municipio}
                       baseEndereco=""
                       geoJsonData={geoJsonData}
                     />
+                  ) : (
+                    <div className="h-full flex items-center justify-center bg-muted/30 text-muted-foreground text-sm">
+                      <MapPin className="w-5 h-5 mr-2" />
+                      Importe um arquivo ou insira um município para visualizar o mapa
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
