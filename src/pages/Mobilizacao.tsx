@@ -1252,7 +1252,6 @@ export default function Mobilizacao() {
                               </Tooltip>
                             </div>
                           </div>
-                          </div>
                           <div>
                             <Label className="text-[10px]">Km Máx/Dia</Label>
                             <Input className="h-8 text-xs" type="number" value={item.km_max_dia} onChange={(e) => updateMobDesmob(item._key, "km_max_dia", Number(e.target.value))} />
