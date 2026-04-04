@@ -107,8 +107,20 @@ export default function BDI() {
     const loaded = defaultBDI.map((d) => ({
       ...d,
       percentual: comp[d.sigla]?.percentual ?? d.percentual,
+      label: comp[d.sigla]?.label ?? d.label,
+      descricao: comp[d.sigla]?.descricao ?? d.descricao,
     }));
-    setItems(loaded);
+    // Also load any extra keys from comp not in defaultBDI
+    const existingSiglas = new Set(defaultBDI.map(d => d.sigla));
+    const extras = Object.entries(comp)
+      .filter(([sigla]) => !existingSiglas.has(sigla))
+      .map(([sigla, val]: [string, any]) => ({
+        label: val?.label || sigla,
+        sigla,
+        percentual: val?.percentual ?? 0,
+        descricao: val?.descricao || "",
+      }));
+    setItems([...loaded, ...extras]);
     setNome(bdi.nome);
     setEditId(bdi.id);
   };
