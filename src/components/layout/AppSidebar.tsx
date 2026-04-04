@@ -55,7 +55,7 @@ const navigation: NavItem[] = [
     label: "Mão de Obra",
     icon: Users,
     children: [
-      { label: "Cargos e Salários", path: "/cadastros/cargos" },
+      { label: "Cargos e Salários", path: "/cadastros/cargos", icon: Calculator },
       { label: "Encargos Sociais", path: "/cadastros/encargos-sociais" },
       { label: "Benefícios", path: "/cadastros/beneficios" },
       { label: "Jornadas", path: "/cadastros/jornadas" },
@@ -169,12 +169,13 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                         key={child.path}
                         to={child.path}
                         className={cn(
-                          "block px-3 py-1.5 rounded-md text-xs transition-colors",
+                          "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs transition-colors",
                           isActive(child.path)
                             ? "bg-sidebar-primary text-sidebar-primary-foreground"
                             : "text-sidebar-foreground hover:bg-sidebar-accent"
                         )}
                       >
+                        {child.icon && <child.icon className="w-3 h-3 shrink-0" />}
                         {child.label}
                       </NavLink>
                     ))}
