@@ -403,20 +403,33 @@ export default function Mobilizacao() {
 
   const calcularMobDesmobItem = useCallback((item: typeof mobDesmobItens[0]) => {
     const veic = (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id);
-    const mediaKmL = veic?.media_km_l || 0;
-    const precoComb = veic?.combustivel_preco_litro || 0;
-    // Use custo_km from vehicle if available, otherwise calculate from fuel
-    const custoKm = veic?.custo_km > 0 ? Number(veic.custo_km) : (mediaKmL > 0 ? precoComb / mediaKmL : 0);
+    const mediaKmL = veic ? Number(veic.media_km_l || 0) : 0;
+    const precoComb = veic ? Number(veic.combustivel_preco_litro || 0) : 0;
+    const consumoKm = veic ? Number(veic.combustivel_consumo_km || 0) : 0;
+    // Custo combustível/km: preco × consumo_km (L/km) OU preco / media_km_l (km/L)
+    const custoCombKm = consumoKm > 0
+      ? precoComb * consumoKm
+      : (mediaKmL > 0 ? precoComb / mediaKmL : 0);
     const distancia = item.distancia_km;
     const diasViagem = item.km_max_dia > 0 ? Math.ceil(distancia / item.km_max_dia) : 1;
     const pernoites = Math.max(0, diasViagem - 1);
-    const custoCombustivelIda = custoKm * distancia * item.quantidade_veiculos;
+    // Combustível ida = custo/km × distância × veículos
+    const custoCombustivelIda = custoCombKm * distancia * item.quantidade_veiculos;
+    // Pernoites ida = pernoites × valor/pernoite × pessoas
     const custoPernoiteIda = pernoites * item.hospedagem_pernoite * item.quantidade_pessoas;
-    // Custo de horas das pessoas: dias de viagem × jornada diária × custo/hora × pessoas
+    // Horas pessoal ida = dias viagem × jornada diária × custo H/H × pessoas
     const custoHorasPessoasIda = diasViagem * jornadaDiaria * item.custo_hora_pessoa * item.quantidade_pessoas;
-    const custoIda = custoCombustivelIda + custoPernoiteIda + item.pedagios_ida + custoHorasPessoasIda;
+    // Pedágios ida (valor informado)
+    const pedagiosIda = item.pedagios_ida || 0;
+    const custoIda = custoCombustivelIda + custoPernoiteIda + pedagiosIda + custoHorasPessoasIda;
+    // Ida + Volta (×2)
     const custoTotal = custoIda * 2;
-    return { veic, mediaKmL, custoKm, diasViagem, pernoites, custoCombustivelIda, custoPernoiteIda, custoHorasPessoasIda, custoIda, custoTotal };
+    return {
+      veic, mediaKmL, precoComb, consumoKm, custoCombKm,
+      diasViagem, pernoites,
+      custoCombustivelIda, custoPernoiteIda, custoHorasPessoasIda,
+      pedagiosIda, custoIda, custoTotal,
+    };
   }, [veiculosCadastrados, jornadaDiaria]);
 
   const custoMobDesmobTotal = useMemo(() => {
