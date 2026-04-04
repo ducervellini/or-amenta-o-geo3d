@@ -17,6 +17,7 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
 export default function Orcamentos() {
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: oportunidades, isLoading } = useQuery({
     queryKey: ["orcamentos-oportunidades"],
