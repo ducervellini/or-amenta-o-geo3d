@@ -165,7 +165,7 @@ export default function Veiculos() {
               <SortTH sk="nome" label="Veículo" />
               <SortTH sk="tipo_propriedade" label="Tipo" />
               <SortTH sk="media_km_l" label="Média (km/L)" className="text-right" />
-              <SortTH sk="combustivel_preco_litro" label="R$/L" className="text-right" />
+              
               <SortTH sk="tipo_combustivel" label="Combustível" />
               <SortTH sk="_custoKmTotal" label="Custo/km" className="text-right" />
               <SortTH sk="_custoHora" label="Custo/hora" className="text-right" />
@@ -184,7 +184,7 @@ export default function Veiculos() {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">{Number(row.media_km_l || 0).toFixed(1)}</TableCell>
-                <TableCell className="text-right">{R(Number(row.combustivel_preco_litro || 0))}</TableCell>
+                
                 <TableCell>
                   <Badge variant="outline" className="capitalize">{row.tipo_combustivel || "diesel"}</Badge>
                 </TableCell>
@@ -200,7 +200,7 @@ export default function Veiculos() {
               </TableRow>
             ))}
             {sortedRows.length === 0 && (
-              <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">Nenhum veículo cadastrado</TableCell></TableRow>
+              <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhum veículo cadastrado</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
