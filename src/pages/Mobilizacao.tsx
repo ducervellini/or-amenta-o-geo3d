@@ -1241,13 +1241,13 @@ export default function Mobilizacao() {
                   <div className="text-xs font-medium text-muted-foreground mb-2">Custos por Categoria</div>
                   <div className="space-y-1.5">
                     {/* Hospedagem (separada) */}
-                    {custoHospedagemMensal > 0 && (
+                    {custoHospedagemTotal > 0 && (
                       <div className="flex items-center justify-between text-xs">
                         <span className="flex items-center gap-1.5">
                           <Home className="w-3 h-3 text-muted-foreground" />
-                          Hospedagem
+                          Hospedagem ({duracaoHospedagemMeses}m)
                         </span>
-                        <span className="font-medium">{fmt(custoHospedagemMensal)}</span>
+                        <span className="font-medium">{fmt(custoHospedagemTotal)}</span>
                       </div>
                     )}
                     {/* Combustível (km rodado) */}
