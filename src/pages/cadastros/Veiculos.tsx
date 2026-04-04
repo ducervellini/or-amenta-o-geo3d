@@ -265,7 +265,7 @@ export default function Veiculos() {
 
               <TabsContent value="operacional" className="space-y-4 mt-4">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div><Label>Consumo combustível (L/km)</Label><Input type="number" step="0.01" value={form.combustivel_consumo_km || ""} onChange={e => setNum("combustivel_consumo_km", e.target.value)} /></div>
+                  <div><Label>Consumo combustível (km/L)</Label><Input type="number" step="0.1" value={form.media_km_l || ""} onChange={e => setNum("media_km_l", e.target.value)} placeholder="Ex: 8.5" /></div>
                   <div><Label>Preço combustível (R$/L)</Label><Input type="number" value={form.combustivel_preco_litro || ""} onChange={e => setNum("combustivel_preco_litro", e.target.value)} /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
