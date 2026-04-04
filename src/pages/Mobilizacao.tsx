@@ -3,7 +3,7 @@ import {
   MapPin, Plus, Trash2, Save, Loader2, Cloud, Sun,
   Truck, Home, Utensils, Fuel, CreditCard, Plane,
   Users, Calculator, ChevronDown, ChevronUp, Info, Upload,
-  FileUp, Navigation, CloudRain, BarChart3, Calendar
+  FileUp, Navigation, CloudRain, BarChart3, Calendar, Route
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -397,6 +397,68 @@ export default function Mobilizacao() {
     { _key: 1, nome: "Equipe Campo", quantidade_pessoas: 4, custo_deslocamento: 0, custo_hospedagem: 150, custo_alimentacao: 0 },
   ]);
   let equipeKeyRef = 2;
+
+  // ── Mobilização / Desmobilização ──
+  const [mobDesmobItens, setMobDesmobItens] = useState<{
+    _key: number;
+    municipio_saida: string;
+    estado_saida: string;
+    veiculo_id: string;
+    distancia_km: number;
+    km_max_dia: number;
+    hospedagem_pernoite: number;
+    pedagios_ida: number;
+    quantidade_pessoas: number;
+    quantidade_veiculos: number;
+  }[]>([]);
+  const mobDesmobKeyRef = useRef(1);
+
+  const addMobDesmob = () => {
+    setMobDesmobItens((prev) => [
+      ...prev,
+      {
+        _key: mobDesmobKeyRef.current++,
+        municipio_saida: "",
+        estado_saida: "",
+        veiculo_id: "",
+        distancia_km: 0,
+        km_max_dia: 500,
+        hospedagem_pernoite: 150,
+        pedagios_ida: 0,
+        quantidade_pessoas: 1,
+        quantidade_veiculos: 1,
+      },
+    ]);
+  };
+
+  const updateMobDesmob = (key: number, field: string, value: any) => {
+    setMobDesmobItens((prev) =>
+      prev.map((item) => (item._key === key ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const removeMobDesmob = (key: number) => {
+    setMobDesmobItens((prev) => prev.filter((item) => item._key !== key));
+  };
+
+  const calcularMobDesmobItem = useCallback((item: typeof mobDesmobItens[0]) => {
+    const veic = (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id);
+    const mediaKmL = veic?.media_km_l || 0;
+    const precoComb = veic?.combustivel_preco_litro || 0;
+    const custoKm = mediaKmL > 0 ? precoComb / mediaKmL : 0;
+    const distancia = item.distancia_km;
+    const diasViagem = item.km_max_dia > 0 ? Math.ceil(distancia / item.km_max_dia) : 1;
+    const pernoites = Math.max(0, diasViagem - 1);
+    const custoCombustivelIda = custoKm * distancia * item.quantidade_veiculos;
+    const custoPernoiteIda = pernoites * item.hospedagem_pernoite * item.quantidade_pessoas;
+    const custoIda = custoCombustivelIda + custoPernoiteIda + item.pedagios_ida;
+    const custoTotal = custoIda * 2;
+    return { veic, mediaKmL, custoKm, diasViagem, pernoites, custoCombustivelIda, custoPernoiteIda, custoIda, custoTotal };
+  }, [veiculosCadastrados]);
+
+  const custoMobDesmobTotal = useMemo(() => {
+    return mobDesmobItens.reduce((acc, item) => acc + calcularMobDesmobItem(item).custoTotal, 0);
+  }, [mobDesmobItens, calcularMobDesmobItem]);
 
   const params: MobilizacaoParams = {
     dias_trabalho: diasTrabalho,
@@ -856,7 +918,6 @@ export default function Mobilizacao() {
             </Section>
 
 
-
             {/* Hospedagem */}
             <Section title="Hospedagem" icon={Home} badge={fmt(custoHospedagemTotal) + " total"}>
               {/* Duração da hospedagem */}
@@ -1084,6 +1145,111 @@ export default function Mobilizacao() {
               </div>
             </Section>
 
+            {/* Mobilização / Desmobilização */}
+            <Section title="Mobilização / Desmobilização" icon={Route} badge={mobDesmobItens.length > 0 ? fmt(custoMobDesmobTotal) + " total" : undefined}>
+              <p className="text-xs text-muted-foreground mb-3">
+                Calcule o custo de deslocamento da equipe do local de saída até o projeto (ida + volta). 
+                Pernoites são calculados automaticamente com base no km máximo/dia.
+              </p>
+              <div className="space-y-3">
+                {mobDesmobItens.map((item) => {
+                  const calc = calcularMobDesmobItem(item);
+                  return (
+                    <div key={item._key} className="p-3 rounded-lg border bg-muted/30 space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 flex-1">
+                          <div>
+                            <Label className="text-[10px]">Município Saída</Label>
+                            <Input className="h-8 text-xs" value={item.municipio_saida} onChange={(e) => updateMobDesmob(item._key, "municipio_saida", e.target.value)} placeholder="Ex: São Paulo" />
+                          </div>
+                          <div>
+                            <Label className="text-[10px]">Estado</Label>
+                            <Select value={item.estado_saida} onValueChange={(v) => updateMobDesmob(item._key, "estado_saida", v)}>
+                              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="UF" /></SelectTrigger>
+                              <SelectContent>
+                                {["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"].map((uf) => (
+                                  <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label className="text-[10px]">Veículo</Label>
+                            <Select value={item.veiculo_id} onValueChange={(v) => updateMobDesmob(item._key, "veiculo_id", v)}>
+                              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                              <SelectContent>
+                                {(veiculosCadastrados as any[])?.map((v: any) => (
+                                  <SelectItem key={v.id} value={v.id}>
+                                    {v.nome} ({Number(v.media_km_l || 0).toFixed(1)} km/L)
+                                  </SelectItem>
+                                ))}
+                                {(!veiculosCadastrados || (veiculosCadastrados as any[]).length === 0) && (
+                                  <SelectItem value="_none" disabled>Nenhum veículo cadastrado</SelectItem>
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label className="text-[10px]">Distância (km)</Label>
+                            <Input className="h-8 text-xs" type="number" value={item.distancia_km || ""} onChange={(e) => updateMobDesmob(item._key, "distancia_km", Number(e.target.value))} placeholder="km total ida" />
+                          </div>
+                          <div>
+                            <Label className="text-[10px]">Km Máx/Dia</Label>
+                            <Input className="h-8 text-xs" type="number" value={item.km_max_dia} onChange={(e) => updateMobDesmob(item._key, "km_max_dia", Number(e.target.value))} />
+                          </div>
+                          <div>
+                            <Label className="text-[10px]">Hospedagem/Pernoite</Label>
+                            <Input className="h-8 text-xs" type="number" step="0.01" value={item.hospedagem_pernoite} onChange={(e) => updateMobDesmob(item._key, "hospedagem_pernoite", Number(e.target.value))} />
+                          </div>
+                          <div>
+                            <Label className="text-[10px]">Pedágios (ida)</Label>
+                            <Input className="h-8 text-xs" type="number" step="0.01" value={item.pedagios_ida || ""} onChange={(e) => updateMobDesmob(item._key, "pedagios_ida", Number(e.target.value))} />
+                          </div>
+                          <div>
+                            <Label className="text-[10px]">Pessoas</Label>
+                            <Input className="h-8 text-xs" type="number" value={item.quantidade_pessoas} onChange={(e) => updateMobDesmob(item._key, "quantidade_pessoas", Number(e.target.value))} min={1} />
+                          </div>
+                          <div>
+                            <Label className="text-[10px]">Veículos</Label>
+                            <Input className="h-8 text-xs" type="number" value={item.quantidade_veiculos} onChange={(e) => updateMobDesmob(item._key, "quantidade_veiculos", Number(e.target.value))} min={1} />
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 ml-2" onClick={() => removeMobDesmob(item._key)}>
+                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                        </Button>
+                      </div>
+                      {calc.veic && item.distancia_km > 0 && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-2 border-t border-border/50">
+                          <div className="text-[10px] text-muted-foreground">
+                            <span className="block font-medium text-foreground">{calc.diasViagem} dia(s) de viagem</span>
+                            {calc.pernoites} pernoite(s)
+                          </div>
+                          <div className="text-[10px] text-muted-foreground">
+                            <span className="block">Combustível (ida): <span className="font-medium text-foreground">{fmt(calc.custoCombustivelIda)}</span></span>
+                            <span>{calc.mediaKmL.toFixed(1)} km/L · {fmt(calc.custoKm)}/km</span>
+                          </div>
+                          <div className="text-[10px] text-muted-foreground">
+                            <span className="block">Pernoite (ida): <span className="font-medium text-foreground">{fmt(calc.custoPernoiteIda)}</span></span>
+                            <span>Pedágios (ida): {fmt(item.pedagios_ida)}</span>
+                          </div>
+                          <div className="text-[10px]">
+                            <span className="block text-muted-foreground">Ida: {fmt(calc.custoIda)}</span>
+                            <span className="block font-bold text-primary">Ida+Volta: {fmt(calc.custoTotal)}</span>
+                          </div>
+                        </div>
+                      )}
+                      {!calc.veic && (
+                        <div className="text-[10px] text-muted-foreground pt-1">Selecione um veículo para calcular</div>
+                      )}
+                    </div>
+                  );
+                })}
+                <Button variant="outline" size="sm" className="gap-1" onClick={addMobDesmob}>
+                  <Plus className="w-3 h-3" /> Adicionar Deslocamento
+                </Button>
+              </div>
+            </Section>
+
 
           </div>
 
@@ -1175,6 +1341,16 @@ export default function Mobilizacao() {
                           </div>
                         );
                       })}
+                    {/* Mob/Desmob */}
+                    {custoMobDesmobTotal > 0 && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-1.5">
+                          <Route className="w-3 h-3 text-muted-foreground" />
+                          Mob/Desmob (ida+volta)
+                        </span>
+                        <span className="font-medium">{fmt(custoMobDesmobTotal)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1184,11 +1360,11 @@ export default function Mobilizacao() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm font-bold text-primary">
                     <span>Custo Total</span>
-                    <span>{fmt((resultado.custo_total * duracaoMeses) + custoHospedagemTotal + custoCombustivelTotal)}</span>
+                    <span>{fmt((resultado.custo_total * duracaoMeses) + custoHospedagemTotal + custoCombustivelTotal + custoMobDesmobTotal)}</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span>Custo/Dia</span>
-                    <span className="font-medium">{fmt(diasProdutivos > 0 ? ((resultado.custo_total * duracaoMeses) + custoHospedagemTotal + custoCombustivelTotal) / diasProdutivos : 0)}</span>
+                    <span className="font-medium">{fmt(diasProdutivos > 0 ? ((resultado.custo_total * duracaoMeses) + custoHospedagemTotal + custoCombustivelTotal + custoMobDesmobTotal) / diasProdutivos : 0)}</span>
                   </div>
                 
                 </div>
