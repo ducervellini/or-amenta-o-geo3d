@@ -138,7 +138,10 @@ function CargoFormDialog({
         .map((b: any) => b.id);
       setBeneficiosSel(estagioBeneficios);
     } else if (prevRegime.current !== regimeContratacao && regimeContratacao === "pj") {
-      setEncargosSel([]);
+      const pjEncargos = encargos
+        .filter((e: any) => e.ativo && /f[ée]rias|13[oº°]|d[ée]cimo/i.test(e.nome))
+        .map((e: any) => e.id);
+      setEncargosSel(pjEncargos);
       setBeneficiosSel([]);
     } else if (prevRegime.current !== regimeContratacao && regimeContratacao === "clt") {
       setEncargosSel(encargos.filter((e: any) => e.ativo).map((e: any) => e.id));
@@ -172,7 +175,7 @@ function CargoFormDialog({
 
   const isPJ = regimeContratacao === "pj";
   const isEstagio = regimeContratacao === "estagio";
-  const hideEncargosEBeneficios = isPJ;
+  const hideEncargosEBeneficios = false;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
