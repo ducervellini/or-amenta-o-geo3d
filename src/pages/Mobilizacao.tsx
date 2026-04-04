@@ -1194,7 +1194,7 @@ export default function Mobilizacao() {
                     <div className="flex justify-between">
                       <span>Total estimado</span>
                       <span className="font-medium">
-                        {((distanciaBase * 2) + (distanciaMedia * resultado.dias_produtivos)).toLocaleString("pt-BR")} km
+                        {((distanciaBase * 2) + (distanciaMedia * diasProdutivos)).toLocaleString("pt-BR")} km
                       </span>
                     </div>
                   </div>
