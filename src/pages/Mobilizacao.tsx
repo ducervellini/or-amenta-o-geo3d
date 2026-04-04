@@ -1234,7 +1234,24 @@ export default function Mobilizacao() {
                           </div>
                           <div>
                             <Label className="text-[10px]">Distância (km)</Label>
-                            <Input className="h-8 text-xs" type="number" value={item.distancia_km || ""} onChange={(e) => updateMobDesmob(item._key, "distancia_km", Number(e.target.value))} placeholder="km total ida" />
+                            <div className="flex gap-1">
+                              <Input className="h-8 text-xs flex-1" type="number" value={item.distancia_km || ""} onChange={(e) => updateMobDesmob(item._key, "distancia_km", Number(e.target.value))} placeholder="km ida" />
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8 shrink-0"
+                                    onClick={() => calcularRotaMobDesmob(item._key)}
+                                    disabled={mobDesmobLoading[item._key]}
+                                  >
+                                    {mobDesmobLoading[item._key] ? <Loader2 className="w-3 h-3 animate-spin" /> : <Navigation className="w-3 h-3" />}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Calcular rota automaticamente</TooltipContent>
+                              </Tooltip>
+                            </div>
+                          </div>
                           </div>
                           <div>
                             <Label className="text-[10px]">Km Máx/Dia</Label>
