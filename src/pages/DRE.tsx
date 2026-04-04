@@ -32,6 +32,7 @@ export default function DRE() {
   const [irpjPct, setIrpjPct] = useState(4.80);
   const [csllPct, setCsllPct] = useState(2.88);
   const [selectedBdiId, setSelectedBdiId] = useState<string>("");
+  const [selectedOportunidadeId, setSelectedOportunidadeId] = useState<string>("");
 
   // Carregar BDIs salvos
   const { data: savedBdis } = useQuery({
@@ -45,6 +46,50 @@ export default function DRE() {
       return data as any[];
     },
   });
+
+  // Carregar oportunidades
+  const { data: oportunidades } = useQuery({
+    queryKey: ["oportunidades_dre"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("oportunidades")
+        .select("*, clientes(nome)")
+        .eq("ativo", true)
+        .order("codigo", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Carregar orçamento da oportunidade selecionada
+  const { data: orcamentoOportunidade } = useQuery({
+    queryKey: ["orcamento_oportunidade", selectedOportunidadeId],
+    queryFn: async () => {
+      if (!selectedOportunidadeId) return null;
+      const { data, error } = await supabase
+        .from("orcamentos")
+        .select("*")
+        .eq("oportunidade_id", selectedOportunidadeId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedOportunidadeId,
+  });
+
+  // Atualizar custo direto e BDI quando oportunidade muda
+  const selectedOportunidade = oportunidades?.find((o) => o.id === selectedOportunidadeId);
+
+  useMemo(() => {
+    if (orcamentoOportunidade) {
+      setCustoDireto(Number(orcamentoOportunidade.custo_total) || 0);
+      if (orcamentoOportunidade.bdi_id) {
+        setSelectedBdiId(orcamentoOportunidade.bdi_id);
+      }
+    }
+  }, [orcamentoOportunidade]);
 
   // Componentes do BDI selecionado
   const bdiComponentes = useMemo((): BDIComp[] => {
