@@ -1294,6 +1294,16 @@ export default function Mobilizacao() {
                           <div className="text-[10px]">
                             <span className="block text-muted-foreground">Ida: {fmt(calc.custoIda)}</span>
                             <span className="block font-bold text-primary">Ida+Volta: {fmt(calc.custoTotal)}</span>
+                            {mobDesmobRotasUrl[item._key] && (
+                              <a
+                                href={mobDesmobRotasUrl[item._key]}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-0.5 text-primary hover:underline mt-0.5"
+                              >
+                                <ExternalLink className="w-2.5 h-2.5" /> Ver pedágios
+                              </a>
+                            )}
                           </div>
                         </div>
                       )}
