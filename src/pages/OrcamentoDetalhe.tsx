@@ -3,7 +3,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Plus, Trash2, Save, ExternalLink, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  ArrowLeft, Plus, Trash2, Save, ExternalLink, Loader2,
+  Users, Wrench, Package, Truck, Route, Calculator, TrendingUp,
+  ChevronDown, ChevronUp,
+} from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import {
@@ -20,6 +26,19 @@ interface OrcamentoServico {
   quantidade: number;
 }
 
+const fmt = (v: number) =>
+  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+const fmtPct = (v: number) => `${Number(v).toFixed(2)}%`;
+
+const TIPO_INSUMO_LABELS: Record<string, { label: string; icon: React.ElementType }> = {
+  mao_de_obra: { label: "Mão de Obra", icon: Users },
+  equipamento: { label: "Equipamentos", icon: Wrench },
+  veiculo: { label: "Veículos", icon: Truck },
+  material: { label: "Materiais", icon: Package },
+  combustivel: { label: "Combustível", icon: Truck },
+};
+
 export default function OrcamentoDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -27,6 +46,7 @@ export default function OrcamentoDetalhe() {
   const [servicos, setServicos] = useState<OrcamentoServico[]>([]);
   const [saving, setSaving] = useState(false);
   const [orcamentoId, setOrcamentoId] = useState<string | null>(null);
+  const [resumoExpandido, setResumoExpandido] = useState(true);
 
   // Oportunidade
   const { data: oportunidade } = useQuery({
@@ -55,6 +75,21 @@ export default function OrcamentoDetalhe() {
     },
   });
 
+  // Composição itens (para breakdown por tipo de insumo)
+  const { data: composicaoItens } = useQuery({
+    queryKey: ["orcamento-composicao-itens", servicos.map(s => s.composicao_id).filter(Boolean).join(",")],
+    queryFn: async () => {
+      const ids = servicos.map(s => s.composicao_id).filter(Boolean);
+      if (ids.length === 0) return [];
+      const { data, error } = await (supabase.from as any)("composicao_itens")
+        .select("composicao_id, tipo_insumo, custo_total")
+        .in("composicao_id", ids);
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: servicos.some(s => s.composicao_id),
+  });
+
   // ADM Local (mobilização) vinculada
   const { data: mobilizacao } = useQuery({
     queryKey: ["orcamento-mobilizacao", id],
@@ -68,6 +103,19 @@ export default function OrcamentoDetalhe() {
       return (data as any[])?.[0] || null;
     },
     enabled: !!id,
+  });
+
+  // Custos deslocamento da mobilização
+  const { data: mobilizacaoCustos } = useQuery({
+    queryKey: ["orcamento-mobilizacao-custos", mobilizacao?.id],
+    queryFn: async () => {
+      const { data, error } = await (supabase.from as any)("mobilizacao_custos")
+        .select("*")
+        .eq("mobilizacao_id", mobilizacao.id);
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!mobilizacao?.id,
   });
 
   // BDI
@@ -111,6 +159,35 @@ export default function OrcamentoDetalhe() {
   }, [existingOrcamento]);
 
   const bdiPercentual = bdiData?.bdi_calculado || 0;
+  const bdiComponentes: { nome: string; percentual: number }[] = useMemo(() => {
+    if (!bdiData?.componentes) return [];
+    const comp = bdiData.componentes;
+    if (Array.isArray(comp)) return comp;
+    // If object format
+    return Object.entries(comp).map(([nome, percentual]) => ({ nome, percentual: Number(percentual) }));
+  }, [bdiData]);
+
+  // ── Custo dos serviços por tipo de insumo ──
+  const custoServicosPorTipo = useMemo(() => {
+    const result: Record<string, number> = {};
+    if (!composicaoItens || !composicoes) return result;
+    for (const s of servicos) {
+      if (!s.composicao_id || s.quantidade <= 0) continue;
+      const comp = composicoes.find((c: any) => c.id === s.composicao_id);
+      if (!comp) continue;
+      // Get items for this composição
+      const itens = composicaoItens.filter((ci: any) => ci.composicao_id === s.composicao_id);
+      // Calculate proportion of each tipo_insumo in the composição total
+      const totalComposicao = itens.reduce((sum: number, ci: any) => sum + Number(ci.custo_total || 0), 0);
+      if (totalComposicao <= 0) continue;
+      for (const ci of itens) {
+        const tipo = ci.tipo_insumo || "outros";
+        const custoItem = Number(ci.custo_total || 0) * s.quantidade;
+        result[tipo] = (result[tipo] || 0) + custoItem;
+      }
+    }
+    return result;
+  }, [servicos, composicoes, composicaoItens]);
 
   const custoServicos = useMemo(() => {
     return servicos.reduce((total, s) => {
@@ -119,12 +196,46 @@ export default function OrcamentoDetalhe() {
     }, 0);
   }, [servicos, composicoes]);
 
+  // ── ADM Local breakdown ──
+  const custoDeslocamentos = useMemo(() => {
+    if (!mobilizacaoCustos) return 0;
+    return mobilizacaoCustos.reduce((sum: number, c: any) => sum + Number(c.custo_total || 0), 0);
+  }, [mobilizacaoCustos]);
+
+  const custoMobDesmob = useMemo(() => {
+    if (!mobilizacao?.mob_desmob_itens || !Array.isArray(mobilizacao.mob_desmob_itens)) return 0;
+    return mobilizacao.mob_desmob_itens.reduce((sum: number, item: any) => {
+      return sum + Number(item.custo_total || 0);
+    }, 0);
+  }, [mobilizacao]);
+
   const custoAdmLocal = mobilizacao?.custo_total || 0;
+  const custoAdmLocalOutros = Math.max(0, custoAdmLocal - custoDeslocamentos - custoMobDesmob);
+
   const custoTotal = custoServicos + custoAdmLocal;
   const valorBdi = custoTotal * (bdiPercentual / 100);
   const precoTotal = custoTotal + valorBdi;
 
-  // Validation: at least one service with valid composicao_id and quantidade > 0
+  // Deslocamentos por categoria
+  const deslocamentosPorCategoria = useMemo(() => {
+    if (!mobilizacaoCustos) return {};
+    const result: Record<string, number> = {};
+    for (const c of mobilizacaoCustos) {
+      const cat = c.categoria || "outros";
+      result[cat] = (result[cat] || 0) + Number(c.custo_total || 0);
+    }
+    return result;
+  }, [mobilizacaoCustos]);
+
+  const CATEGORIAS_DESL_LABELS: Record<string, string> = {
+    hospedagem: "Hospedagem",
+    combustivel: "Veículo + Combustível",
+    pedagios: "Pedágios",
+    passagens: "Passagens",
+    diversos: "Diversos",
+  };
+
+  // Validation
   const servicosValidos = servicos.filter(
     (s) => s.composicao_id && s.quantidade > 0
   );
@@ -179,7 +290,7 @@ export default function OrcamentoDetalhe() {
         setOrcamentoId(savedId);
       }
 
-      // Sync service items: delete old, insert new
+      // Sync service items
       await (supabase.from as any)("orcamento_itens_servico")
         .delete()
         .eq("orcamento_id", savedId);
@@ -210,9 +321,6 @@ export default function OrcamentoDetalhe() {
       setSaving(false);
     }
   };
-
-  const fmt = (v: number) =>
-    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   if (!oportunidade) {
     return (
@@ -397,7 +505,7 @@ export default function OrcamentoDetalhe() {
               </div>
               <div>
                 <span className="text-muted-foreground">Custo Total ADM Local</span>
-                <p className="font-semibold text-accent">{fmt(custoAdmLocal)}</p>
+                <p className="font-semibold text-primary">{fmt(custoAdmLocal)}</p>
               </div>
             </div>
           ) : (
@@ -408,48 +516,190 @@ export default function OrcamentoDetalhe() {
         </CardContent>
       </Card>
 
-      {/* Resumo */}
-      <Card className="border-accent/30">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Resumo do Orçamento</CardTitle>
-          <Button
-            className="gap-2"
-            onClick={handleSalvar}
-            disabled={!podesSalvar || saving}
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Salvar Orçamento
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Custo Serviços</span>
-              <span className="font-medium">{fmt(custoServicos)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Custo ADM Local</span>
-              <span className="font-medium">{fmt(custoAdmLocal)}</span>
-            </div>
-            <div className="border-t pt-2 flex justify-between text-sm">
-              <span className="font-medium">Custo Total</span>
-              <span className="font-semibold">{fmt(custoTotal)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">BDI ({bdiPercentual.toFixed(2)}%)</span>
-              <span className="font-medium">{fmt(valorBdi)}</span>
-            </div>
-            <div className="border-t pt-2 flex justify-between text-lg">
-              <span className="font-bold">Preço Total</span>
-              <span className="font-bold text-accent">{fmt(precoTotal)}</span>
+      {/* ── Resumo Detalhado ── */}
+      <Card className="border-primary/30">
+        <CardHeader
+          className="cursor-pointer select-none"
+          onClick={() => setResumoExpandido(!resumoExpandido)}
+        >
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Calculator className="w-4 h-4 text-primary" />
+              Resumo do Orçamento
+            </CardTitle>
+            <div className="flex items-center gap-3">
+              <span className="text-lg font-bold text-primary">{fmt(precoTotal)}</span>
+              {resumoExpandido ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </div>
           </div>
-          {!podesSalvar && (
-            <p className="text-xs text-destructive mt-4 text-center">
-              Adicione ao menos uma composição válida para habilitar o salvamento.
-            </p>
-          )}
-        </CardContent>
+        </CardHeader>
+        {resumoExpandido && (
+          <CardContent className="space-y-5">
+            {/* ── SUBTOTAL 1: Serviços ── */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Badge variant="outline" className="text-xs font-semibold">SUBTOTAL 1</Badge>
+                <span className="text-sm font-semibold">Serviços</span>
+              </div>
+              <div className="space-y-2 pl-2">
+                {Object.entries(TIPO_INSUMO_LABELS).map(([tipo, { label, icon: Icon }]) => {
+                  const valor = custoServicosPorTipo[tipo] || 0;
+                  if (valor <= 0) return null;
+                  return (
+                    <div key={tipo} className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-2 text-muted-foreground">
+                        <Icon className="w-3.5 h-3.5" /> {label}
+                      </span>
+                      <span className="font-medium">{fmt(valor)}</span>
+                    </div>
+                  );
+                })}
+                {custoServicos > 0 && Object.keys(custoServicosPorTipo).length === 0 && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Composições</span>
+                    <span className="font-medium">{fmt(custoServicos)}</span>
+                  </div>
+                )}
+              </div>
+              <Separator className="my-2" />
+              <div className="flex justify-between text-sm font-semibold pl-2">
+                <span>Subtotal Serviços</span>
+                <span>{fmt(custoServicos)}</span>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* ── SUBTOTAL 2: ADM Local ── */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Badge variant="outline" className="text-xs font-semibold">SUBTOTAL 2</Badge>
+                <span className="text-sm font-semibold">ADM Local</span>
+              </div>
+              {mobilizacao ? (
+                <div className="space-y-2 pl-2">
+                  {/* Mob/Desmob */}
+                  {custoMobDesmob > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-2 text-muted-foreground">
+                        <Route className="w-3.5 h-3.5" /> Mobilização / Desmobilização
+                      </span>
+                      <span className="font-medium">{fmt(custoMobDesmob)}</span>
+                    </div>
+                  )}
+                  {/* Deslocamentos por categoria */}
+                  {Object.entries(deslocamentosPorCategoria).map(([cat, valor]) => {
+                    if (valor <= 0) return null;
+                    return (
+                      <div key={cat} className="flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-2 text-muted-foreground">
+                          <Truck className="w-3.5 h-3.5" /> {CATEGORIAS_DESL_LABELS[cat] || cat}
+                        </span>
+                        <span className="font-medium">{fmt(valor)}</span>
+                      </div>
+                    );
+                  })}
+                  {/* Outros custos ADM (se houver diferença) */}
+                  {custoAdmLocalOutros > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-2 text-muted-foreground">
+                        <Package className="w-3.5 h-3.5" /> Demais custos
+                      </span>
+                      <span className="font-medium">{fmt(custoAdmLocalOutros)}</span>
+                    </div>
+                  )}
+                  {/* Se sem breakdown, mostra total direto */}
+                  {custoDeslocamentos <= 0 && custoMobDesmob <= 0 && custoAdmLocal > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Custo ADM Local</span>
+                      <span className="font-medium">{fmt(custoAdmLocal)}</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground pl-2">Nenhum ADM Local configurado</p>
+              )}
+              <Separator className="my-2" />
+              <div className="flex justify-between text-sm font-semibold pl-2">
+                <span>Subtotal ADM Local</span>
+                <span>{fmt(custoAdmLocal)}</span>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* ── Custo Direto Total ── */}
+            <div className="flex justify-between text-sm font-bold bg-muted/50 p-3 rounded-md">
+              <span>Custo Direto Total (Serviços + ADM Local)</span>
+              <span>{fmt(custoTotal)}</span>
+            </div>
+
+            <Separator />
+
+            {/* ── BDI Detalhado ── */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Badge variant="outline" className="text-xs font-semibold">BDI</Badge>
+                <span className="text-sm font-semibold">
+                  {bdiData?.nome || "BDI"} — {fmtPct(bdiPercentual)}
+                </span>
+              </div>
+              {bdiComponentes.length > 0 ? (
+                <div className="space-y-1.5 pl-2">
+                  {bdiComponentes.map((comp, i) => (
+                    <div key={i} className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">{comp.nome}</span>
+                      <div className="flex items-center gap-4">
+                        <span className="text-xs text-muted-foreground w-16 text-right">{fmtPct(comp.percentual)}</span>
+                        <span className="font-medium w-28 text-right">{fmt(custoTotal * (comp.percentual / 100))}</span>
+                      </div>
+                    </div>
+                  ))}
+                  <Separator className="my-2" />
+                  <div className="flex items-center justify-between text-sm font-semibold">
+                    <span className="flex items-center gap-2">
+                      <TrendingUp className="w-3.5 h-3.5 text-primary" /> Total BDI
+                    </span>
+                    <div className="flex items-center gap-4">
+                      <span className="text-xs w-16 text-right">{fmtPct(bdiPercentual)}</span>
+                      <span className="w-28 text-right">{fmt(valorBdi)}</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-between text-sm pl-2">
+                  <span className="text-muted-foreground">BDI ({fmtPct(bdiPercentual)})</span>
+                  <span className="font-medium">{fmt(valorBdi)}</span>
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* ── Preço Final ── */}
+            <div className="flex justify-between items-center text-lg font-bold bg-primary/10 p-4 rounded-lg">
+              <span>Preço de Venda</span>
+              <span className="text-primary text-xl">{fmt(precoTotal)}</span>
+            </div>
+
+            {!podesSalvar && (
+              <p className="text-xs text-destructive text-center">
+                Adicione ao menos uma composição válida para habilitar o salvamento.
+              </p>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <Button
+                className="gap-2"
+                onClick={handleSalvar}
+                disabled={!podesSalvar || saving}
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Salvar Orçamento
+              </Button>
+            </div>
+          </CardContent>
+        )}
       </Card>
     </div>
   );
