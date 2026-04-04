@@ -341,7 +341,7 @@ export default function Mobilizacao() {
 
   // Equipes
   const [equipes, setEquipes] = useState<(EquipeItem & { _key: number })[]>([
-    { _key: 1, nome: "Equipe Campo", quantidade_pessoas: 4, custo_deslocamento: 0, custo_hospedagem: 150, custo_alimentacao: 80 },
+    { _key: 1, nome: "Equipe Campo", quantidade_pessoas: 4, custo_deslocamento: 0, custo_hospedagem: 150, custo_alimentacao: 0 },
   ]);
   let equipeKeyRef = 2;
 
