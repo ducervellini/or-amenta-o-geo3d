@@ -984,10 +984,6 @@ export default function Mobilizacao() {
                         <Input className="h-8 text-xs" type="number" value={eq.custo_hospedagem} onChange={(e) => updateEquipe(eq._key, "custo_hospedagem", Number(e.target.value))} />
                       </div>
                       <div>
-                        <Label className="text-[10px]">Alimentação/dia</Label>
-                        <Input className="h-8 text-xs" type="number" value={eq.custo_alimentacao} onChange={(e) => updateEquipe(eq._key, "custo_alimentacao", Number(e.target.value))} />
-                      </div>
-                      <div>
                         <Label className="text-[10px]">Deslocamento/dia</Label>
                         <Input className="h-8 text-xs" type="number" value={eq.custo_deslocamento} onChange={(e) => updateEquipe(eq._key, "custo_deslocamento", Number(e.target.value))} />
                       </div>
