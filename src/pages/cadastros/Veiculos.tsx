@@ -181,7 +181,10 @@ export default function Veiculos() {
                     {row.tipo_propriedade === "proprio" || !row.tipo_propriedade ? "Próprio" : "Alugado"}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right">{R(row._depKm)}</TableCell>
+                <TableCell className="text-right">{Number(row.media_km_l || 0).toFixed(1)}</TableCell>
+                <TableCell>
+                  <Badge variant="outline" className="capitalize">{row.tipo_combustivel || "diesel"}</Badge>
+                </TableCell>
                 <TableCell className="text-right font-medium">{R(row._custoKmTotal)}</TableCell>
                 <TableCell className="text-right font-medium">{R(row._custoHora)}</TableCell>
                 <TableCell className="text-right font-medium">{R(row._totalMes)}</TableCell>
