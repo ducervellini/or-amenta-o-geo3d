@@ -737,9 +737,9 @@ export default function Mobilizacao() {
               Planejamento de custos de deslocamento, hospedagem e logística de campo
             </p>
           </div>
-          <Button className="gap-2" disabled>
-            <Save className="w-4 h-4" />
-            Salvar
+          <Button className="gap-2" disabled={!formValido || saving} onClick={handleSalvar}>
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {saving ? "Salvando..." : "Salvar"}
           </Button>
         </div>
 
