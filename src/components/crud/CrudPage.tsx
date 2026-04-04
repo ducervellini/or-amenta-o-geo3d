@@ -49,6 +49,8 @@ export function CrudPage<T extends TableName>({
   formFields,
   searchField,
   filter,
+  defaultFilters,
+  hiddenDefaults,
 }: CrudPageProps<T>) {
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
