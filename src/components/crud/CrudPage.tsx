@@ -99,6 +99,49 @@ export function CrudPage<T extends TableName>({
 
   return (
     <div className="page-container animate-fade-in">
+
+{/* Sortable table sub-component */}
+function SortableTable({ data, columns, onEdit, onDelete }: { data: Record<string, unknown>[]; columns: ColumnConfig[]; onEdit: (item: Record<string, unknown>) => void; onDelete: (id: string) => void }) {
+  const { sorted, sortKey, sortDirection, handleSort } = useTableSort(data);
+  return (
+    <div className="overflow-x-auto">
+      <table className="data-table">
+        <thead>
+          <tr>
+            {columns.map((col) => (
+              <SortableHeader key={col.key} label={col.label} sortKey={col.key} currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+            ))}
+            <th className="text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.map((row: any) => (
+            <tr key={row.id}>
+              {columns.map((col) => (
+                <td key={col.key}>
+                  {col.render ? col.render(row[col.key], row) : String(row[col.key] ?? "-")}
+                </td>
+              ))}
+              <td className="text-center">
+                <div className="flex items-center justify-center gap-1">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(row)}>
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => onDelete(row.id)}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+  return (
+    <div className="page-container animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="page-title">{title}</h1>
