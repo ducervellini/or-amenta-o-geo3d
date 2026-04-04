@@ -132,69 +132,7 @@ export default function Composicoes() {
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <ComposicoesTable filtered={filtered} handleRowClick={handleRowClick} getMercadoNome={getMercadoNome} getAreaNome={getAreaNome} getModuloNome={getModuloNome} navigate={navigate} setDeletingId={setDeletingId} />
-              <tbody>
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="text-center py-8 text-muted-foreground">
-                      Nenhuma composição encontrada
-                    </td>
-                  </tr>
-                ) : (
-                  filtered.map((row) => (
-                    <tr
-                      key={`${row.type}-${row.id}`}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleRowClick(row)}
-                    >
-                      <td className="font-medium text-accent">{row.codigo}</td>
-                      <td className="font-medium">{row.nome}</td>
-                      <td className="text-sm">{getMercadoNome(row.mercado_id as string | null)}</td>
-                      <td>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
-                          {getAreaNome(row.area_empresa_id as string | null)}
-                        </span>
-                      </td>
-                      <td className="text-sm">{getModuloNome(row.modulo_id as string | null)}</td>
-                      <td className="text-sm text-muted-foreground max-w-[200px] truncate">
-                        {row.descricao ? String(row.descricao) : "-"}
-                      </td>
-                      <td className="text-sm">{row.unidade}</td>
-                      <td className="font-semibold font-mono">
-                        {row.type === "composicao" ? (
-                          `R$ ${fmt(row.custo_unitario_total)}`
-                        ) : (
-                          <span className="text-xs text-muted-foreground italic">Sem composição</span>
-                        )}
-                      </td>
-                      <td className="text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          {row.type === "composicao" ? (
-                            <>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/${row.id}`); }}>
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/${row.id}`); }}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); setDeletingId(row.id); }}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </>
-                          ) : (
-                            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/novo?servico_id=${row.id}`); }}>
-                              <Plus className="w-3 h-3 mr-1" />
-                              Criar
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <ComposicoesTableContent filtered={filtered} handleRowClick={handleRowClick} getMercadoNome={getMercadoNome} getAreaNome={getAreaNome} getModuloNome={getModuloNome} navigate={navigate} setDeletingId={setDeletingId} />
         )}
       </div>
 
