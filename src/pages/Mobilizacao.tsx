@@ -535,30 +535,6 @@ export default function Mobilizacao() {
   };
   const removeMunicipioRota = (idx: number) => setMunicipiosRota((prev) => prev.filter((_, i) => i !== idx));
 
-  // ── Custo handlers ──
-  const addCusto = () => {
-    setCustos((prev) => [
-      ...prev,
-      { _key: custoKeyRef++, categoria: "veiculo", valor_unitario: 0, quantidade: 1, frequencia: "diario", km_dia: kmMedioDiario },
-    ]);
-  };
-  const removeCusto = (key: number) => setCustos((prev) => prev.filter((c) => c._key !== key));
-  const updateCusto = (key: number, field: string, value: any) => {
-    setCustos((prev) => prev.map((c) => (c._key === key ? { ...c, [field]: value } : c)));
-  };
-
-  // ── Equipe handlers ──
-  const addEquipe = () => {
-    setEquipes((prev) => [
-      ...prev,
-      { _key: equipeKeyRef++, nome: "", quantidade_pessoas: 1, custo_deslocamento: 0, custo_hospedagem: 0, custo_alimentacao: 0 },
-    ]);
-  };
-  const removeEquipe = (key: number) => setEquipes((prev) => prev.filter((e) => e._key !== key));
-  const updateEquipe = (key: number, field: string, value: any) => {
-    setEquipes((prev) => prev.map((e) => (e._key === key ? { ...e, [field]: value } : e)));
-  };
-
   // Max bar for chart
   const maxPrecip = pluviometria ? Math.max(...pluviometria.mensal.map((m) => m.precipitacao_max), 1) : 1;
 
