@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseQuery, useSupabaseInsert, useSupabaseUpdate, useSupabaseDelete } from "@/hooks/useSupabaseCrud";
 import { Button } from "@/components/ui/button";
+import { SortableHeader, useTableSort } from "@/components/ui/sortable-header";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -43,6 +44,81 @@ const tipoLabels: Record<string, string> = {
   mao_de_obra: "Mão de Obra", equipamento: "Equipamento", material: "Material", combustivel: "Material",
 };
 const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+
+function ItensTable({ itens, tipoIcons, tipoLabels, fmt, resumo, onEdit, onDelete }: {
+  itens: any[];
+  tipoIcons: Record<string, React.ElementType>;
+  tipoLabels: Record<string, string>;
+  fmt: (n: number) => string;
+  resumo: { custo_direto: number };
+  onEdit: (item: any) => void;
+  onDelete: (id: string) => void;
+}) {
+  const flatData = itens.map((item) => ({
+    ...item,
+    _tipo_label: tipoLabels[String(item.tipo_insumo)] || String(item.tipo_insumo),
+    _custo_unitario: item.resultado.custo_unitario,
+    _custo_total: item.resultado.custo_total,
+  }));
+  const { sorted, sortKey, sortDirection, handleSort } = useTableSort(flatData);
+  const cols = [
+    { key: "tipo_insumo", label: "Tipo" },
+    { key: "descricao", label: "Descrição" },
+    { key: "quantidade", label: "Qtd" },
+    { key: "coeficiente", label: "Coeficiente" },
+    { key: "_custo_unitario", label: "Custo Unit." },
+    { key: "_custo_total", label: "Custo Total" },
+  ];
+  return (
+    <div className="overflow-x-auto">
+      <table className="data-table">
+        <thead>
+          <tr>
+            {cols.map((col) => (
+              <SortableHeader key={col.key} label={col.label} sortKey={col.key} currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+            ))}
+            <th className="text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.map((item: any) => {
+            const Icon = tipoIcons[String(item.tipo_insumo)] || Package;
+            return (
+              <tr key={String(item.id)} className="hover:bg-muted/50">
+                <td>
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
+                    <Icon className="w-3 h-3" />
+                    {item._tipo_label}
+                  </span>
+                </td>
+                <td className="font-medium text-sm">{String(item.descricao) || "Sem descrição"}</td>
+                <td className="font-mono text-sm">{fmt(Number(item.quantidade))}</td>
+                <td className="font-mono text-sm">{fmt(Number(item.coeficiente))}</td>
+                <td className="font-mono text-sm">R$ {fmt(item._custo_unitario)}</td>
+                <td className="font-mono font-semibold text-sm">R$ {fmt(item._custo_total)}</td>
+                <td className="text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(item)}>
+                      <Edit className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(String(item.id))}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+          <tr className="border-t-2 font-semibold bg-muted/30">
+            <td colSpan={5} className="text-right text-sm">Total da Composição</td>
+            <td className="font-mono text-sm">R$ {fmt(resumo.custo_direto)}</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 export default function ComposicaoDetalhe() {
   const { id } = useParams<{ id: string }>();
@@ -462,57 +538,10 @@ export default function ComposicaoDetalhe() {
                   Nenhum item adicionado. Use o botão acima para adicionar mão de obra, equipamentos ou materiais.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Tipo</th>
-                        <th>Descrição</th>
-                        <th>Qtd</th>
-                        <th>Coeficiente</th>
-                        <th>Custo Unit.</th>
-                        <th>Custo Total</th>
-                        <th className="text-center">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {itensComCalculo.map((item) => {
-                        const Icon = tipoIcons[String(item.tipo_insumo)] || Package;
-                        return (
-                          <tr key={String(item.id)} className="hover:bg-muted/50">
-                            <td>
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
-                                <Icon className="w-3 h-3" />
-                                {tipoLabels[String(item.tipo_insumo)] || String(item.tipo_insumo)}
-                              </span>
-                            </td>
-                            <td className="font-medium text-sm">{String(item.descricao) || "Sem descrição"}</td>
-                            <td className="font-mono text-sm">{fmt(Number(item.quantidade))}</td>
-                            <td className="font-mono text-sm">{fmt(Number(item.coeficiente))}</td>
-                            <td className="font-mono text-sm">R$ {fmt(item.resultado.custo_unitario)}</td>
-                            <td className="font-mono font-semibold text-sm">R$ {fmt(item.resultado.custo_total)}</td>
-                            <td className="text-center">
-                              <div className="flex items-center justify-center gap-1">
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingItem(item); setTipoNovo(String(item.tipo_insumo) as TipoInsumo); setShowItemForm(true); }}>
-                                  <Edit className="w-3.5 h-3.5" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeletingItemId(String(item.id))}>
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                      {/* Totals row */}
-                      <tr className="border-t-2 font-semibold bg-muted/30">
-                        <td colSpan={5} className="text-right text-sm">Total da Composição</td>
-                        <td className="font-mono text-sm">R$ {fmt(resumo.custo_direto)}</td>
-                        <td></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+                <ItensTable itens={itensComCalculo} tipoIcons={tipoIcons} tipoLabels={tipoLabels} fmt={fmt} resumo={resumo}
+                  onEdit={(item) => { setEditingItem(item); setTipoNovo(String(item.tipo_insumo) as TipoInsumo); setShowItemForm(true); }}
+                  onDelete={(id) => setDeletingItemId(id)}
+                />
               )}
             </div>
           )}

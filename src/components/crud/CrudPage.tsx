@@ -9,6 +9,7 @@ import {
   useSupabaseDelete,
 } from "@/hooks/useSupabaseCrud";
 import { Database } from "@/integrations/supabase/types";
+import { SortableHeader, useTableSort } from "@/components/ui/sortable-header";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,16 +42,52 @@ export interface CrudPageProps<T extends TableName> {
   hiddenDefaults?: Record<string, unknown>;
 }
 
+function SortableTable({ data, columns, onEdit, onDelete }: {
+  data: Record<string, unknown>[];
+  columns: ColumnConfig[];
+  onEdit: (item: Record<string, unknown>) => void;
+  onDelete: (id: string) => void;
+}) {
+  const { sorted, sortKey, sortDirection, handleSort } = useTableSort(data);
+  return (
+    <div className="overflow-x-auto">
+      <table className="data-table">
+        <thead>
+          <tr>
+            {columns.map((col) => (
+              <SortableHeader key={col.key} label={col.label} sortKey={col.key} currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+            ))}
+            <th className="text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.map((row: any) => (
+            <tr key={row.id}>
+              {columns.map((col) => (
+                <td key={col.key}>
+                  {col.render ? col.render(row[col.key], row) : String(row[col.key] ?? "-")}
+                </td>
+              ))}
+              <td className="text-center">
+                <div className="flex items-center justify-center gap-1">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(row)}>
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => onDelete(row.id)}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function CrudPage<T extends TableName>({
-  table,
-  title,
-  subtitle,
-  columns,
-  formFields,
-  searchField,
-  filter,
-  defaultFilters,
-  hiddenDefaults,
+  table, title, subtitle, columns, formFields, searchField, filter, defaultFilters, hiddenDefaults,
 }: CrudPageProps<T>) {
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
@@ -64,9 +101,7 @@ export function CrudPage<T extends TableName>({
 
   const filtered = (data || []).filter((row: any) => {
     if (!search || !searchField) return true;
-    return String(row[searchField] || "")
-      .toLowerCase()
-      .includes(search.toLowerCase());
+    return String(row[searchField] || "").toLowerCase().includes(search.toLowerCase());
   });
 
   const handleSubmit = (values: Record<string, unknown>) => {
@@ -77,22 +112,15 @@ export function CrudPage<T extends TableName>({
         { onSuccess: () => { setFormOpen(false); setEditItem(null); } }
       );
     } else {
-      insertMutation.mutate(mergedValues as any, {
-        onSuccess: () => setFormOpen(false),
-      });
+      insertMutation.mutate(mergedValues as any, { onSuccess: () => setFormOpen(false) });
     }
   };
 
-  const handleEdit = (item: Record<string, unknown>) => {
-    setEditItem(item);
-    setFormOpen(true);
-  };
+  const handleEdit = (item: Record<string, unknown>) => { setEditItem(item); setFormOpen(true); };
 
   const handleDelete = () => {
     if (deleteId) {
-      deleteMutation.mutate(deleteId, {
-        onSuccess: () => setDeleteId(null),
-      });
+      deleteMutation.mutate(deleteId, { onSuccess: () => setDeleteId(null) });
     }
   };
 
@@ -103,13 +131,7 @@ export function CrudPage<T extends TableName>({
           <h1 className="page-title">{title}</h1>
           <p className="page-subtitle">{subtitle}</p>
         </div>
-        <Button
-          className="gap-2"
-          onClick={() => {
-            setEditItem(null);
-            setFormOpen(true);
-          }}
-        >
+        <Button className="gap-2" onClick={() => { setEditItem(null); setFormOpen(true); }}>
           <Plus className="w-4 h-4" />
           Novo
         </Button>
@@ -140,60 +162,13 @@ export function CrudPage<T extends TableName>({
             Nenhum registro encontrado
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  {columns.map((col) => (
-                    <th key={col.key}>{col.label}</th>
-                  ))}
-                  <th className="text-center">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((row: any) => (
-                  <tr key={row.id}>
-                    {columns.map((col) => (
-                      <td key={col.key}>
-                        {col.render
-                          ? col.render(row[col.key], row)
-                          : String(row[col.key] ?? "-")}
-                      </td>
-                    ))}
-                    <td className="text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleEdit(row)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive"
-                          onClick={() => setDeleteId(row.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <SortableTable data={filtered} columns={columns} onEdit={handleEdit} onDelete={(id) => setDeleteId(id)} />
         )}
       </div>
 
       <CrudFormDialog
         open={formOpen}
-        onOpenChange={(open) => {
-          setFormOpen(open);
-          if (!open) setEditItem(null);
-        }}
+        onOpenChange={(open) => { setFormOpen(open); if (!open) setEditItem(null); }}
         title={editItem ? `Editar ${title}` : `Novo ${title}`}
         fields={formFields}
         initialValues={editItem || undefined}
@@ -205,9 +180,7 @@ export function CrudPage<T extends TableName>({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
+            <AlertDialogDescription>Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
