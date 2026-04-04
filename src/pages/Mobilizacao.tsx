@@ -1008,7 +1008,7 @@ export default function Mobilizacao() {
                   const aluguelMesVeic = Number(selectedVeiculo?.valor_aluguel_mensal || 0);
                   const kmMesProd = (item.km_dia || 0) * diasProdutivosMes;
                   const custoMes = item.categoria === "hospedagem"
-                    ? item.valor_unitario * item.quantidade * diasTrabalho
+                    ? (isHotelType(item.tipo_hospedagem) ? item.valor_unitario * item.quantidade * diasTrabalho : item.valor_unitario * item.quantidade)
                     : item.categoria === "combustivel" && selectedVeiculo
                     ? (custoKmComb * kmMesProd * item.quantidade) + (aluguelMesVeic * item.quantidade)
                     : item.frequencia === "diario" ? item.valor_unitario * item.quantidade * diasProdutivosMes
