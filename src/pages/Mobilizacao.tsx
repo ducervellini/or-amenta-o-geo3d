@@ -61,7 +61,6 @@ const ICON_MAP: Record<string, React.ElementType> = {
 };
 
 const CATEGORIAS_DESLOCAMENTO = [
-  { value: "veiculo", label: "Veículo", icon: Car },
   { value: "hospedagem", label: "Hospedagem", icon: Home },
   { value: "combustivel", label: "Combustível", icon: Fuel },
   { value: "pedagios", label: "Pedágios", icon: CreditCard },
@@ -340,7 +339,7 @@ export default function Mobilizacao() {
   const addDeslocamento = () => {
     setDeslocamentos(prev => [...prev, {
       _key: deslKeyRef.current++,
-      categoria: "veiculo",
+      categoria: "hospedagem",
       descricao: "",
       valor_unitario: 0,
       quantidade: 1,
@@ -508,14 +507,6 @@ export default function Mobilizacao() {
       if (item.frequencia === "mensal") return custoDia * diasProdutivosMes * item.quantidade * duracaoMeses;
       return custoDia * item.quantidade;
     }
-    if (item.categoria === "veiculo") {
-      if (item.tipo_veiculo === "alugado") {
-        const valorMensal = item.valor_aluguel_mensal || item.valor_unitario || 0;
-        return valorMensal * item.quantidade * duracaoMeses;
-      }
-      // Próprio: valor mensal de custo
-      return item.valor_unitario * item.quantidade * duracaoMeses;
-    }
     if (item.categoria === "hospedagem") {
       // valor_unitario = diária; frequência sempre diário
       return item.valor_unitario * item.quantidade * diasProdutivos;
@@ -546,10 +537,7 @@ export default function Mobilizacao() {
     for (const item of deslocamentos) {
       const selectedVeiculo = item.veiculo_id ? (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id) : null;
       let custoMes = 0;
-      if (item.categoria === "veiculo") {
-        custoMes = item.tipo_veiculo === "alugado"
-          ? (item.valor_aluguel_mensal || item.valor_unitario || 0) * item.quantidade
-          : item.valor_unitario * item.quantidade;
+      if (item.categoria === "hospedagem") {
       } else if (item.categoria === "hospedagem") {
         custoMes = item.valor_unitario * item.quantidade * diasProdutivosMes;
       } else if (item.categoria === "combustivel" && selectedVeiculo) {
@@ -987,16 +975,14 @@ export default function Mobilizacao() {
             {/* Deslocamentos do Projeto */}
             <Section title="Deslocamentos do Projeto" icon={Truck} badge={deslocamentos.length > 0 ? fmt(custoDeslocamentosTotal) + " total" : undefined}>
               <p className="text-xs text-muted-foreground mb-3">
-                Itens de custo recorrentes do projeto: veículos, hospedagem, combustível, pedágios, passagens e diversos.
+                Itens de custo recorrentes do projeto: hospedagem, combustível, pedágios, passagens e diversos.
               </p>
               <div className="space-y-3">
                 {deslocamentos.map((item) => {
                   const CatIcon = ICON_MAP[item.categoria] || CreditCard;
                   const selectedVeiculo = item.veiculo_id ? (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id) : null;
                   const custoItem = calcularCustoDeslocamentoItem(item);
-                  const custoMes = item.categoria === "veiculo"
-                    ? (item.tipo_veiculo === "alugado" ? (item.valor_aluguel_mensal || item.valor_unitario || 0) * item.quantidade : item.valor_unitario * item.quantidade)
-                    : item.categoria === "hospedagem"
+                  const custoMes = item.categoria === "hospedagem"
                     ? item.valor_unitario * item.quantidade * diasProdutivosMes
                     : item.categoria === "combustivel" && selectedVeiculo
                     ? (() => {
@@ -1026,68 +1012,6 @@ export default function Mobilizacao() {
                             </SelectContent>
                           </Select>
                         </div>
-
-                        {/* ── VEÍCULO ── */}
-                        {item.categoria === "veiculo" && (
-                          <>
-                            <div>
-                              <Label className="text-[10px]">Tipo</Label>
-                              <Select value={item.tipo_veiculo || "alugado"} onValueChange={(v) => updateDeslocamento(item._key, "tipo_veiculo", v)}>
-                                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                  {TIPOS_VEICULO_DESL.map((t) => (
-                                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <Label className="text-[10px]">Veículo</Label>
-                              <Select
-                                value={item.veiculo_id || ""}
-                                onValueChange={(v) => {
-                                  const veic = (veiculosCadastrados as any[])?.find((ve: any) => ve.id === v);
-                                  updateDeslocamento(item._key, "veiculo_id", v);
-                                  if (veic) {
-                                    updateDeslocamento(item._key, "descricao", veic.nome);
-                                    if (item.tipo_veiculo === "alugado") {
-                                      updateDeslocamento(item._key, "valor_aluguel_mensal", veic.valor_aluguel_mensal || 0);
-                                    } else {
-                                      updateDeslocamento(item._key, "valor_unitario", veic.custo_hora ? veic.custo_hora * (veic.horas_produtivas_mes || 176) : 0);
-                                    }
-                                  }
-                                }}
-                              >
-                                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                                <SelectContent>
-                                  {(veiculosCadastrados as any[])?.map((v: any) => (
-                                    <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>
-                                  ))}
-                                  {(!veiculosCadastrados || (veiculosCadastrados as any[]).length === 0) && (
-                                    <SelectItem value="_none" disabled>Nenhum veículo cadastrado</SelectItem>
-                                  )}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <Label className="text-[10px]">{item.tipo_veiculo === "alugado" ? "Aluguel Mensal (R$)" : "Custo Mensal (R$)"}</Label>
-                              <Input className="h-8 text-xs" type="number" step="0.01"
-                                value={item.tipo_veiculo === "alugado" ? (item.valor_aluguel_mensal || "") : (item.valor_unitario || "")}
-                                onChange={(e) => updateDeslocamento(item._key, item.tipo_veiculo === "alugado" ? "valor_aluguel_mensal" : "valor_unitario", Number(e.target.value))}
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-[10px]">Qtde</Label>
-                              <Input className="h-8 text-xs" type="number" value={item.quantidade} onChange={(e) => updateDeslocamento(item._key, "quantidade", Number(e.target.value))} min={1} />
-                            </div>
-                            <div className="flex items-end col-span-2 md:col-span-5">
-                              <div className="text-[10px] text-muted-foreground pb-1.5 flex gap-4">
-                                <span>Valor/mês: <span className="font-medium text-foreground">{fmt(custoMes)}</span></span>
-                                <span>Total ({duracaoMeses}m): <span className="font-bold text-primary">{fmt(custoItem)}</span></span>
-                              </div>
-                            </div>
-                          </>
-                        )}
 
                         {/* ── HOSPEDAGEM ── */}
                         {item.categoria === "hospedagem" && (
