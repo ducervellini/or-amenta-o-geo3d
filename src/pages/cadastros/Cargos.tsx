@@ -174,6 +174,7 @@ function CargoFormDialog({
                   <SelectContent>
                     <SelectItem value="clt">CLT (com encargos e benefícios)</SelectItem>
                     <SelectItem value="pj">PJ (apenas salário)</SelectItem>
+                    <SelectItem value="estagio">Estágio</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -484,8 +485,8 @@ export default function Cargos() {
                 <tbody>
                   {sorted.map((row: any) => {
                     const custo = row._custo;
-                    const isPJ = row.regime_contratacao === "pj";
-                    const regimeLabel = String(row.regime_contratacao || "clt").toUpperCase();
+                    const isPJ = row.regime_contratacao === "pj" || row.regime_contratacao === "estagio";
+                    const regimeLabel = row.regime_contratacao === "estagio" ? "Estágio" : String(row.regime_contratacao || "clt").toUpperCase();
                     const totalBen = custo.valor_beneficios_fixos + custo.valor_beneficios_pct;
 
                     return (
