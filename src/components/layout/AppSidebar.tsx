@@ -74,18 +74,6 @@ const navigation: NavItem[] = [
     ],
   },
   { label: "Composições", path: "/composicoes", icon: Layers },
-  {
-    label: "Admin. Local",
-    icon: Building,
-    children: [
-      { label: "Equipes", path: "/admin-local/equipes" },
-      { label: "Veículos", path: "/admin-local/veiculos" },
-      { label: "Combustível", path: "/admin-local/combustivel" },
-      { label: "Pedágios", path: "/admin-local/pedagios" },
-      { label: "Passagens", path: "/admin-local/passagens" },
-      { label: "Hospedagem", path: "/admin-local/hospedagem" },
-    ],
-  },
   { label: "Orçamentos", path: "/orcamentos", icon: FileText },
   {
     label: "Parâmetros",
