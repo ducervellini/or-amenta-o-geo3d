@@ -158,9 +158,8 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
   const insumoOptions = useMemo(() => {
     if (tipo === "mao_de_obra") return (cargos || []).map((c) => ({ id: String(c.id), nome: String(c.nome) }));
     if (tipo === "equipamento") return (equipamentos || []).map((e) => ({ id: String(e.id), nome: String(e.nome) }));
-    if (tipo === "veiculo") return (veiculos || []).map((v) => ({ id: String(v.id), nome: String(v.nome) }));
     return (materiais || []).map((m) => ({ id: String(m.id), nome: String(m.nome) }));
-  }, [tipo, cargos, equipamentos, veiculos, materiais]);
+  }, [tipo, cargos, equipamentos, materiais]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
