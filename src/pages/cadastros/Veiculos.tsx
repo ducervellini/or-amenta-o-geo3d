@@ -212,13 +212,9 @@ export default function Veiculos() {
           </DialogHeader>
           <div className="grid gap-6">
             {/* Identificação */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div><Label>Código *</Label><Input value={form.codigo} onChange={e => setField("codigo", e.target.value)} placeholder="VE-001" /></div>
               <div><Label>Nome *</Label><Input value={form.nome} onChange={e => setField("nome", e.target.value)} /></div>
-              <div>
-                <Label>Média (km/L)</Label>
-                <Input type="number" step="0.1" value={form.media_km_l || ""} onChange={e => setNum("media_km_l", e.target.value)} placeholder="Ex: 8.5" />
-              </div>
               <div>
                 <Label>Tipo Combustível</Label>
                 <Select value={form.tipo_combustivel} onValueChange={v => setField("tipo_combustivel", v)}>
