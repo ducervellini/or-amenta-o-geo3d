@@ -302,6 +302,7 @@ export default function Mobilizacao() {
   const [diasTrabalho, setDiasTrabalho] = useState(24);
   const [jornadaDiaria, setJornadaDiaria] = useState(8);
   const [diasChuvaMes, setDiasChuvaMes] = useState(5);
+  const [diasImprodutivosUsuario, setDiasImprodutivosUsuario] = useState(5);
   const [fatorImprod, setFatorImprod] = useState(0.15);
   const [distanciaBase, setDistanciaBase] = useState(50);
   const [distanciaMedia, setDistanciaMedia] = useState(30);
