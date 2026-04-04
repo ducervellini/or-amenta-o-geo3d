@@ -686,34 +686,51 @@ export default function Mobilizacao() {
                       </div>
                     </div>
 
-                    {/* Monthly chart */}
+                    {/* Monthly chart - average with min/max range */}
                     <div>
                       <div className="text-xs font-medium mb-2 flex items-center gap-1">
-                        <BarChart3 className="w-3 h-3" /> Precipitação Mensal (mm)
+                        <BarChart3 className="w-3 h-3" /> Precipitação Estimada por Mês do Projeto (média histórica)
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         {pluviometria.mensal.map((m) => {
-                          const pct = (m.precipitacao_total / maxPrecip) * 100;
-                          const mesLabel = new Date(m.mes + "-01").toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
+                          const pctAvg = (m.precipitacao_media / maxPrecip) * 100;
+                          const pctMax = (m.precipitacao_max / maxPrecip) * 100;
                           return (
-                            <div key={m.mes} className="flex items-center gap-2 text-[11px]">
-                              <span className="w-16 text-right text-muted-foreground">{mesLabel}</span>
-                              <div className="flex-1 h-5 bg-muted rounded-sm overflow-hidden">
-                                <div
-                                  className="h-full bg-primary/60 rounded-sm flex items-center px-1"
-                                  style={{ width: `${Math.max(pct, 2)}%` }}
-                                >
-                                  {pct > 20 && (
-                                    <span className="text-[9px] text-primary-foreground font-medium">
-                                      {Math.round(m.precipitacao_total)}mm
-                                    </span>
-                                  )}
+                            <div key={m.mes} className="space-y-0.5">
+                              <div className="flex items-center gap-2 text-[11px]">
+                                <span className="w-10 text-right font-medium">{m.mes}</span>
+                                <div className="flex-1 h-6 bg-muted rounded-sm overflow-hidden relative">
+                                  {/* Max range background */}
+                                  <div
+                                    className="absolute h-full bg-primary/15 rounded-sm"
+                                    style={{ width: `${Math.max(pctMax, 2)}%` }}
+                                  />
+                                  {/* Average bar */}
+                                  <div
+                                    className="relative h-full bg-primary/60 rounded-sm flex items-center px-1"
+                                    style={{ width: `${Math.max(pctAvg, 2)}%` }}
+                                  >
+                                    {pctAvg > 25 && (
+                                      <span className="text-[9px] text-primary-foreground font-medium">
+                                        {m.precipitacao_media}mm
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
+                                {pctAvg <= 25 && (
+                                  <span className="text-[9px] text-muted-foreground w-14">{m.precipitacao_media}mm</span>
+                                )}
+                                <span className="w-20 text-[9px] text-muted-foreground">
+                                  {m.dias_chuva_media}d chuva
+                                </span>
                               </div>
-                              {pct <= 20 && (
-                                <span className="text-[9px] text-muted-foreground w-12">{Math.round(m.precipitacao_total)}mm</span>
-                              )}
-                              <span className="w-16 text-[9px] text-muted-foreground">{m.dias_chuva}d chuva</span>
+                              <div className="flex items-center gap-2 text-[9px] text-muted-foreground pl-12">
+                                <span>min: {m.precipitacao_min}mm</span>
+                                <span>·</span>
+                                <span>máx: {m.precipitacao_max}mm</span>
+                                <span>·</span>
+                                <span>{m.anos_dados} anos</span>
+                              </div>
                             </div>
                           );
                         })}
