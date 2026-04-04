@@ -552,7 +552,11 @@ export default function Mobilizacao() {
       const selectedVeiculo = item.veiculo_id ? (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id) : null;
       let custoMes = 0;
       if (item.categoria === "hospedagem") {
-        custoMes = item.valor_unitario * item.quantidade * diasTrabalho;
+        if (isHotelType(item.tipo_hospedagem)) {
+          custoMes = item.valor_unitario * item.quantidade * diasTrabalho;
+        } else {
+          custoMes = item.valor_unitario * item.quantidade;
+        }
       } else if (item.categoria === "combustivel" && selectedVeiculo) {
         const mediaKmL = selectedVeiculo?.media_km_l || 0;
         const precoComb = Number(selectedVeiculo?.combustivel_preco_litro || 0);
