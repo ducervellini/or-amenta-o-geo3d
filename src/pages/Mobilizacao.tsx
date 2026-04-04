@@ -1061,8 +1061,8 @@ export default function Mobilizacao() {
                               )}
                               <div className="flex items-end">
                                 <div className="text-[10px] text-muted-foreground pb-1.5 flex gap-3">
-                                  <span>Mês: <span className="font-medium text-foreground">{fmt(custoMes)}</span></span>
-                                  <span>Total ({isHotel ? `${diasTrabalho * duracaoMeses}d` : `${item.meses_hospedagem ?? duracaoMeses}m`}): <span className="font-bold text-primary">{fmt(custoItem)}</span></span>
+                                  {!isHotel && <span>Mês: <span className="font-medium text-foreground">{fmt(custoMes)}</span></span>}
+                                  <span>Total{!isHotel ? ` (${item.meses_hospedagem ?? duracaoMeses}m)` : ` (${item.quantidade} diária${item.quantidade > 1 ? "s" : ""})`}: <span className="font-bold text-primary">{fmt(custoItem)}</span></span>
                                 </div>
                               </div>
                             </>
