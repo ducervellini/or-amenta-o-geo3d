@@ -749,11 +749,11 @@ export default function OrcamentoDetalhe() {
                       <span>{fmt(precoTotal)}</span>
                     </div>
 
-                    {/* (-) Tributos */}
-                    {tributos.length > 0 && (
+                    {/* (-) Tributos sobre Receita */}
+                    {tributosReceita.length > 0 && (
                       <div className="pt-2">
-                        <div className="text-xs font-medium text-muted-foreground mb-1 pl-1">(-) Tributos e Contribuições</div>
-                        {tributos.map((comp, i) => (
+                        <div className="text-xs font-medium text-muted-foreground mb-1 pl-1">(-) Tributos sobre Receita</div>
+                        {tributosReceita.map((comp, i) => (
                           <div key={i} className="flex items-center justify-between text-sm pl-3 py-0.5">
                             <span className="text-muted-foreground">{comp.nome}</span>
                             <div className="flex items-center gap-4">
@@ -763,7 +763,7 @@ export default function OrcamentoDetalhe() {
                           </div>
                         ))}
                         <div className="flex justify-between text-sm font-medium pl-3 pt-1 border-t border-dashed mt-1">
-                          <span>Total Tributos</span>
+                          <span>Total Tributos s/ Receita</span>
                           <div className="flex items-center gap-4">
                             <span className="text-xs w-16 text-right">{fmtPct(totalTributosPct)}</span>
                             <span className="w-28 text-right text-destructive">-{fmt(totalTributos)}</span>
@@ -833,13 +833,40 @@ export default function OrcamentoDetalhe() {
                       </div>
                     )}
 
+                    {/* = Lucro antes do IR */}
+                    <div className="flex justify-between text-sm font-semibold bg-muted/30 p-2 rounded mt-2">
+                      <span>= Lucro antes do IR</span>
+                      <span>{fmt(lucroAntesIR)}</span>
+                    </div>
+
+                    {/* (-) Impostos sobre o Lucro */}
+                    <div className="pt-2">
+                      <div className="text-xs font-medium text-muted-foreground mb-1 pl-1">(-) Impostos sobre o Lucro</div>
+                      {impostosLucro.map((comp, i) => (
+                        <div key={i} className="flex items-center justify-between text-sm pl-3 py-0.5">
+                          <span className="text-muted-foreground">{comp.nome}</span>
+                          <div className="flex items-center gap-4">
+                            <span className="text-xs text-muted-foreground w-16 text-right">{fmtPct(comp.percentual)}</span>
+                            <span className="font-medium w-28 text-right text-destructive">-{fmt(precoTotal * (comp.percentual / 100))}</span>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="flex justify-between text-sm font-medium pl-3 pt-1 border-t border-dashed mt-1">
+                        <span>Total IR + CSLL</span>
+                        <div className="flex items-center gap-4">
+                          <span className="text-xs w-16 text-right">{fmtPct(totalImpostosLucroPct)}</span>
+                          <span className="w-28 text-right text-destructive">-{fmt(totalImpostosLucro)}</span>
+                        </div>
+                      </div>
+                    </div>
+
                     <Separator className="my-3" />
 
                     {/* = Lucro Líquido */}
                     <div className="flex justify-between items-center text-base font-bold p-3 rounded-lg border-2 border-primary/30 bg-primary/5">
                       <span className="flex items-center gap-2">
                         <TrendingUp className="w-4 h-4 text-primary" />
-                        Lucro Líquido
+                        Lucro Líquido (após IR)
                       </span>
                       <div className="text-right">
                         <span className={`text-lg ${lucroLiquido >= 0 ? "text-primary" : "text-destructive"}`}>
