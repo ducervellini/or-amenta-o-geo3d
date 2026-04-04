@@ -130,6 +130,7 @@ export default function Veiculos() {
     const c = calcVeic(form);
     const payload = {
       ...form,
+      combustivel_consumo_km: form.media_km_l > 0 ? 1 / form.media_km_l : 0,
       custo_km: c.custoKmTotal,
       custo_hora: c.custoHora,
       manutencao_hora: c.manutKm * (form.km_mensal_estimado / (form.horas_produtivas_mes || 1)),
