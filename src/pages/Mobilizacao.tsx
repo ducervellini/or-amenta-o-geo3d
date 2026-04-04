@@ -523,7 +523,35 @@ export default function Mobilizacao() {
     return result;
   }, [deslocamentos, calcularCustoDeslocamentoItem]);
 
-  // ── Pluviometria INMET ──
+  const custoMesPorCategoria = useMemo(() => {
+    const result: Record<string, number> = {};
+    for (const item of deslocamentos) {
+      const selectedVeiculo = item.veiculo_id ? (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id) : null;
+      let custoMes = 0;
+      if (item.categoria === "veiculo") {
+        custoMes = item.tipo_veiculo === "alugado"
+          ? (item.valor_aluguel_mensal || item.valor_unitario || 0) * item.quantidade
+          : item.valor_unitario * item.quantidade;
+      } else if (item.categoria === "hospedagem") {
+        custoMes = item.valor_unitario * item.quantidade * diasProdutivosMes;
+      } else if (item.categoria === "combustivel" && selectedVeiculo) {
+        const mediaKmL = selectedVeiculo?.media_km_l || 0;
+        const precoComb = item.preco_combustivel || 0;
+        const custoKm = mediaKmL > 0 ? precoComb / mediaKmL : 0;
+        custoMes = custoKm * (item.km_dia || 0) * diasProdutivosMes * item.quantidade;
+      } else if (item.frequencia === "diario") {
+        custoMes = item.valor_unitario * item.quantidade * diasProdutivosMes;
+      } else if (item.frequencia === "mensal") {
+        custoMes = item.valor_unitario * item.quantidade;
+      } else {
+        custoMes = item.valor_unitario * item.quantidade / duracaoMeses;
+      }
+      result[item.categoria] = (result[item.categoria] || 0) + custoMes;
+    }
+    return result;
+  }, [deslocamentos, veiculosCadastrados, diasProdutivosMes, duracaoMeses]);
+
+
   const buscarPluviometria = async () => {
     if (!lat || !lng) {
       toast.error("Informe o município/estado ou importe um arquivo geográfico");
