@@ -337,6 +337,7 @@ export default function Mobilizacao() {
     tipo_hospedagem?: string;
     tipo_veiculo?: string;
     valor_aluguel_mensal?: number;
+    meses_hospedagem?: number;
   }
   const [deslocamentos, setDeslocamentos] = useState<DeslocamentoItem[]>([]);
   const deslKeyRef = useRef(1);
