@@ -11,7 +11,6 @@ export function ResumoComposicao({ resumo }: Props) {
   const itens = [
     { label: "Mão de Obra", valor: resumo.mao_de_obra, icon: Users, cor: "text-blue-400" },
     { label: "Equipamentos", valor: resumo.equipamentos, icon: Wrench, cor: "text-amber-400" },
-    { label: "Veículos", valor: resumo.veiculos, icon: Truck, cor: "text-emerald-400" },
     { label: "Materiais", valor: resumo.materiais, icon: Package, cor: "text-purple-400" },
   ];
 
