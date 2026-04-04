@@ -530,6 +530,56 @@ export default function Mobilizacao() {
               </CardContent>
             </Card>
 
+            {/* Parâmetros Operacionais */}
+            <Section title="Parâmetros Operacionais" icon={Calculator}>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                <div>
+                  <Label className="text-xs flex items-center gap-1">
+                    <Calendar className="w-3 h-3" /> Data Início
+                  </Label>
+                  <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Duração (meses)</Label>
+                  <Input type="number" value={duracaoMeses} onChange={(e) => setDuracaoMeses(Number(e.target.value))} min={1} max={120} />
+                </div>
+                <div>
+                  <Label className="text-xs">Dias Úteis/Mês</Label>
+                  <Input type="number" value={diasUteisMes} onChange={(e) => {
+                    const v = Number(e.target.value);
+                    setDiasUteisMes(v);
+                    setDiasTrabalho(v);
+                  }} min={1} max={31} />
+                </div>
+                <div className="flex items-end">
+                  <div className="text-xs text-muted-foreground pb-2 space-y-0.5">
+                    <div>Fim previsto: {new Date(dataFim).toLocaleDateString("pt-BR")}</div>
+                    <div className="inline-flex items-center gap-1">
+                      <Sun className="w-3 h-3 text-primary" /> {diasProdutivos} produtivos
+                    </div>
+                    <div className="inline-flex items-center gap-1">
+                      <Cloud className="w-3 h-3 text-muted-foreground" /> {diasImprodutivos} improdutivos
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div>
+                  <Label className="text-xs">Jornada Diária (h)</Label>
+                  <Input type="number" value={jornadaDiaria} onChange={(e) => setJornadaDiaria(Number(e.target.value))} step="0.5" />
+                </div>
+                <div>
+                  <Label className="text-xs">Dist. Média Diária (km)</Label>
+                  <Input type="number" value={distanciaMedia} onChange={(e) => setDistanciaMedia(Number(e.target.value))} />
+                </div>
+                <div className="flex items-end col-span-2">
+                  <div className="text-xs text-muted-foreground pb-2">
+                    Horas totais: {(diasProdutivos * jornadaDiaria).toFixed(0)}h · Total dias úteis: {diasUteisMes * duracaoMeses}d
+                  </div>
+                </div>
+              </div>
+            </Section>
+
             {/* Local do Projeto */}
             <Section title="Local do Projeto" icon={MapPin}>
               <Tabs value={modoLocalizacao} onValueChange={(v) => setModoLocalizacao(v as any)} className="mb-3">
