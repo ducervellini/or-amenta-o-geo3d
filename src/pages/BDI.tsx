@@ -31,16 +31,17 @@ function calcBdi(items: BDIItem[]) {
   const sg = items.find((i) => i.sigla === "S+G")?.percentual || 0;
   const r = items.find((i) => i.sigla === "R")?.percentual || 0;
   const df = items.find((i) => i.sigla === "DF")?.percentual || 0;
+  const com = items.find((i) => i.sigla === "COM")?.percentual || 0;
   const l = items.find((i) => i.sigla === "L")?.percentual || 0;
   const tributos = items
     .filter((i) => ["PIS", "COFINS", "ISS", "CPRB"].includes(i.sigla))
     .reduce((sum, i) => sum + i.percentual, 0);
 
   const bdiCalc =
-    ((1 + (ac + sg + r) / 100) * (1 + df / 100) * (1 + l / 100)) /
+    ((1 + (ac + sg + r) / 100) * (1 + df / 100) * (1 + com / 100) * (1 + l / 100)) /
       (1 - tributos / 100) -
     1;
-  return { bdiCalc, bdiPercent: bdiCalc * 100, ac, sg, r, df, l, tributos };
+  return { bdiCalc, bdiPercent: bdiCalc * 100, ac, sg, r, df, com, l, tributos };
 }
 
 export default function BDI() {
