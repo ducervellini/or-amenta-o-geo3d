@@ -882,10 +882,16 @@ export default function Mobilizacao() {
               Planejamento de custos de deslocamento, hospedagem e logística de campo
             </p>
           </div>
-          <Button className="gap-2" disabled={!formValido || saving} onClick={handleSalvar}>
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {saving ? "Salvando..." : "Salvar"}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" className="gap-2 print:hidden" onClick={() => window.print()}>
+              <Printer className="w-4 h-4" />
+              Imprimir
+            </Button>
+            <Button className="gap-2" disabled={!formValido || saving} onClick={handleSalvar}>
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {saving ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
