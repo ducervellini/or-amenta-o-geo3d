@@ -1109,6 +1109,51 @@ export type Database = {
           },
         ]
       }
+      orcamento_itens_servico: {
+        Row: {
+          composicao_id: string
+          created_at: string
+          custo_total: number
+          custo_unitario: number
+          id: string
+          orcamento_id: string
+          quantidade: number
+        }
+        Insert: {
+          composicao_id: string
+          created_at?: string
+          custo_total?: number
+          custo_unitario?: number
+          id?: string
+          orcamento_id: string
+          quantidade?: number
+        }
+        Update: {
+          composicao_id?: string
+          created_at?: string
+          custo_total?: number
+          custo_unitario?: number
+          id?: string
+          orcamento_id?: string
+          quantidade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orcamento_itens_servico_composicao_id_fkey"
+            columns: ["composicao_id"]
+            isOneToOne: false
+            referencedRelation: "composicoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamento_itens_servico_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orcamento_revisoes: {
         Row: {
           composicao_id: string
@@ -1143,6 +1188,73 @@ export type Database = {
             columns: ["composicao_id"]
             isOneToOne: false
             referencedRelation: "composicoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orcamentos: {
+        Row: {
+          bdi_id: string | null
+          bdi_percentual: number
+          created_at: string
+          custo_adm_local: number
+          custo_servicos: number
+          custo_total: number
+          id: string
+          mobilizacao_id: string | null
+          oportunidade_id: string
+          preco_total: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bdi_id?: string | null
+          bdi_percentual?: number
+          created_at?: string
+          custo_adm_local?: number
+          custo_servicos?: number
+          custo_total?: number
+          id?: string
+          mobilizacao_id?: string | null
+          oportunidade_id: string
+          preco_total?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bdi_id?: string | null
+          bdi_percentual?: number
+          created_at?: string
+          custo_adm_local?: number
+          custo_servicos?: number
+          custo_total?: number
+          id?: string
+          mobilizacao_id?: string | null
+          oportunidade_id?: string
+          preco_total?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orcamentos_bdi_id_fkey"
+            columns: ["bdi_id"]
+            isOneToOne: false
+            referencedRelation: "parametros_bdi"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamentos_mobilizacao_id_fkey"
+            columns: ["mobilizacao_id"]
+            isOneToOne: false
+            referencedRelation: "mobilizacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamentos_oportunidade_id_fkey"
+            columns: ["oportunidade_id"]
+            isOneToOne: false
+            referencedRelation: "oportunidades"
             referencedColumns: ["id"]
           },
         ]
