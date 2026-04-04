@@ -163,7 +163,8 @@ export default function Veiculos() {
               <SortTH sk="codigo" label="Código" />
               <SortTH sk="nome" label="Veículo" />
               <SortTH sk="tipo_propriedade" label="Tipo" />
-              <SortTH sk="_depKm" label="Deprec./km" className="text-right" />
+              <SortTH sk="media_km_l" label="Média (km/L)" className="text-right" />
+              <SortTH sk="tipo_combustivel" label="Combustível" />
               <SortTH sk="_custoKmTotal" label="Custo/km" className="text-right" />
               <SortTH sk="_custoHora" label="Custo/hora" className="text-right" />
               <SortTH sk="_totalMes" label="Custo/mês" className="text-right" />
