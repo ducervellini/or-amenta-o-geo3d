@@ -212,7 +212,7 @@ export default function ComposicaoDetalhe() {
   }, [itensComCalculo]);
 
   const handleSaveHeader = async () => {
-    if (!codigo || !nome) { toast.error("Código e nome são obrigatórios"); return; }
+    if (!codigo) { toast.error("Selecione um serviço para gerar o código"); return; }
     if (travado) { toast.error("Orçamento travado — não é possível editar"); return; }
     const values = {
       codigo, nome, descricao, unidade,
