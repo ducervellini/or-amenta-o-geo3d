@@ -1217,8 +1217,28 @@ export default function Mobilizacao() {
                 <div>
                   <div className="text-xs font-medium text-muted-foreground mb-2">Custos por Categoria</div>
                   <div className="space-y-1.5">
+                    {/* Hospedagem (separada) */}
+                    {custoHospedagemMensal > 0 && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-1.5">
+                          <Home className="w-3 h-3 text-muted-foreground" />
+                          Hospedagem
+                        </span>
+                        <span className="font-medium">{fmt(custoHospedagemMensal)}</span>
+                      </div>
+                    )}
+                    {/* Combustível (km rodado) */}
+                    {custoCombustivelMensal > 0 && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-1.5">
+                          <Fuel className="w-3 h-3 text-muted-foreground" />
+                          Combustível (km)
+                        </span>
+                        <span className="font-medium">{fmt(custoCombustivelMensal)}</span>
+                      </div>
+                    )}
                     {Object.entries(resultado.custos_por_categoria)
-                      .filter(([, v]) => v > 0)
+                      .filter(([cat, v]) => v > 0 && cat !== "hospedagem" && cat !== "alimentacao")
                       .sort(([, a], [, b]) => b - a)
                       .map(([cat, valor]) => {
                         const catInfo = CATEGORIAS_CUSTO.find((c) => c.value === cat);
