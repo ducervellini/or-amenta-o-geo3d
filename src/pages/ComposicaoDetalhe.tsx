@@ -212,7 +212,8 @@ export default function ComposicaoDetalhe() {
   }, [itensComCalculo]);
 
   const handleSaveHeader = async () => {
-    if (!codigo) { toast.error("Selecione um serviço para gerar o código"); return; }
+    if (!codigo) { toast.error("Informe um código para a composição"); return; }
+    if (servicoId === "_none_" && !nome) { toast.error("Informe um nome para a composição avulsa"); return; }
     if (travado) { toast.error("Orçamento travado — não é possível editar"); return; }
     const values = {
       codigo, nome, descricao, unidade,
