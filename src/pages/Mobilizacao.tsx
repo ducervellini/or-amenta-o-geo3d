@@ -267,10 +267,23 @@ export default function Mobilizacao() {
   const [distanciaBase, setDistanciaBase] = useState(50);
   const [distanciaMedia, setDistanciaMedia] = useState(30);
 
-  // Alimentação
-  const [alimentacaoLocal, setAlimentacaoLocal] = useState<"local" | "cidade">("local");
-  const [distanciaCidadeAlimentacao, setDistanciaCidadeAlimentacao] = useState(0);
-  const [cidadeAlimentacao, setCidadeAlimentacao] = useState("");
+  // Veículo / Custo por km
+  const [consumoMedioKmL, setConsumoMedioKmL] = useState(8); // km/L
+  const [precoCombustivel, setPrecoCombustivel] = useState(6.5); // R$/L
+  const [kmMedioDiario, setKmMedioDiario] = useState(80); // km/dia
+
+  const custoKmRodado = useMemo(() => {
+    if (consumoMedioKmL <= 0) return 0;
+    return precoCombustivel / consumoMedioKmL;
+  }, [precoCombustivel, consumoMedioKmL]);
+
+  const custoCombustivelDiario = useMemo(() => {
+    return custoKmRodado * kmMedioDiario;
+  }, [custoKmRodado, kmMedioDiario]);
+
+  const custoCombustivelMensal = useMemo(() => {
+    return custoCombustivelDiario * diasProdutivos;
+  }, [custoCombustivelDiario, diasProdutivos]);
 
   // Datas do projeto (data início = hoje)
   const [dataInicio, setDataInicio] = useState(() => {
