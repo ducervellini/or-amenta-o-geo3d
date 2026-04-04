@@ -175,7 +175,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                             : "text-sidebar-foreground hover:bg-sidebar-accent"
                         )}
                       >
-                        {child.icon && <child.icon className="w-3 h-3 shrink-0" />}
+                        {child.icon && <child.icon className="w-4 h-4 shrink-0" />}
                         {child.label}
                       </NavLink>
                     ))}
