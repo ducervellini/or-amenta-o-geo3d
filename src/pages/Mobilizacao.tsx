@@ -444,15 +444,15 @@ export default function Mobilizacao() {
             <Card>
               <CardContent className="p-0">
                 <div className="h-[300px] rounded-lg overflow-hidden">
-                  <LeafletMap
-                    projectLat={lat}
-                    projectLng={lng}
-                    baseLat={baseLat}
-                    baseLng={baseLng}
-                    municipio={municipio}
-                    baseEndereco={baseEndereco}
-                    geoJsonData={geoJsonData}
-                  />
+                    <LeafletMap
+                      projectLat={lat || -15.78}
+                      projectLng={lng || -47.93}
+                      baseLat={baseLat || lat || -15.78}
+                      baseLng={baseLng || lng || -47.93}
+                      municipio={municipio}
+                      baseEndereco=""
+                      geoJsonData={geoJsonData}
+                    />
                 </div>
               </CardContent>
             </Card>
