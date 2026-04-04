@@ -250,16 +250,16 @@ export default function Mobilizacao() {
   const [modoLocalizacao, setModoLocalizacao] = useState<"manual" | "arquivo">("manual");
   const [municipio, setMunicipio] = useState("");
   const [estado, setEstado] = useState("");
-  const [lat, setLat] = useState(-15.78);
-  const [lng, setLng] = useState(-47.93);
-  const [baseEndereco, setBaseEndereco] = useState("");
+  const [lat, setLat] = useState<number | null>(null);
+  const [lng, setLng] = useState<number | null>(null);
+  const [geocodificando, setGeocodificando] = useState(false);
   const [arquivoGeo, setArquivoGeo] = useState("");
   const [geoJsonData, setGeoJsonData] = useState<FeatureCollection | null>(null);
   const [loadingGeo, setLoadingGeo] = useState(false);
   const [loadingMunicipios, setLoadingMunicipios] = useState(false);
   const [geoProgress, setGeoProgress] = useState("");
-  const [baseLat, setBaseLat] = useState(-15.78);
-  const [baseLng, setBaseLng] = useState(-47.93);
+  const [baseLat, setBaseLat] = useState<number | null>(null);
+  const [baseLng, setBaseLng] = useState<number | null>(null);
   const [diasTrabalho, setDiasTrabalho] = useState(30);
   const [jornadaDiaria, setJornadaDiaria] = useState(8);
   const [diasChuvaMes, setDiasChuvaMes] = useState(5);
@@ -267,16 +267,47 @@ export default function Mobilizacao() {
   const [distanciaBase, setDistanciaBase] = useState(50);
   const [distanciaMedia, setDistanciaMedia] = useState(30);
 
-  // Datas do projeto
+  // Alimentação
+  const [alimentacaoLocal, setAlimentacaoLocal] = useState<"local" | "cidade">("local");
+  const [distanciaCidadeAlimentacao, setDistanciaCidadeAlimentacao] = useState(0);
+  const [cidadeAlimentacao, setCidadeAlimentacao] = useState("");
+
+  // Datas do projeto (data início = hoje)
   const [dataInicio, setDataInicio] = useState(() => {
-    const d = new Date();
-    return d.toISOString().split("T")[0];
+    return new Date().toISOString().split("T")[0];
   });
-  const [dataFim, setDataFim] = useState(() => {
-    const d = new Date();
-    d.setMonth(d.getMonth() + 3);
+  const [duracaoMeses, setDuracaoMeses] = useState(3);
+  const dataFim = useMemo(() => {
+    const d = new Date(dataInicio);
+    d.setMonth(d.getMonth() + duracaoMeses);
     return d.toISOString().split("T")[0];
-  });
+  }, [dataInicio, duracaoMeses]);
+
+  // Auto-geocode município/estado
+  const geocodeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!municipio || !estado || modoLocalizacao !== "manual") return;
+    if (geocodeTimeout.current) clearTimeout(geocodeTimeout.current);
+    geocodeTimeout.current = setTimeout(async () => {
+      setGeocodificando(true);
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(municipio + ", " + estado + ", Brasil")}&format=json&limit=1`,
+          { headers: { "User-Agent": "MobilizacaoApp/1.0" } }
+        );
+        const data = await res.json();
+        if (data?.[0]) {
+          setLat(parseFloat(data[0].lat));
+          setLng(parseFloat(data[0].lon));
+        }
+      } catch (e) {
+        console.error("Geocode error:", e);
+      } finally {
+        setGeocodificando(false);
+      }
+    }, 1000);
+    return () => { if (geocodeTimeout.current) clearTimeout(geocodeTimeout.current); };
+  }, [municipio, estado, modoLocalizacao]);
 
   // Municípios na rota
   const [municipiosRota, setMunicipiosRota] = useState<MunicipioRota[]>([]);
