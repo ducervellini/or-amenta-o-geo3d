@@ -75,14 +75,8 @@ const navigation: NavItem[] = [
     ],
   },
   { label: "Composições", path: "/composicoes", icon: Layers },
-  {
-    label: "ADM Local",
-    icon: Building,
-    children: [
-      { label: "Oportunidades", path: "/oportunidades", icon: Briefcase },
-      { label: "Mobilização", path: "/mobilizacao", icon: Truck },
-    ],
-  },
+  { label: "Oportunidades", path: "/oportunidades", icon: Briefcase },
+  { label: "ADM Local", path: "/mobilizacao", icon: Building },
   { label: "Orçamentos", path: "/orcamentos", icon: FileText },
   {
     label: "Parâmetros",
