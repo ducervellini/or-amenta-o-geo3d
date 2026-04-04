@@ -1294,6 +1294,10 @@ export default function Mobilizacao() {
                             <Input className="h-8 text-xs" type="number" value={item.quantidade_pessoas} onChange={(e) => updateMobDesmob(item._key, "quantidade_pessoas", Number(e.target.value))} min={1} />
                           </div>
                           <div>
+                            <Label className="text-[10px]">Custo H/H (R$)</Label>
+                            <Input className="h-8 text-xs" type="number" step="0.01" value={item.custo_hora_pessoa || ""} onChange={(e) => updateMobDesmob(item._key, "custo_hora_pessoa", Number(e.target.value))} placeholder="R$/hora" />
+                          </div>
+                          <div>
                             <Label className="text-[10px]">Veículos</Label>
                             <Input className="h-8 text-xs" type="number" value={item.quantidade_veiculos} onChange={(e) => updateMobDesmob(item._key, "quantidade_veiculos", Number(e.target.value))} min={1} />
                           </div>
