@@ -1100,10 +1100,8 @@ export default function Mobilizacao() {
                               const veic = (veiculosCadastrados as any[])?.find((ve: any) => ve.id === v);
                               updateCusto(c._key, "veiculo_id", v);
                               if (veic) {
-                                updateCusto(c._key, "descricao", veic.nome);
-                                updateCusto(c._key, "consumo_km", veic.media_km_l > 0 ? 1 / veic.media_km_l : 0);
-                                updateCusto(c._key, "preco_litro", veic.combustivel_preco_litro);
-                                updateCusto(c._key, "valor_unitario", veic.custo_km || 0);
+                              updateCusto(c._key, "descricao", veic.nome);
+                                updateCusto(c._key, "preco_combustivel", veic.combustivel_preco_litro || 0);
                               }
                             }}
                           >
