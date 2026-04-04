@@ -8,6 +8,7 @@ export function useSupabaseQuery(
     orderBy?: string;
     ascending?: boolean;
     filter?: { column: string; value: unknown };
+    filters?: Record<string, unknown>;
     enabled?: boolean;
   }
 ) {
