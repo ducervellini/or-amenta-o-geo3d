@@ -20,7 +20,7 @@ export default function DRE() {
 
   // Inputs do usuário
   const [custoDireto, setCustoDireto] = useState(850000);
-  const [lucroLiquidoDesejado, setLucroLiquidoDesejado] = useState(100000);
+  const [lucroLiquidoPct, setLucroLiquidoPct] = useState(8);
   const [irpjPct, setIrpjPct] = useState(4.80);
   const [csllPct, setCsllPct] = useState(2.88);
 
@@ -58,21 +58,15 @@ export default function DRE() {
     const financiamento = baseFinanciamento * (financiamentoPct / 100);
     const totalDespesas = adminLocal + adminCentral + financiamento;
 
-    // Caminho inverso:
-    // Lucro Líquido = Lucro antes IR - IR
-    // IR = Receita Bruta × (IRPJ% + CSLL%)
-    // Lucro antes IR = Lucro Bruto - Despesas
-    // Lucro Bruto = Receita Líquida - Custos Diretos
-    // Receita Líquida = Receita Bruta - Tributos Receita
-    // Receita Líquida = Receita Bruta × (1 - tributosReceita%)
-    // 
-    // Lucro Líquido = Receita Bruta × (1 - tributosReceita%) - custoDireto - totalDespesas - Receita Bruta × IR%
-    // Lucro Líquido = Receita Bruta × (1 - tributosReceita% - IR%) - custoDireto - totalDespesas
-    // Receita Bruta = (Lucro Líquido + custoDireto + totalDespesas) / (1 - tributosReceita% - IR%)
+    // Caminho inverso com lucro líquido em %:
+    // Lucro Líquido = Receita Bruta × lucroLiquidoPct%
+    // Receita Bruta × (1 - tributos% - IR%) - custoDireto - totalDespesas = Receita Bruta × lucroLiquidoPct%
+    // Receita Bruta × (1 - tributos% - IR% - lucroLiquidoPct%) = custoDireto + totalDespesas
+    // Receita Bruta = (custoDireto + totalDespesas) / (1 - tributos% - IR% - lucroLiquidoPct%)
 
-    const denominador = 1 - (totalTributosReceitaPct / 100) - (totalIRPct / 100);
+    const denominador = 1 - (totalTributosReceitaPct / 100) - (totalIRPct / 100) - (lucroLiquidoPct / 100);
     const receitaBruta = denominador > 0
-      ? (lucroLiquidoDesejado + custoDireto + totalDespesas) / denominador
+      ? (custoDireto + totalDespesas) / denominador
       : 0;
 
     const tributosTotal = receitaBruta * (totalTributosReceitaPct / 100);
@@ -117,7 +111,7 @@ export default function DRE() {
       margemBruta,
       margemEbit,
     };
-  }, [custoDireto, lucroLiquidoDesejado, tributosReceita, adminCentralPct, adminLocalPct, financiamentoPct, irpjPct, csllPct]);
+  }, [custoDireto, lucroLiquidoPct, tributosReceita, adminCentralPct, adminLocalPct, financiamentoPct, irpjPct, csllPct]);
 
   type DreRow = {
     label: string;
@@ -185,13 +179,18 @@ export default function DRE() {
               </div>
               <Separator />
               <div>
-                <Label className="text-xs font-semibold text-primary">Lucro Líquido Desejado (R$)</Label>
-                <Input
-                  type="number"
-                  value={lucroLiquidoDesejado}
-                  onChange={e => setLucroLiquidoDesejado(parseFloat(e.target.value) || 0)}
-                  className="mt-1 border-primary/50 focus:border-primary"
-                />
+                <Label className="text-xs font-semibold text-primary">Lucro Líquido Desejado (%)</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={lucroLiquidoPct}
+                    onChange={e => setLucroLiquidoPct(parseFloat(e.target.value) || 0)}
+                    className="border-primary/50 focus:border-primary"
+                  />
+                  <span className="text-sm text-muted-foreground">%</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Percentual sobre a receita bruta</p>
               </div>
               <Separator />
               <div className="text-xs font-medium text-muted-foreground">Impostos sobre Lucro</div>
