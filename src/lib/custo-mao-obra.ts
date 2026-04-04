@@ -91,7 +91,9 @@ export function calcularCustoDetalhado(
   const salarioMensal = calcularSalarioMensal(cargo, jornada);
   const j = jornada || { horas_diarias: 8, dias_por_semana: 5, horas_por_mes: 176 };
 
-  // Fator regime operacional (ex: 60/10 → 60/(60+10) = 0.857)
+  // Fator regime operacional — folga é remunerada, então o custo mensal
+  // permanece integral. O fator indica a proporção de dias produtivos
+  // (útil para calcular custo/dia trabalhado, mas NÃO reduz o custo total).
   const fatorRegime = regime
     ? regime.dias_trabalho / (regime.dias_trabalho + regime.dias_folga)
     : 1;
@@ -116,7 +118,8 @@ export function calcularCustoDetalhado(
     .filter((b) => b.tipo === "percentual")
     .reduce((sum, b) => sum + salarioMensal * (b.valor / 100), 0);
 
-  const custoTotal = (salarioMensal + valorEncargos + valorBenFixos + valorBenPct) * fatorRegime;
+  // Custo total SEM redução por regime (folga remunerada = custo integral)
+  const custoTotal = salarioMensal + valorEncargos + valorBenFixos + valorBenPct;
 
   return {
     salario_mensal: salarioMensal,
