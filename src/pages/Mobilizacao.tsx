@@ -1168,11 +1168,11 @@ export default function Mobilizacao() {
                 {/* Dias */}
                 <div className="grid grid-cols-2 gap-2">
                   <div className="p-2 rounded-md bg-primary/10 text-center">
-                    <div className="text-lg font-bold text-primary">{resultado.dias_produtivos}</div>
+                    <div className="text-lg font-bold text-primary">{diasProdutivos}</div>
                     <div className="text-[10px] text-muted-foreground">Dias Produtivos</div>
                   </div>
                   <div className="p-2 rounded-md bg-destructive/10 text-center">
-                    <div className="text-lg font-bold text-destructive">{resultado.dias_improdutivos}</div>
+                    <div className="text-lg font-bold text-destructive">{diasImprodutivos}</div>
                     <div className="text-[10px] text-muted-foreground">Dias Improdutivos</div>
                   </div>
                 </div>
