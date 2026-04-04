@@ -147,17 +147,16 @@ export default function Equipamentos() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Código</TableHead>
-              <TableHead>Equipamento</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead className="text-right">Custo/hora</TableHead>
-              <TableHead className="text-right">Custo/mês</TableHead>
+              <SortTH sk="codigo" label="Código" />
+              <SortTH sk="nome" label="Equipamento" />
+              <SortTH sk="tipo_propriedade" label="Tipo" />
+              <SortTH sk="_custoHora" label="Custo/hora" className="text-right" />
+              <SortTH sk="_custoMes" label="Custo/mês" className="text-right" />
               <TableHead className="w-24">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((row: any) => {
-              const rc = calcEquip(rowToForm(row));
+            {sortedRows.map((row: any) => {
               return (
                 <TableRow key={row.id}>
                   <TableCell className="font-medium text-accent">{row.codigo}</TableCell>
@@ -167,8 +166,8 @@ export default function Equipamentos() {
                       {row.tipo_propriedade === "proprio" || !row.tipo_propriedade ? "Próprio" : "Alugado"}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right font-medium">{R(rc.custoHora)}</TableCell>
-                  <TableCell className="text-right font-medium">{R(rc.custoMes)}</TableCell>
+                  <TableCell className="text-right font-medium">{R(row._custoHora)}</TableCell>
+                  <TableCell className="text-right font-medium">{R(row._custoMes)}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
                       <Button size="icon" variant="ghost" title="Editar" onClick={() => openEdit(row)}><Pencil className="h-4 w-4" /></Button>
@@ -179,7 +178,7 @@ export default function Equipamentos() {
                 </TableRow>
               );
             })}
-            {filtered.length === 0 && (
+            {sortedRows.length === 0 && (
               <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum equipamento cadastrado</TableCell></TableRow>
             )}
           </TableBody>
