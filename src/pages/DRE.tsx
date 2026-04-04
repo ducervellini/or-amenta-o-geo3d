@@ -82,7 +82,7 @@ export default function DRE() {
   // Atualizar custo direto e BDI quando oportunidade muda
   const selectedOportunidade = oportunidades?.find((o) => o.id === selectedOportunidadeId);
 
-  useMemo(() => {
+  useEffect(() => {
     if (orcamentoOportunidade) {
       setCustoDireto(Number(orcamentoOportunidade.custo_total) || 0);
       if (orcamentoOportunidade.bdi_id) {
