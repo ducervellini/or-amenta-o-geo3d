@@ -95,7 +95,7 @@ export default function Veiculos() {
       else (f as any)[k] = row[k] || (defaultForm as any)[k];
     }
     const rc = calcVeic(f);
-    return { ...row, _depKm: rc.depKm, _custoKmTotal: rc.custoKmTotal, _custoHora: rc.custoHora, _totalMes: rc.totalMes };
+    return { ...row, _calc: rc, _depKm: rc.depKm, _custoKmTotal: rc.custoKmTotal, _custoHora: rc.custoHora, _totalMes: rc.totalMes };
   }), [filtered]);
 
   const { sorted: sortedRows, sortKey, sortDirection, handleSort } = useTableSort(flatFiltered);
