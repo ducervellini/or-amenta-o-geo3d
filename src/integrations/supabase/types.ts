@@ -1457,12 +1457,14 @@ export type Database = {
           lavagem_mensal: number
           manutencao_hora: number
           manutencao_preventiva_mensal: number
+          media_km_l: number
           nome: string
           oleo_troca_km: number
           oleo_valor: number
           pneus_valor: number
           pneus_vida_util_km: number
           seguro_mensal: number
+          tipo_combustivel: string
           tipo_propriedade: string
           unidade: string
           updated_at: string
@@ -1486,12 +1488,14 @@ export type Database = {
           lavagem_mensal?: number
           manutencao_hora?: number
           manutencao_preventiva_mensal?: number
+          media_km_l?: number
           nome: string
           oleo_troca_km?: number
           oleo_valor?: number
           pneus_valor?: number
           pneus_vida_util_km?: number
           seguro_mensal?: number
+          tipo_combustivel?: string
           tipo_propriedade?: string
           unidade?: string
           updated_at?: string
@@ -1515,12 +1519,14 @@ export type Database = {
           lavagem_mensal?: number
           manutencao_hora?: number
           manutencao_preventiva_mensal?: number
+          media_km_l?: number
           nome?: string
           oleo_troca_km?: number
           oleo_valor?: number
           pneus_valor?: number
           pneus_vida_util_km?: number
           seguro_mensal?: number
+          tipo_combustivel?: string
           tipo_propriedade?: string
           unidade?: string
           updated_at?: string

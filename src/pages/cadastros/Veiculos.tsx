@@ -19,6 +19,7 @@ const R = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits
 interface VeiculoForm {
   codigo: string; nome: string; unidade: string;
   tipo_propriedade: string;
+  media_km_l: number; tipo_combustivel: string;
   valor_aquisicao: number; valor_residual: number; vida_util_km: number;
   valor_aluguel_mensal: number; km_mensal_estimado: number;
   combustivel_consumo_km: number; combustivel_preco_litro: number;
@@ -31,7 +32,7 @@ interface VeiculoForm {
 
 const defaultForm: VeiculoForm = {
   codigo: "", nome: "", unidade: "h",
-  tipo_propriedade: "proprio",
+  tipo_propriedade: "proprio", media_km_l: 0, tipo_combustivel: "diesel",
   valor_aquisicao: 0, valor_residual: 0, vida_util_km: 300000,
   valor_aluguel_mensal: 0, km_mensal_estimado: 3000,
   combustivel_consumo_km: 0, combustivel_preco_litro: 0,
@@ -162,7 +163,8 @@ export default function Veiculos() {
               <SortTH sk="codigo" label="Código" />
               <SortTH sk="nome" label="Veículo" />
               <SortTH sk="tipo_propriedade" label="Tipo" />
-              <SortTH sk="_depKm" label="Deprec./km" className="text-right" />
+              <SortTH sk="media_km_l" label="Média (km/L)" className="text-right" />
+              <SortTH sk="tipo_combustivel" label="Combustível" />
               <SortTH sk="_custoKmTotal" label="Custo/km" className="text-right" />
               <SortTH sk="_custoHora" label="Custo/hora" className="text-right" />
               <SortTH sk="_totalMes" label="Custo/mês" className="text-right" />
@@ -179,7 +181,10 @@ export default function Veiculos() {
                     {row.tipo_propriedade === "proprio" || !row.tipo_propriedade ? "Próprio" : "Alugado"}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right">{R(row._depKm)}</TableCell>
+                <TableCell className="text-right">{Number(row.media_km_l || 0).toFixed(1)}</TableCell>
+                <TableCell>
+                  <Badge variant="outline" className="capitalize">{row.tipo_combustivel || "diesel"}</Badge>
+                </TableCell>
                 <TableCell className="text-right font-medium">{R(row._custoKmTotal)}</TableCell>
                 <TableCell className="text-right font-medium">{R(row._custoHora)}</TableCell>
                 <TableCell className="text-right font-medium">{R(row._totalMes)}</TableCell>
@@ -192,7 +197,7 @@ export default function Veiculos() {
               </TableRow>
             ))}
             {sortedRows.length === 0 && (
-              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhum veículo cadastrado</TableCell></TableRow>
+              <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhum veículo cadastrado</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -205,9 +210,24 @@ export default function Veiculos() {
           </DialogHeader>
           <div className="grid gap-6">
             {/* Identificação */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div><Label>Código *</Label><Input value={form.codigo} onChange={e => setField("codigo", e.target.value)} placeholder="VE-001" /></div>
-              <div className="col-span-2"><Label>Nome *</Label><Input value={form.nome} onChange={e => setField("nome", e.target.value)} /></div>
+              <div><Label>Nome *</Label><Input value={form.nome} onChange={e => setField("nome", e.target.value)} /></div>
+              <div>
+                <Label>Média (km/L)</Label>
+                <Input type="number" step="0.1" value={form.media_km_l || ""} onChange={e => setNum("media_km_l", e.target.value)} placeholder="Ex: 8.5" />
+              </div>
+              <div>
+                <Label>Tipo Combustível</Label>
+                <Select value={form.tipo_combustivel} onValueChange={v => setField("tipo_combustivel", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="diesel">Diesel</SelectItem>
+                    <SelectItem value="gasolina">Gasolina</SelectItem>
+                    <SelectItem value="etanol">Etanol</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <Tabs defaultValue="propriedade">
