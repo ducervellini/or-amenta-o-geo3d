@@ -281,9 +281,7 @@ export default function Mobilizacao() {
     return custoKmRodado * kmMedioDiario;
   }, [custoKmRodado, kmMedioDiario]);
 
-  const custoCombustivelMensal = useMemo(() => {
-    return custoCombustivelDiario * diasProdutivos;
-  }, [custoCombustivelDiario, diasProdutivos]);
+  // custoCombustivelMensal calculated after diasProdutivos is available
 
   // Datas do projeto (data início = hoje)
   const [dataInicio, setDataInicio] = useState(() => {
