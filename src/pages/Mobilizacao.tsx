@@ -670,11 +670,11 @@ export default function Mobilizacao() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                       <div className="p-2 rounded-md bg-primary/10 text-center">
                         <div className="text-lg font-bold text-primary">{pluviometria.resumo.precipitacao_total_mm}</div>
-                        <div className="text-[10px] text-muted-foreground">mm total</div>
+                        <div className="text-[10px] text-muted-foreground">mm total (média)</div>
                       </div>
                       <div className="p-2 rounded-md bg-primary/10 text-center">
                         <div className="text-lg font-bold text-primary">{pluviometria.resumo.dias_com_chuva}</div>
-                        <div className="text-[10px] text-muted-foreground">dias c/ chuva</div>
+                        <div className="text-[10px] text-muted-foreground">dias c/ chuva (média)</div>
                       </div>
                       <div className="p-2 rounded-md bg-primary/10 text-center">
                         <div className="text-lg font-bold text-primary">{pluviometria.resumo.media_dias_chuva_mes}</div>
