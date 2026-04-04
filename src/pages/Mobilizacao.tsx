@@ -3,7 +3,7 @@ import {
   MapPin, Plus, Trash2, Save, Loader2, Cloud, Sun,
   Truck, Home, Utensils, Fuel, CreditCard, Plane,
   Users, Calculator, ChevronDown, ChevronUp, Info, Upload,
-  FileUp, Navigation, CloudRain, BarChart3, Calendar, Route
+  FileUp, Navigation, CloudRain, BarChart3, Calendar, Route, ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -460,6 +460,48 @@ export default function Mobilizacao() {
     return mobDesmobItens.reduce((acc, item) => acc + calcularMobDesmobItem(item).custoTotal, 0);
   }, [mobDesmobItens, calcularMobDesmobItem]);
 
+  const [mobDesmobLoading, setMobDesmobLoading] = useState<Record<number, boolean>>({});
+  const [mobDesmobRotasUrl, setMobDesmobRotasUrl] = useState<Record<number, string>>({});
+
+  const calcularRotaMobDesmob = async (key: number) => {
+    const item = mobDesmobItens.find((i) => i._key === key);
+    if (!item) return;
+    if (!item.municipio_saida || !item.estado_saida) {
+      toast.error("Preencha o município e estado de saída");
+      return;
+    }
+    if (!municipio && !lat) {
+      toast.error("Defina o local do projeto primeiro");
+      return;
+    }
+
+    setMobDesmobLoading((prev) => ({ ...prev, [key]: true }));
+    try {
+      const { data, error } = await supabase.functions.invoke("calcular-rota", {
+        body: {
+          origem_municipio: item.municipio_saida,
+          origem_estado: item.estado_saida,
+          destino_municipio: municipio || undefined,
+          destino_estado: estado || undefined,
+          destino_lat: lat || undefined,
+          destino_lng: lng || undefined,
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Erro ao calcular rota");
+
+      updateMobDesmob(key, "distancia_km", data.distancia_km);
+      setMobDesmobRotasUrl((prev) => ({ ...prev, [key]: data.rotas_brasil_url }));
+      toast.success(`Rota calculada: ${data.distancia_km} km (~${data.duracao_horas}h)`);
+    } catch (err: any) {
+      console.error("Erro ao calcular rota:", err);
+      toast.error(err.message || "Erro ao calcular rota");
+    } finally {
+      setMobDesmobLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
   const params: MobilizacaoParams = {
     dias_trabalho: diasTrabalho,
     jornada_diaria: jornadaDiaria,
@@ -761,6 +803,7 @@ export default function Mobilizacao() {
                 </div>
               </div>
             </Section>
+
 
 
             {/* Municípios na Rota */}
@@ -1191,7 +1234,23 @@ export default function Mobilizacao() {
                           </div>
                           <div>
                             <Label className="text-[10px]">Distância (km)</Label>
-                            <Input className="h-8 text-xs" type="number" value={item.distancia_km || ""} onChange={(e) => updateMobDesmob(item._key, "distancia_km", Number(e.target.value))} placeholder="km total ida" />
+                            <div className="flex gap-1">
+                              <Input className="h-8 text-xs flex-1" type="number" value={item.distancia_km || ""} onChange={(e) => updateMobDesmob(item._key, "distancia_km", Number(e.target.value))} placeholder="km ida" />
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8 shrink-0"
+                                    onClick={() => calcularRotaMobDesmob(item._key)}
+                                    disabled={mobDesmobLoading[item._key]}
+                                  >
+                                    {mobDesmobLoading[item._key] ? <Loader2 className="w-3 h-3 animate-spin" /> : <Navigation className="w-3 h-3" />}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Calcular rota automaticamente</TooltipContent>
+                              </Tooltip>
+                            </div>
                           </div>
                           <div>
                             <Label className="text-[10px]">Km Máx/Dia</Label>
@@ -1235,6 +1294,16 @@ export default function Mobilizacao() {
                           <div className="text-[10px]">
                             <span className="block text-muted-foreground">Ida: {fmt(calc.custoIda)}</span>
                             <span className="block font-bold text-primary">Ida+Volta: {fmt(calc.custoTotal)}</span>
+                            {mobDesmobRotasUrl[item._key] && (
+                              <a
+                                href={mobDesmobRotasUrl[item._key]}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-0.5 text-primary hover:underline mt-0.5"
+                              >
+                                <ExternalLink className="w-2.5 h-2.5" /> Ver pedágios
+                              </a>
+                            )}
                           </div>
                         </div>
                       )}
