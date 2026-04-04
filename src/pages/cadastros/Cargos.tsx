@@ -255,7 +255,7 @@ function CargoFormDialog({
           </div>
 
           {/* ── Encargos Sociais ── */}
-          {!isPJ && (
+          {!hideEncargosEBeneficios && (
             <div>
               <div className="flex items-center justify-between mb-3 border-b pb-1">
                 <h3 className="text-sm font-semibold text-foreground">Encargos Sociais</h3>
