@@ -491,12 +491,24 @@ export default function Mobilizacao() {
                         e.target.value = "";
                       }}
                     />
+                    {(loadingGeo || loadingMunicipios) && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        {geoProgress}
+                      </div>
+                    )}
                     {arquivoGeo && (
                       <div className="flex items-center justify-center gap-2">
                         <Badge variant="secondary" className="text-xs gap-1">
                           <FileUp className="w-3 h-3" />
                           {arquivoGeo}
-                          <button onClick={() => setArquivoGeo("")} className="ml-1 hover:text-destructive">×</button>
+                          {geoJsonData && (
+                            <span className="text-muted-foreground">({geoJsonData.features.length} feições)</span>
+                          )}
+                          <button onClick={() => {
+                            setArquivoGeo("");
+                            setGeoJsonData(null);
+                          }} className="ml-1 hover:text-destructive">×</button>
                         </Badge>
                       </div>
                     )}
