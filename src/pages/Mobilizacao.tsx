@@ -1067,7 +1067,7 @@ export default function Mobilizacao() {
               </div>
             </Section>
 
-            <Section title="Itens de Custo" icon={CreditCard} badge={`${custos.length} itens`}>
+            <Section title="Veículos e Deslocamento" icon={Truck} badge={`${custos.length} veículos`}>
               <div className="space-y-3">
                 {custos.map((c) => {
                   const CatIcon = ICON_MAP[c.categoria] || CreditCard;
