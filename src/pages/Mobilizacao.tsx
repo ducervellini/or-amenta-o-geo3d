@@ -1044,7 +1044,7 @@ export default function Mobilizacao() {
                           </>
                         )}
 
-                        {/* ── COMBUSTÍVEL ── */}
+                        {/* ── VEÍCULO + COMBUSTÍVEL ── */}
                         {item.categoria === "combustivel" && (
                           <>
                             <div>
@@ -1078,19 +1078,17 @@ export default function Mobilizacao() {
                               <Input className="h-8 text-xs" type="number" value={item.km_dia || ""} onChange={(e) => updateDeslocamento(item._key, "km_dia", Number(e.target.value))} />
                             </div>
                             <div>
-                              <Label className="text-[10px]">Combustível (R$/L)</Label>
-                              <Input className="h-8 text-xs" type="number" step="0.01" value={item.preco_combustivel || ""} onChange={(e) => updateDeslocamento(item._key, "preco_combustivel", Number(e.target.value))} />
-                            </div>
-                            <div>
                               <Label className="text-[10px]">Qtde Veículos</Label>
                               <Input className="h-8 text-xs" type="number" value={item.quantidade} onChange={(e) => updateDeslocamento(item._key, "quantidade", Number(e.target.value))} min={1} />
                             </div>
                             <div className="flex items-end col-span-2 md:col-span-5">
                               <div className="text-[10px] text-muted-foreground pb-1.5 space-y-0.5">
                                 {selectedVeiculo ? (
-                                  <div className="flex gap-4">
-                                    <span>{mediaKmL.toFixed(1)} km/L · {selectedVeiculo.tipo_combustivel || "diesel"} · {fmt(custoKm)}/km</span>
-                                    <span>Mês: <span className="font-medium text-foreground">{fmt(custoMes)}</span></span>
+                                  <div className="flex gap-4 flex-wrap">
+                                    <span>{mediaKmL.toFixed(1)} km/L · {selectedVeiculo.tipo_combustivel || "diesel"} · R$ {Number(selectedVeiculo.combustivel_preco_litro || 0).toFixed(2)}/L</span>
+                                    <span>{fmt(custoKm)}/km · {Number(item.km_dia || 0) * diasProdutivosMes} km/mês</span>
+                                    <span>Custo veículo/mês: <span className="font-medium text-foreground">{fmt(Number(selectedVeiculo.custo_km || 0) * Number(item.km_dia || 0) * diasProdutivosMes)}</span></span>
+                                    <span>Comb/mês: <span className="font-medium text-foreground">{fmt(custoMes)}</span></span>
                                     <span>Total ({duracaoMeses}m): <span className="font-bold text-primary">{fmt(custoItem)}</span></span>
                                   </div>
                                 ) : (
