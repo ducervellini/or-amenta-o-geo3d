@@ -233,6 +233,7 @@ export default function Cargos() {
                     <SortableHeader label="Regime" sortKey="regime_contratacao" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
                     <SortableHeader label="Salário Base" sortKey="salario_base" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
                     <SortableHeader label="Tipo" sortKey="unidade_salarial" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+                    <SortableHeader label="Local" sortKey="local_trabalho" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
                     <SortableHeader label="Encargos" sortKey="_custo.valor_encargos" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
                     <SortableHeader label="Benefícios" sortKey="_custo.valor_beneficios_fixos" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
                     <SortableHeader label="Custo Total/Mês" sortKey="custo_total" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
