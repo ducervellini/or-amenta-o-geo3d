@@ -31,7 +31,12 @@ import {
   type EquipeItem,
   type MobilizacaoParams,
 } from "@/lib/mobilizacao-calculo";
+import {
+  parseGeoFile, getGeoJSONCenter, getGeoJSONBounds,
+  findMunicipiosFromGeoJSON,
+} from "@/lib/geo-utils";
 import { supabase } from "@/integrations/supabase/client";
+import type { FeatureCollection } from "geojson";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -89,16 +94,17 @@ interface PluviometriaResult {
 
 // ── Plain Leaflet Map Component ──
 function LeafletMap({
-  projectLat, projectLng, baseLat, baseLng, municipio, baseEndereco, municipiosRota,
+  projectLat, projectLng, baseLat, baseLng, municipio, baseEndereco, geoJsonData,
 }: {
   projectLat: number; projectLng: number;
   baseLat: number; baseLng: number;
   municipio: string; baseEndereco: string;
-  municipiosRota?: MunicipioRota[];
+  geoJsonData?: FeatureCollection | null;
 }) {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.Layer[]>([]);
+  const geoLayerRef = useRef<L.GeoJSON | null>(null);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -143,8 +149,55 @@ function LeafletMap({
       markersRef.current.push(line);
     }
 
-    mapRef.current.setView([projectLat, projectLng], 8);
+    // Fit to GeoJSON if present, otherwise center on project
+    if (geoJsonData && geoJsonData.features.length > 0) {
+      // handled in geoJsonData effect
+      mapRef.current.setView([projectLat, projectLng], 8);
+    } else {
+      mapRef.current.setView([projectLat, projectLng], 8);
+    }
   }, [projectLat, projectLng, baseLat, baseLng, municipio, baseEndereco]);
+
+  // GeoJSON layer effect
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    // Remove old layer
+    if (geoLayerRef.current) {
+      mapRef.current.removeLayer(geoLayerRef.current);
+      geoLayerRef.current = null;
+    }
+
+    if (geoJsonData && geoJsonData.features.length > 0) {
+      geoLayerRef.current = L.geoJSON(geoJsonData as any, {
+        style: {
+          color: "#3b82f6",
+          weight: 3,
+          opacity: 0.8,
+          fillColor: "#3b82f6",
+          fillOpacity: 0.15,
+        },
+        pointToLayer: (_, latlng) => L.circleMarker(latlng, {
+          radius: 6,
+          fillColor: "#3b82f6",
+          color: "#1e40af",
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.7,
+        }),
+        onEachFeature: (feature, layer) => {
+          const name = feature.properties?.name || feature.properties?.Name || feature.properties?.nome || "";
+          if (name) layer.bindPopup(name);
+        },
+      }).addTo(mapRef.current);
+
+      // Fit map to GeoJSON bounds
+      const bounds = geoLayerRef.current.getBounds();
+      if (bounds.isValid()) {
+        mapRef.current.fitBounds(bounds, { padding: [30, 30] });
+      }
+    }
+  }, [geoJsonData]);
 
   return <div ref={containerRef} className="h-full w-full" />;
 }
@@ -187,6 +240,10 @@ export default function Mobilizacao() {
   const [lng, setLng] = useState(-47.93);
   const [baseEndereco, setBaseEndereco] = useState("");
   const [arquivoGeo, setArquivoGeo] = useState("");
+  const [geoJsonData, setGeoJsonData] = useState<FeatureCollection | null>(null);
+  const [loadingGeo, setLoadingGeo] = useState(false);
+  const [loadingMunicipios, setLoadingMunicipios] = useState(false);
+  const [geoProgress, setGeoProgress] = useState("");
   const [baseLat, setBaseLat] = useState(-15.78);
   const [baseLng, setBaseLng] = useState(-47.93);
   const [diasTrabalho, setDiasTrabalho] = useState(30);
@@ -349,7 +406,7 @@ export default function Mobilizacao() {
                     baseLng={baseLng}
                     municipio={municipio}
                     baseEndereco={baseEndereco}
-                    municipiosRota={municipiosRota}
+                    geoJsonData={geoJsonData}
                   />
                 </div>
               </CardContent>
@@ -390,21 +447,68 @@ export default function Mobilizacao() {
                       type="file"
                       accept=".kmz,.kml,.shp,.zip"
                       className="hidden"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (file) {
                           setArquivoGeo(file.name);
-                          toast.info(`Arquivo "${file.name}" carregado. Parsing de coordenadas será implementado com API geográfica.`);
+                          setLoadingGeo(true);
+                          setGeoProgress("Lendo arquivo...");
+                          try {
+                            const geojson = await parseGeoFile(file);
+                            setGeoJsonData(geojson);
+
+                            // Extract center and update lat/lng
+                            const center = getGeoJSONCenter(geojson);
+                            if (center) {
+                              setLat(Math.round(center.lat * 10000) / 10000);
+                              setLng(Math.round(center.lng * 10000) / 10000);
+                            }
+
+                            toast.success(`Arquivo "${file.name}" carregado com ${geojson.features.length} feição(ões)`);
+
+                            // Find municipalities
+                            setLoadingMunicipios(true);
+                            setGeoProgress("Identificando municípios...");
+                            const munis = await findMunicipiosFromGeoJSON(geojson, (cur, total) => {
+                              setGeoProgress(`Geocodificando ponto ${cur}/${total}...`);
+                            });
+                            if (munis.length > 0) {
+                              setMunicipiosRota(munis);
+                              // Set first municipality as main
+                              setMunicipio(munis[0].nome);
+                              setEstado(munis[0].uf);
+                              toast.success(`${munis.length} município(s) identificado(s)`);
+                            }
+                          } catch (err: any) {
+                            console.error("Erro parsing geo:", err);
+                            toast.error("Erro ao ler arquivo: " + (err.message || "formato inválido"));
+                          } finally {
+                            setLoadingGeo(false);
+                            setLoadingMunicipios(false);
+                            setGeoProgress("");
+                          }
                         }
                         e.target.value = "";
                       }}
                     />
+                    {(loadingGeo || loadingMunicipios) && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        {geoProgress}
+                      </div>
+                    )}
                     {arquivoGeo && (
                       <div className="flex items-center justify-center gap-2">
                         <Badge variant="secondary" className="text-xs gap-1">
                           <FileUp className="w-3 h-3" />
                           {arquivoGeo}
-                          <button onClick={() => setArquivoGeo("")} className="ml-1 hover:text-destructive">×</button>
+                          {geoJsonData && (
+                            <span className="text-muted-foreground">({geoJsonData.features.length} feições)</span>
+                          )}
+                          <button onClick={() => {
+                            setArquivoGeo("");
+                            setGeoJsonData(null);
+                          }} className="ml-1 hover:text-destructive">×</button>
                         </Badge>
                       </div>
                     )}
