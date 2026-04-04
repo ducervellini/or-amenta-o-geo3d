@@ -684,7 +684,8 @@ export default function OrcamentoDetalhe() {
             {/* ── DRE / BDI Detalhado ── */}
             {(() => {
               // Categorize BDI components for DRE
-              const tributos: typeof bdiComponentes = [];
+              const tributosReceita: typeof bdiComponentes = [];
+              const impostosLucro: typeof bdiComponentes = [];
               const despesasIndiretas: typeof bdiComponentes = [];
               let lucroComp: typeof bdiComponentes[0] | null = null;
               let riscoComp: typeof bdiComponentes[0] | null = null;
@@ -696,22 +697,41 @@ export default function OrcamentoDetalhe() {
                 } else if (nomeUpper.includes("RISCO")) {
                   riscoComp = comp;
                 } else if (
-                  ["ISS", "PIS", "COFINS", "CPRB", "ICMS", "IRPJ", "CSLL"].some(t => nomeUpper.includes(t)) ||
+                  nomeUpper.includes("IRPJ") || nomeUpper.includes("IR ") || nomeUpper.includes("IMPOSTO DE RENDA") ||
+                  nomeUpper.includes("CSLL") || nomeUpper.includes("CONTRIBUIÇÃO SOCIAL")
+                ) {
+                  impostosLucro.push(comp);
+                } else if (
+                  ["ISS", "PIS", "COFINS", "CPRB", "ICMS"].some(t => nomeUpper.includes(t)) ||
                   nomeUpper.includes("TRIBUT") || nomeUpper.includes("IMPOSTO") || nomeUpper.includes("CONTRIBUI")
                 ) {
-                  tributos.push(comp);
+                  tributosReceita.push(comp);
                 } else {
                   despesasIndiretas.push(comp);
                 }
               }
 
-              const totalTributosPct = tributos.reduce((s, c) => s + c.percentual, 0);
+              // Se não houver IRPJ/CSLL nos componentes do BDI, adicionar padrões presumido lucro
+              if (impostosLucro.length === 0) {
+                impostosLucro.push({ nome: "IRPJ (Lucro Presumido)", percentual: 4.80 });
+                impostosLucro.push({ nome: "CSLL (Lucro Presumido)", percentual: 2.88 });
+              }
+
+              const totalTributosPct = tributosReceita.reduce((s, c) => s + c.percentual, 0);
               const totalTributos = custoTotal * (totalTributosPct / 100);
               const totalDespIndPct = despesasIndiretas.reduce((s, c) => s + c.percentual, 0);
               const totalDespInd = custoTotal * (totalDespIndPct / 100);
               const valorLucro = lucroComp ? custoTotal * (lucroComp.percentual / 100) : 0;
               const valorRisco = riscoComp ? custoTotal * (riscoComp.percentual / 100) : 0;
-              const lucroLiquido = valorLucro - valorRisco;
+
+              // Lucro antes do IR
+              const lucroAntesIR = valorLucro - valorRisco;
+
+              // Impostos sobre o lucro (aplicados sobre o preço de venda)
+              const totalImpostosLucroPct = impostosLucro.reduce((s, c) => s + c.percentual, 0);
+              const totalImpostosLucro = precoTotal * (totalImpostosLucroPct / 100);
+
+              const lucroLiquido = lucroAntesIR - totalImpostosLucro;
 
               return (
                 <div>
