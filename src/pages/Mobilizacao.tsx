@@ -281,15 +281,25 @@ export default function Mobilizacao() {
   const [distanciaBase, setDistanciaBase] = useState(50);
   const [distanciaMedia, setDistanciaMedia] = useState(30);
 
-  // Veículo / Custo por km
-  const [consumoMedioKmL, setConsumoMedioKmL] = useState(8); // km/L
-  const [precoCombustivel, setPrecoCombustivel] = useState(6.5); // R$/L
-  const [kmMedioDiario, setKmMedioDiario] = useState(80); // km/dia
+  // Datas do projeto
+  const [dataInicio, setDataInicio] = useState(() => new Date().toISOString().split("T")[0]);
+  const [duracaoMeses, setDuracaoMeses] = useState(3);
+  const dataFim = useMemo(() => {
+    const d = new Date(dataInicio);
+    d.setMonth(d.getMonth() + duracaoMeses);
+    return d.toISOString().split("T")[0];
+  }, [dataInicio, duracaoMeses]);
 
-  const custoKmRodado = useMemo(() => {
-    if (consumoMedioKmL <= 0) return 0;
-    return precoCombustivel / consumoMedioKmL;
-  }, [precoCombustivel, consumoMedioKmL]);
+  // Municípios na rota
+  const [municipiosRota, setMunicipiosRota] = useState<MunicipioRota[]>([]);
+  const [novoMunicipioNome, setNovoMunicipioNome] = useState("");
+  const [novoMunicipioUF, setNovoMunicipioUF] = useState("");
+  const [novoMunicipioDist, setNovoMunicipioDist] = useState(0);
+
+  // Pluviometria
+  const [pluviometria, setPluviometria] = useState<PluviometriaResult | null>(null);
+  const [loadingPluv, setLoadingPluv] = useState(false);
+
 
   // Veículos cadastrados
   const { data: veiculosCadastrados } = useSupabaseQuery("veiculos");
