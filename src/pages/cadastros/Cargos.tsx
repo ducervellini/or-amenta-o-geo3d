@@ -125,6 +125,28 @@ function CargoFormDialog({
     }
   }, [open, editItem, jornadas, regimes, horarios, encargos, beneficios]);
 
+  // Auto-select encargos/benefícios when switching to estágio
+  const prevRegime = React.useRef(regimeContratacao);
+  useEffect(() => {
+    if (prevRegime.current !== regimeContratacao && regimeContratacao === "estagio") {
+      const estagioEncargos = encargos
+        .filter((e: any) => e.ativo && /f[ée]rias|13[oº°]|d[ée]cimo/i.test(e.nome))
+        .map((e: any) => e.id);
+      setEncargosSel(estagioEncargos);
+      const estagioBeneficios = beneficios
+        .filter((b: any) => b.ativo && /seguro.*vida|starbem/i.test(b.nome))
+        .map((b: any) => b.id);
+      setBeneficiosSel(estagioBeneficios);
+    } else if (prevRegime.current !== regimeContratacao && regimeContratacao === "pj") {
+      setEncargosSel([]);
+      setBeneficiosSel([]);
+    } else if (prevRegime.current !== regimeContratacao && regimeContratacao === "clt") {
+      setEncargosSel(encargos.filter((e: any) => e.ativo).map((e: any) => e.id));
+      setBeneficiosSel(beneficios.filter((b: any) => b.ativo).map((b: any) => b.id));
+    }
+    prevRegime.current = regimeContratacao;
+  }, [regimeContratacao, encargos, beneficios]);
+
   const toggleEncargo = (id: string) => {
     setEncargosSel((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   };
