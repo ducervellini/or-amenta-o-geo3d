@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import {
   MapPin, Plus, Trash2, Save, Loader2, Cloud, Sun,
   Truck, Home, Utensils, Fuel, CreditCard, Plane,
-  Users, Calculator, ChevronDown, ChevronUp, Info
+  Users, Calculator, ChevronDown, ChevronUp, Info, Upload
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -136,6 +136,7 @@ export default function Mobilizacao() {
   const [lat, setLat] = useState(-15.78);
   const [lng, setLng] = useState(-47.93);
   const [baseEndereco, setBaseEndereco] = useState("");
+  const [arquivoGeo, setArquivoGeo] = useState("");
   const [baseLat, setBaseLat] = useState(-15.78);
   const [baseLng, setBaseLng] = useState(-47.93);
   const [diasTrabalho, setDiasTrabalho] = useState(30);
@@ -236,6 +237,37 @@ export default function Mobilizacao() {
 
             {/* Local do Projeto */}
             <Section title="Local do Projeto" icon={MapPin}>
+              <div className="flex items-center gap-2 mb-3">
+                <Label className="text-xs font-medium text-muted-foreground">Importar arquivo geográfico:</Label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => document.getElementById("geo-file-input")?.click()}
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  Importar KMZ / SHP
+                </Button>
+                <input
+                  id="geo-file-input"
+                  type="file"
+                  accept=".kmz,.kml,.shp,.zip"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setArquivoGeo(file.name);
+                    }
+                    e.target.value = "";
+                  }}
+                />
+                {arquivoGeo && (
+                  <Badge variant="secondary" className="text-xs gap-1">
+                    {arquivoGeo}
+                    <button onClick={() => setArquivoGeo("")} className="ml-1 hover:text-destructive">×</button>
+                  </Badge>
+                )}
+              </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="col-span-2">
                   <Label className="text-xs">Município</Label>
