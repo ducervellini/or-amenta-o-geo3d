@@ -345,6 +345,18 @@ export default function Mobilizacao() {
   const updateQuarto = (key: number, field: string, value: any) => {
     setQuartosHotel(prev => prev.map(q => q._key === key ? { ...q, [field]: value } : q));
   };
+  // Duração hospedagem (pré-configurada com duração do projeto)
+  const [duracaoHospedagemMeses, setDuracaoHospedagemMeses] = useState(duracaoMeses);
+  // Sync default when duracaoMeses changes (only if user hasn't customized)
+  const duracaoHospedagemSynced = useRef(true);
+  useEffect(() => {
+    if (duracaoHospedagemSynced.current) setDuracaoHospedagemMeses(duracaoMeses);
+  }, [duracaoMeses]);
+  const handleDuracaoHospedagem = (v: number) => {
+    duracaoHospedagemSynced.current = false;
+    setDuracaoHospedagemMeses(v);
+  };
+
   // Alojamento mobiliado
   const [alojamentoMobiliadoValor, setAlojamentoMobiliadoValor] = useState(3000);
   const [alojamentoMobiliadoQtd, setAlojamentoMobiliadoQtd] = useState(1);
@@ -352,7 +364,7 @@ export default function Mobilizacao() {
   const [alojamentoMobiliarAluguel, setAlojamentoMobiliarAluguel] = useState(2000);
   const [alojamentoMobiliarQtd, setAlojamentoMobiliarQtd] = useState(1);
   const [alojamentoMobiliarMobilia, setAlojamentoMobiliarMobilia] = useState(5000);
-  const [alojamentoMobiliarRevenda, setAlojamentoMobiliarRevenda] = useState(50); // % de revenda
+  const [alojamentoMobiliarRevenda, setAlojamentoMobiliarRevenda] = useState(50);
 
   const custoHospedagemMensal = useMemo(() => {
     if (tipoHospedagem === "hotel") {
@@ -361,16 +373,16 @@ export default function Mobilizacao() {
     if (tipoHospedagem === "alojamento_mobiliado") {
       return alojamentoMobiliadoValor * alojamentoMobiliadoQtd;
     }
-    // alojamento_mobiliar: aluguel + mobília amortizada - revenda
     const aluguelTotal = alojamentoMobiliarAluguel * alojamentoMobiliarQtd;
     const mobiliaTotal = alojamentoMobiliarMobilia * alojamentoMobiliarQtd;
     const revendaTotal = mobiliaTotal * (alojamentoMobiliarRevenda / 100);
     const custoLiquidoMobilia = mobiliaTotal - revendaTotal;
-    // Amortizar mobília sobre a duração do projeto
-    const amortizacaoMensal = duracaoMeses > 0 ? custoLiquidoMobilia / duracaoMeses : custoLiquidoMobilia;
+    const amortizacaoMensal = duracaoHospedagemMeses > 0 ? custoLiquidoMobilia / duracaoHospedagemMeses : custoLiquidoMobilia;
     return aluguelTotal + amortizacaoMensal;
   }, [tipoHospedagem, quartosHotel, diasTrabalho, alojamentoMobiliadoValor, alojamentoMobiliadoQtd,
-    alojamentoMobiliarAluguel, alojamentoMobiliarQtd, alojamentoMobiliarMobilia, alojamentoMobiliarRevenda, duracaoMeses]);
+    alojamentoMobiliarAluguel, alojamentoMobiliarQtd, alojamentoMobiliarMobilia, alojamentoMobiliarRevenda, duracaoHospedagemMeses]);
+
+  const custoHospedagemTotal = useMemo(() => custoHospedagemMensal * duracaoHospedagemMeses, [custoHospedagemMensal, duracaoHospedagemMeses]);
 
   // Custos (sem hospedagem, que agora é separada)
   const [custos, setCustos] = useState<(CustoItem & { _key: number })[]>([
