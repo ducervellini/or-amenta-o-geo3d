@@ -1232,13 +1232,14 @@ export default function Mobilizacao() {
                       .map(([cat, valor]) => {
                         const catInfo = CATEGORIAS_CUSTO.find((c) => c.value === cat);
                         const CatIcon = ICON_MAP[cat] || Users;
+                        const valorTotal = valor * duracaoMeses;
                         return (
                           <div key={cat} className="flex items-center justify-between text-xs">
                             <span className="flex items-center gap-1.5">
                               <CatIcon className="w-3 h-3 text-muted-foreground" />
                               {catInfo?.label || cat}
                             </span>
-                            <span className="font-medium">{fmt(valor)}</span>
+                            <span className="font-medium">{fmt(valorTotal)}</span>
                           </div>
                         );
                       })}
