@@ -162,13 +162,13 @@ export default function Composicoes() {
                     >
                       <td className="font-medium text-accent">{row.codigo}</td>
                       <td className="font-medium">{row.nome}</td>
-                      <td className="text-sm">{getMercadoNome(row.mercado_id)}</td>
+                      <td className="text-sm">{getMercadoNome(row.mercado_id as string | null)}</td>
                       <td>
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
-                          {getAreaNome(row.area_empresa_id)}
+                          {getAreaNome(row.area_empresa_id as string | null)}
                         </span>
                       </td>
-                      <td className="text-sm">{getModuloNome(row.modulo_id)}</td>
+                      <td className="text-sm">{getModuloNome(row.modulo_id as string | null)}</td>
                       <td className="text-sm text-muted-foreground max-w-[200px] truncate">
                         {row.descricao ? String(row.descricao) : "-"}
                       </td>
