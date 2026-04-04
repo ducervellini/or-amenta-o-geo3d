@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import {
   MapPin, Plus, Trash2, Save, Loader2, Cloud, Sun,
   Truck, Home, Utensils, Fuel, CreditCard, Plane,
@@ -28,7 +28,6 @@ import {
   type EquipeItem,
   type MobilizacaoParams,
 } from "@/lib/mobilizacao-calculo";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -52,13 +51,53 @@ const ICON_MAP: Record<string, React.ElementType> = {
   viagem_avulsa: Plane,
 };
 
-// ── Map Recenter ──
-function RecenterMap({ lat, lng }: { lat: number; lng: number }) {
-  const map = useMap();
+// ── Plain Leaflet Map Component ──
+function LeafletMap({
+  projectLat, projectLng, baseLat, baseLng, municipio, baseEndereco,
+}: {
+  projectLat: number; projectLng: number;
+  baseLat: number; baseLng: number;
+  municipio: string; baseEndereco: string;
+}) {
+  const mapRef = useRef<L.Map | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const markersRef = useRef<L.Marker[]>([]);
+
   useEffect(() => {
-    if (lat && lng) map.setView([lat, lng], 10);
-  }, [lat, lng, map]);
-  return null;
+    if (!containerRef.current || mapRef.current) return;
+    mapRef.current = L.map(containerRef.current).setView([projectLat, projectLng], 8);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(mapRef.current);
+    return () => {
+      mapRef.current?.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+    // Clear old markers
+    markersRef.current.forEach((m) => m.remove());
+    markersRef.current = [];
+    // Add project marker
+    if (projectLat && projectLng) {
+      const m = L.marker([projectLat, projectLng])
+        .addTo(mapRef.current)
+        .bindPopup(`Projeto: ${municipio || "Local do projeto"}`);
+      markersRef.current.push(m);
+    }
+    // Add base marker
+    if (baseLat && baseLng && (baseLat !== projectLat || baseLng !== projectLng)) {
+      const m = L.marker([baseLat, baseLng])
+        .addTo(mapRef.current)
+        .bindPopup(`Base: ${baseEndereco || "Ponto inicial"}`);
+      markersRef.current.push(m);
+    }
+    mapRef.current.setView([projectLat, projectLng], 8);
+  }, [projectLat, projectLng, baseLat, baseLng, municipio, baseEndereco]);
+
+  return <div ref={containerRef} className="h-full w-full" />;
 }
 
 // ── Collapsible Section ──
@@ -183,28 +222,14 @@ export default function Mobilizacao() {
             <Card>
               <CardContent className="p-0">
                 <div className="h-[300px] rounded-lg overflow-hidden">
-                  <MapContainer
-                    center={[lat, lng]}
-                    zoom={8}
-                    className="h-full w-full"
-                    scrollWheelZoom
-                  >
-                    <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                    <RecenterMap lat={lat} lng={lng} />
-                    {lat && lng && (
-                      <Marker position={[lat, lng]}>
-                        <Popup>Projeto: {municipio || "Local do projeto"}</Popup>
-                      </Marker>
-                    )}
-                    {baseLat && baseLng && (
-                      <Marker position={[baseLat, baseLng]}>
-                        <Popup>Base: {baseEndereco || "Ponto inicial"}</Popup>
-                      </Marker>
-                    )}
-                  </MapContainer>
+                  <LeafletMap
+                    projectLat={lat}
+                    projectLng={lng}
+                    baseLat={baseLat}
+                    baseLng={baseLng}
+                    municipio={municipio}
+                    baseEndereco={baseEndereco}
+                  />
                 </div>
               </CardContent>
             </Card>
