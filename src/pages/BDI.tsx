@@ -244,13 +244,14 @@ export default function BDI() {
               <h3 className="text-sm font-semibold">Fórmula</h3>
             </div>
             <div className="bg-muted rounded-md p-3 text-xs font-mono text-muted-foreground leading-relaxed">
-              BDI = [(1+AC+S+R+G) × (1+DF) × (1+L)] / (1-I) - 1
+              BDI = [(1+AC+S+R+G) × (1+DF) × (1+COM) × (1+L)] / (1-I) - 1
             </div>
             <div className="mt-3 space-y-1 text-xs text-muted-foreground">
               <p>AC = Administração Central</p>
               <p>S+G = Seguros e Garantias</p>
               <p>R = Risco</p>
               <p>DF = Despesas Financeiras</p>
+              <p>COM = Comissões</p>
               <p>L = Lucro</p>
               <p>I = Impostos (PIS+COFINS+ISS+CPRB)</p>
             </div>
