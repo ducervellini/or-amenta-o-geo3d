@@ -1,0 +1,1 @@
+ALTER TABLE public.mobilizacoes ADD COLUMN oportunidade_id UUID REFERENCES public.oportunidades(id) ON DELETE SET NULL;

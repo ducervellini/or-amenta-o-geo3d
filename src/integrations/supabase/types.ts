@@ -873,6 +873,7 @@ export type Database = {
           municipio: string | null
           municipios_considerados: Json
           nome: string
+          oportunidade_id: string | null
           orcamento_id: string | null
           updated_at: string
         }
@@ -902,6 +903,7 @@ export type Database = {
           municipio?: string | null
           municipios_considerados?: Json
           nome: string
+          oportunidade_id?: string | null
           orcamento_id?: string | null
           updated_at?: string
         }
@@ -931,10 +933,19 @@ export type Database = {
           municipio?: string | null
           municipios_considerados?: Json
           nome?: string
+          oportunidade_id?: string | null
           orcamento_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "mobilizacoes_oportunidade_id_fkey"
+            columns: ["oportunidade_id"]
+            isOneToOne: false
+            referencedRelation: "oportunidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       modulos: {
         Row: {
