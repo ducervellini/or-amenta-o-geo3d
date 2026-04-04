@@ -157,8 +157,37 @@ export default function Orcamentos() {
                             size="icon"
                             className="h-8 w-8"
                             onClick={() => navigate(`/orcamentos/${o.id}`)}
+                            title="Abrir orçamento"
                           >
                             <FileText className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => navigate(`/orcamentos/${o.id}`)}
+                            title="Editar"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive"
+                            onClick={async () => {
+                              const { error } = await (supabase.from as any)("oportunidades")
+                                .update({ ativo: false })
+                                .eq("id", o.id);
+                              if (error) {
+                                toast.error(error.message);
+                              } else {
+                                toast.success("Orçamento removido");
+                                queryClient.invalidateQueries({ queryKey: ["orcamentos-oportunidades"] });
+                              }
+                            }}
+                            title="Excluir"
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </td>
