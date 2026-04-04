@@ -769,6 +769,8 @@ export default function Mobilizacao() {
         municipios_considerados: municipiosRota as any,
         arquivo_geo: arquivoGeo || null,
         duracao_meses: duracaoMeses,
+        data_inicio: dataInicio || null,
+        pluviometria_dados: pluviometria ? (pluviometria as any) : null,
         mob_desmob_itens: mobDesmobItens.map(({ _key, ...rest }) => rest) as any,
       } as any;
 
