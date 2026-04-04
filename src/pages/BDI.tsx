@@ -269,6 +269,10 @@ export default function BDI() {
                 <span className="font-medium">{df.toFixed(2)}%</span>
               </div>
               <div className="flex justify-between">
+                <span className="text-muted-foreground">Comissões</span>
+                <span className="font-medium">{com.toFixed(2)}%</span>
+              </div>
+              <div className="flex justify-between">
                 <span className="text-muted-foreground">Lucro</span>
                 <span className="font-medium">{l.toFixed(2)}%</span>
               </div>
