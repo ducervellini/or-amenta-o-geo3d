@@ -70,13 +70,14 @@ export function CrudPage<T extends TableName>({
   });
 
   const handleSubmit = (values: Record<string, unknown>) => {
+    const mergedValues = { ...hiddenDefaults, ...values };
     if (editItem) {
       updateMutation.mutate(
-        { id: editItem.id as string, values: values as any },
+        { id: editItem.id as string, values: mergedValues as any },
         { onSuccess: () => { setFormOpen(false); setEditItem(null); } }
       );
     } else {
-      insertMutation.mutate(values as any, {
+      insertMutation.mutate(mergedValues as any, {
         onSuccess: () => setFormOpen(false),
       });
     }
