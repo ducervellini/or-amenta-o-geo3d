@@ -118,7 +118,19 @@ export default function OrcamentoDetalhe() {
     enabled: !!mobilizacao?.id,
   });
 
-  // BDI
+  // Veículos cadastrados (para cálculo mob/desmob)
+  const { data: veiculosCadastrados } = useQuery({
+    queryKey: ["orcamento-veiculos"],
+    queryFn: async () => {
+      const { data, error } = await (supabase.from as any)("veiculos")
+        .select("*")
+        .eq("ativo", true);
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
+
   const { data: bdiData } = useQuery({
     queryKey: ["orcamento-bdi-detalhe"],
     queryFn: async () => {
