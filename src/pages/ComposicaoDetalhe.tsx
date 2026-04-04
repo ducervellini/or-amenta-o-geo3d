@@ -463,57 +463,10 @@ export default function ComposicaoDetalhe() {
                   Nenhum item adicionado. Use o botão acima para adicionar mão de obra, equipamentos ou materiais.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Tipo</th>
-                        <th>Descrição</th>
-                        <th>Qtd</th>
-                        <th>Coeficiente</th>
-                        <th>Custo Unit.</th>
-                        <th>Custo Total</th>
-                        <th className="text-center">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {itensComCalculo.map((item) => {
-                        const Icon = tipoIcons[String(item.tipo_insumo)] || Package;
-                        return (
-                          <tr key={String(item.id)} className="hover:bg-muted/50">
-                            <td>
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
-                                <Icon className="w-3 h-3" />
-                                {tipoLabels[String(item.tipo_insumo)] || String(item.tipo_insumo)}
-                              </span>
-                            </td>
-                            <td className="font-medium text-sm">{String(item.descricao) || "Sem descrição"}</td>
-                            <td className="font-mono text-sm">{fmt(Number(item.quantidade))}</td>
-                            <td className="font-mono text-sm">{fmt(Number(item.coeficiente))}</td>
-                            <td className="font-mono text-sm">R$ {fmt(item.resultado.custo_unitario)}</td>
-                            <td className="font-mono font-semibold text-sm">R$ {fmt(item.resultado.custo_total)}</td>
-                            <td className="text-center">
-                              <div className="flex items-center justify-center gap-1">
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingItem(item); setTipoNovo(String(item.tipo_insumo) as TipoInsumo); setShowItemForm(true); }}>
-                                  <Edit className="w-3.5 h-3.5" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeletingItemId(String(item.id))}>
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                      {/* Totals row */}
-                      <tr className="border-t-2 font-semibold bg-muted/30">
-                        <td colSpan={5} className="text-right text-sm">Total da Composição</td>
-                        <td className="font-mono text-sm">R$ {fmt(resumo.custo_direto)}</td>
-                        <td></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+                <ItensTable itens={itensComCalculo} tipoIcons={tipoIcons} tipoLabels={tipoLabels} fmt={fmt} resumo={resumo}
+                  onEdit={(item) => { setEditingItem(item); setTipoNovo(String(item.tipo_insumo) as TipoInsumo); setShowItemForm(true); }}
+                  onDelete={(id) => setDeletingItemId(id)}
+                />
               )}
             </div>
           )}
