@@ -18,6 +18,7 @@ const defaultBDI: BDIItem[] = [
   { label: "Seguro e Garantia", sigla: "S+G", percentual: 0.80, descricao: "Seguros e garantias contratuais" },
   { label: "Risco", sigla: "R", percentual: 1.27, descricao: "Margem de risco do empreendimento" },
   { label: "Despesas Financeiras", sigla: "DF", percentual: 1.23, descricao: "Custo financeiro do capital" },
+  { label: "Comissões", sigla: "COM", percentual: 0.00, descricao: "Comissões sobre venda ou intermediação" },
   { label: "Lucro", sigla: "L", percentual: 7.40, descricao: "Margem de lucro bruto" },
   { label: "PIS", sigla: "PIS", percentual: 0.65, descricao: "Programa de Integração Social" },
   { label: "COFINS", sigla: "COFINS", percentual: 3.00, descricao: "Contrib. p/ Financiamento da Seg. Social" },
@@ -30,16 +31,17 @@ function calcBdi(items: BDIItem[]) {
   const sg = items.find((i) => i.sigla === "S+G")?.percentual || 0;
   const r = items.find((i) => i.sigla === "R")?.percentual || 0;
   const df = items.find((i) => i.sigla === "DF")?.percentual || 0;
+  const com = items.find((i) => i.sigla === "COM")?.percentual || 0;
   const l = items.find((i) => i.sigla === "L")?.percentual || 0;
   const tributos = items
     .filter((i) => ["PIS", "COFINS", "ISS", "CPRB"].includes(i.sigla))
     .reduce((sum, i) => sum + i.percentual, 0);
 
   const bdiCalc =
-    ((1 + (ac + sg + r) / 100) * (1 + df / 100) * (1 + l / 100)) /
+    ((1 + (ac + sg + r) / 100) * (1 + df / 100) * (1 + com / 100) * (1 + l / 100)) /
       (1 - tributos / 100) -
     1;
-  return { bdiCalc, bdiPercent: bdiCalc * 100, ac, sg, r, df, l, tributos };
+  return { bdiCalc, bdiPercent: bdiCalc * 100, ac, sg, r, df, com, l, tributos };
 }
 
 export default function BDI() {
@@ -67,7 +69,7 @@ export default function BDI() {
     setItems(updated);
   };
 
-  const { bdiCalc, bdiPercent, ac, sg, r, df, l, tributos } = calcBdi(items);
+  const { bdiCalc, bdiPercent, ac, sg, r, df, com, l, tributos } = calcBdi(items);
 
   const handleSave = async () => {
     if (!nome.trim()) return toast.error("Informe um nome para a configuração");
@@ -105,8 +107,20 @@ export default function BDI() {
     const loaded = defaultBDI.map((d) => ({
       ...d,
       percentual: comp[d.sigla]?.percentual ?? d.percentual,
+      label: comp[d.sigla]?.label ?? d.label,
+      descricao: comp[d.sigla]?.descricao ?? d.descricao,
     }));
-    setItems(loaded);
+    // Also load any extra keys from comp not in defaultBDI
+    const existingSiglas = new Set(defaultBDI.map(d => d.sigla));
+    const extras = Object.entries(comp)
+      .filter(([sigla]) => !existingSiglas.has(sigla))
+      .map(([sigla, val]: [string, any]) => ({
+        label: val?.label || sigla,
+        sigla,
+        percentual: val?.percentual ?? 0,
+        descricao: val?.descricao || "",
+      }));
+    setItems([...loaded, ...extras]);
     setNome(bdi.nome);
     setEditId(bdi.id);
   };
@@ -242,13 +256,14 @@ export default function BDI() {
               <h3 className="text-sm font-semibold">Fórmula</h3>
             </div>
             <div className="bg-muted rounded-md p-3 text-xs font-mono text-muted-foreground leading-relaxed">
-              BDI = [(1+AC+S+R+G) × (1+DF) × (1+L)] / (1-I) - 1
+              BDI = [(1+AC+S+R+G) × (1+DF) × (1+COM) × (1+L)] / (1-I) - 1
             </div>
             <div className="mt-3 space-y-1 text-xs text-muted-foreground">
               <p>AC = Administração Central</p>
               <p>S+G = Seguros e Garantias</p>
               <p>R = Risco</p>
               <p>DF = Despesas Financeiras</p>
+              <p>COM = Comissões</p>
               <p>L = Lucro</p>
               <p>I = Impostos (PIS+COFINS+ISS+CPRB)</p>
             </div>
@@ -264,6 +279,10 @@ export default function BDI() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Desp. Financeiras</span>
                 <span className="font-medium">{df.toFixed(2)}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Comissões</span>
+                <span className="font-medium">{com.toFixed(2)}%</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Lucro</span>
