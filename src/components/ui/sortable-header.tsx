@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 
 export type SortDirection = "asc" | "desc" | null;
@@ -34,16 +35,9 @@ export function SortableHeader({ label, sortKey, currentSort, currentDirection, 
   );
 }
 
-export function useSorting() {
-  const [sortKey, setSortKey] = import("react").then(() => null) as any;
-  // This is a hook factory - see useTableSort below
-}
-
-import { useState, useMemo } from "react";
-
-export function useTableSort<T extends Record<string, unknown>>(data: T[]) {
-  const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+export function useTableSort<T extends Record<string, unknown>>(data: T[], defaultKey?: string | null) {
+  const [sortKey, setSortKey] = useState<string | null>(defaultKey ?? null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(defaultKey ? "asc" : null);
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
