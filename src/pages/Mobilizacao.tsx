@@ -757,6 +757,8 @@ export default function Mobilizacao() {
         custo_por_dia: diasProdutivos > 0 ? (custoDeslocamentosTotal + custoMobDesmobTotal) / diasProdutivos : 0,
         municipios_considerados: municipiosRota as any,
         arquivo_geo: arquivoGeo || null,
+        duracao_meses: duracaoMeses,
+        mob_desmob_itens: mobDesmobItens.map(({ _key, ...rest }) => rest) as any,
       } as any;
 
       let mobId = mobilizacaoId;
