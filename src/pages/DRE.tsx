@@ -20,7 +20,7 @@ export default function DRE() {
 
   // Inputs do usuário
   const [custoDireto, setCustoDireto] = useState(850000);
-  const [lucroLiquidoDesejado, setLucroLiquidoDesejado] = useState(100000);
+  const [lucroLiquidoPct, setLucroLiquidoPct] = useState(8);
   const [irpjPct, setIrpjPct] = useState(4.80);
   const [csllPct, setCsllPct] = useState(2.88);
 
