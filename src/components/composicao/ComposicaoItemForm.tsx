@@ -132,10 +132,14 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
       if (tipo === "mao_de_obra") return calcularMaoDeObra(paramsMO, quantidade, coeficiente);
       if (tipo === "equipamento") return calcularEquipamento(paramsEq, quantidade, coeficiente);
       return calcularMaterial(paramsMa, quantidade, coeficiente);
+    } catch {
+      return { custo_unitario: 0, custo_total: 0, memoria: [] };
+    }
+  }, [tipo, paramsMO, paramsEq, paramsMa, quantidade, coeficiente]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const params = tipo === "mao_de_obra" ? paramsMO : tipo === "equipamento" ? paramsEq : tipo === "veiculo" ? paramsVe : paramsMa;
+    const params = tipo === "mao_de_obra" ? paramsMO : tipo === "equipamento" ? paramsEq : paramsMa;
     onSubmit({
       tipo_insumo: tipo,
       insumo_id: insumoId || crypto.randomUUID(),
