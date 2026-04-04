@@ -114,20 +114,6 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
           combustivel_preco_litro: comb ? Number(comb.preco_litro) : 0,
         }));
       }
-    } else if (tipo === "veiculo") {
-      const ve = veiculos?.find((v) => v.id === id);
-      if (ve) {
-        setDescricao(String(ve.nome));
-        setUnidade(String(ve.unidade));
-        const comb = combustiveis?.find((c) => c.ativo);
-        setParamsVe((prev) => ({
-          ...prev,
-          custo_hora: Number(ve.custo_hora),
-          manutencao_km: Number(ve.manutencao_hora),
-          depreciacao_km: Number(ve.custo_km),
-          combustivel_preco_litro: comb ? Number(comb.preco_litro) : 0,
-        }));
-      }
     } else if (tipo === "material") {
       const ma = materiais?.find((m) => m.id === id);
       if (ma) {
