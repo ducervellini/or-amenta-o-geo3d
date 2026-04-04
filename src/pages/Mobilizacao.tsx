@@ -388,7 +388,7 @@ export default function Mobilizacao() {
   const { data: veiculosCadastrados } = useSupabaseQuery("veiculos");
 
   // Custos (sem hospedagem, que agora é separada)
-  const [custos, setCustos] = useState<(CustoItem & { _key: number; veiculo_id?: string; km_dia?: number })[]>([]);
+  const [custos, setCustos] = useState<(CustoItem & { _key: number; veiculo_id?: string; km_dia?: number; preco_combustivel?: number })[]>([]);
   let custoKeyRef = 4;
 
   // Equipes
@@ -1071,12 +1071,12 @@ export default function Mobilizacao() {
               <div className="space-y-3">
                 {custos.map((c) => {
                   const CatIcon = ICON_MAP[c.categoria] || CreditCard;
-                  const selectedVeiculo = c.veiculo_id ? (veiculosCadastrados as any[])?.find((v: any) => v.id === c.veiculo_id) : null;
-                  const custoKmCalc = selectedVeiculo && (selectedVeiculo.media_km_l > 0)
-                    ? (selectedVeiculo.combustivel_preco_litro / selectedVeiculo.media_km_l)
-                    : 0;
-                  const custoDiaCalc = custoKmCalc * (c.km_dia || 0);
-                  const custoTotalCalc = custoDiaCalc * diasProdutivos * c.quantidade;
+                   const selectedVeiculo = c.veiculo_id ? (veiculosCadastrados as any[])?.find((v: any) => v.id === c.veiculo_id) : null;
+                   const mediaKmL = selectedVeiculo?.media_km_l || 0;
+                   const precoComb = c.preco_combustivel || 0;
+                   const custoKmCalc = mediaKmL > 0 ? precoComb / mediaKmL : 0;
+                   const custoDiaCalc = custoKmCalc * (c.km_dia || 0);
+                   const custoTotalCalc = custoDiaCalc * diasProdutivos * c.quantidade;
                   return (
                     <div key={c._key} className="flex items-start gap-2 p-3 rounded-lg border bg-muted/30">
                       <CatIcon className="w-4 h-4 mt-2 text-muted-foreground shrink-0" />
@@ -1100,10 +1100,8 @@ export default function Mobilizacao() {
                               const veic = (veiculosCadastrados as any[])?.find((ve: any) => ve.id === v);
                               updateCusto(c._key, "veiculo_id", v);
                               if (veic) {
-                                updateCusto(c._key, "descricao", veic.nome);
-                                updateCusto(c._key, "consumo_km", veic.media_km_l > 0 ? 1 / veic.media_km_l : 0);
-                                updateCusto(c._key, "preco_litro", veic.combustivel_preco_litro);
-                                updateCusto(c._key, "valor_unitario", veic.custo_km || 0);
+                              updateCusto(c._key, "descricao", veic.nome);
+                                updateCusto(c._key, "preco_combustivel", veic.combustivel_preco_litro || 0);
                               }
                             }}
                           >
@@ -1125,41 +1123,26 @@ export default function Mobilizacao() {
                           <Input className="h-8 text-xs" type="number" value={c.km_dia || ""} onChange={(e) => updateCusto(c._key, "km_dia", Number(e.target.value))} />
                         </div>
                         <div>
+                          <Label className="text-[10px]">Combustível (R$/L)</Label>
+                          <Input className="h-8 text-xs" type="number" step="0.01" value={c.preco_combustivel || ""} onChange={(e) => updateCusto(c._key, "preco_combustivel", Number(e.target.value))} />
+                        </div>
+                        <div>
                           <Label className="text-[10px]">Qtde Veículos</Label>
                           <Input className="h-8 text-xs" type="number" value={c.quantidade} onChange={(e) => updateCusto(c._key, "quantidade", Number(e.target.value))} min={1} />
                         </div>
                         <div className="flex items-end">
                           <div className="text-[10px] text-muted-foreground pb-1.5 space-y-0.5">
-                            {selectedVeiculo && (
+                            {selectedVeiculo ? (
                               <>
-                                <div>{fmt(custoKmCalc)}/km · {selectedVeiculo.tipo_combustivel || "diesel"}</div>
-                                <div>{fmt(custoDiaCalc)}/dia</div>
+                                <div>{mediaKmL.toFixed(1)} km/L · {selectedVeiculo.tipo_combustivel || "diesel"}</div>
+                                <div>{fmt(custoKmCalc)}/km · {fmt(custoDiaCalc)}/dia</div>
                                 <div className="font-medium text-foreground">{fmt(custoTotalCalc)} total ({diasProdutivos}d)</div>
                               </>
+                            ) : (
+                              <span>Selecione um veículo</span>
                             )}
-                            {!selectedVeiculo && <span>Selecione um veículo</span>}
                           </div>
                         </div>
-                        {c.categoria === "veiculo" && (
-                          <>
-                            <div>
-                              <Label className="text-[10px]">Propriedade</Label>
-                              <Select value={c.tipo_propriedade || "proprio"} onValueChange={(v) => updateCusto(c._key, "tipo_propriedade", v)}>
-                                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="proprio">Próprio</SelectItem>
-                                  <SelectItem value="alugado">Alugado</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            {c.tipo_propriedade === "alugado" && (
-                              <div>
-                                <Label className="text-[10px]">Valor Aluguel</Label>
-                                <Input className="h-8 text-xs" type="number" value={c.valor_aluguel || ""} onChange={(e) => updateCusto(c._key, "valor_aluguel", Number(e.target.value))} />
-                              </div>
-                            )}
-                          </>
-                        )}
                       </div>
                       <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 mt-1" onClick={() => removeCusto(c._key)}>
                         <Trash2 className="w-3.5 h-3.5 text-destructive" />
