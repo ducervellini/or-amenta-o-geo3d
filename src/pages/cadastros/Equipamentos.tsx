@@ -86,6 +86,22 @@ export default function Equipamentos() {
     return data.filter((r: any) => r.nome?.toLowerCase().includes(search.toLowerCase()) || r.codigo?.toLowerCase().includes(search.toLowerCase()));
   }, [data, search]);
 
+  const flatFiltered = useMemo(() => filtered.map((row: any) => {
+    const rc = calcEquip(rowToForm(row));
+    return { ...row, _custoHora: rc.custoHora, _custoMes: rc.custoMes };
+  }), [filtered]);
+
+  const { sorted: sortedRows, sortKey, sortDirection, handleSort } = useTableSort(flatFiltered);
+
+  const SortTH = ({ sk, label, className }: { sk: string; label: string; className?: string }) => (
+    <TableHead className={`cursor-pointer select-none hover:bg-muted/50 ${className || ""}`} onClick={() => handleSort(sk)}>
+      <div className="flex items-center gap-1.5">
+        <span>{label}</span>
+        {sortKey === sk ? (sortDirection === "asc" ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />) : <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground/50" />}
+      </div>
+    </TableHead>
+  );
+
   const setField = (name: keyof EquipamentoForm, value: any) => setForm(p => ({ ...p, [name]: value }));
   const setNum = (name: keyof EquipamentoForm, v: string) => setField(name, parseFloat(v) || 0);
 
