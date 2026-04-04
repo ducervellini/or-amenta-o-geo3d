@@ -1706,14 +1706,21 @@ export default function Mobilizacao() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Dias */}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <div className="p-2 rounded-md bg-primary/10 text-center">
                     <div className="text-lg font-bold text-primary">{diasProdutivos}</div>
                     <div className="text-[10px] text-muted-foreground">Dias Produtivos</div>
+                    <div className="text-[9px] text-muted-foreground">{diasProdutivosMes}/mês</div>
                   </div>
                   <div className="p-2 rounded-md bg-destructive/10 text-center">
                     <div className="text-lg font-bold text-destructive">{diasImprodutivos}</div>
                     <div className="text-[10px] text-muted-foreground">Dias Improdutivos</div>
+                    <div className="text-[9px] text-muted-foreground">{diasImprodutivosMes}/mês</div>
+                  </div>
+                  <div className="p-2 rounded-md bg-blue-500/10 text-center">
+                    <div className="text-lg font-bold text-blue-600">{diasChuvaMes * duracaoMeses}</div>
+                    <div className="text-[10px] text-muted-foreground">Dias c/ Chuva</div>
+                    <div className="text-[9px] text-muted-foreground">{diasChuvaMes}/mês</div>
                   </div>
                 </div>
 
