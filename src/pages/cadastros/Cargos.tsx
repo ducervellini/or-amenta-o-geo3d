@@ -396,7 +396,7 @@ export default function Cargos() {
         _numEncargos: encargosFiltered.length,
         _numBeneficios: beneficiosFiltered.length,
         custo_total: custo.custo_total_mensal,
-        valor_hh: jornada ? custo.custo_total_mensal / jornada.horas_por_mes : 0,
+        valor_hh: jornada ? custo.custo_total_mensal / (jornada.horas_por_mes * custo.fator_regime) : 0,
       };
     });
   }, [cargos, allEncargos, allBeneficios, allJornadas, allRegimes, allHorarios]);
