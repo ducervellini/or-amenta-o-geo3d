@@ -1256,11 +1256,11 @@ export default function Mobilizacao() {
                   </div>
                   <div className="flex justify-between text-xs">
                     <span>Custo/Dia</span>
-                    <span className="font-medium">{fmt(resultado.custo_por_dia)}</span>
+                    <span className="font-medium">{fmt(diasProdutivos > 0 ? ((resultado.custo_total * duracaoMeses) + custoHospedagemTotal + custoCombustivelTotal) / diasProdutivos : 0)}</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span>Custo/Pessoa</span>
-                    <span className="font-medium">{fmt(resultado.custo_por_equipe)}</span>
+                    <span className="font-medium">{fmt(resultado.total_equipes > 0 ? ((resultado.custo_total * duracaoMeses) + custoHospedagemTotal + custoCombustivelTotal) / resultado.total_equipes : 0)}</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span>Total equipe</span>
