@@ -476,6 +476,7 @@ export default function Cargos() {
                     <SortableHeader label="Encargos" sortKey="_custo.valor_encargos" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
                     <SortableHeader label="Benefícios" sortKey="_custo.valor_beneficios_fixos" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
                     <SortableHeader label="Custo Total/Mês" sortKey="custo_total" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+                    <SortableHeader label="Fator Regime" sortKey="_custo.fator_regime" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
                     <SortableHeader label="Valor H/H" sortKey="valor_hh" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
                     <th className="text-center">Ações</th>
                   </tr>
@@ -571,6 +572,11 @@ export default function Cargos() {
                               </div>
                             </TooltipContent>
                           </Tooltip>
+                        </td>
+                        <td>
+                          <Badge variant="outline" className="text-xs">
+                            {row._regime ? `${row._regime.dias_trabalho}/${row._regime.dias_folga} (${(custo.fator_regime * 100).toFixed(1)}%)` : "—"}
+                          </Badge>
                         </td>
                         <td>
                           <span className="font-medium">{fmt(row.valor_hh)}</span>
