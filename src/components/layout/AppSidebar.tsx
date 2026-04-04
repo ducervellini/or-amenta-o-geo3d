@@ -48,6 +48,7 @@ const navigation: NavItem[] = [
       { label: "Mercados", path: "/cadastros/mercados" },
       { label: "Áreas da Empresa", path: "/cadastros/areas-empresa" },
       { label: "Departamentos", path: "/cadastros/departamentos" },
+      { label: "Clientes", path: "/cadastros/clientes" },
       { label: "Serviços", path: "/cadastros/servicos" },
     ],
   },
@@ -74,6 +75,7 @@ const navigation: NavItem[] = [
     ],
   },
   { label: "Composições", path: "/composicoes", icon: Layers },
+  { label: "Oportunidades", path: "/oportunidades", icon: Briefcase },
   { label: "ADM Local", path: "/mobilizacao", icon: Building },
   { label: "Orçamentos", path: "/orcamentos", icon: FileText },
   {
