@@ -870,7 +870,7 @@ export default function Mobilizacao() {
               )}
               {!pluviometria && (
                 <p className="text-[10px] text-muted-foreground mt-2">
-                  ⓘ Use "Análise Pluviométrica" acima para preencher automaticamente com dados históricos INMET.
+                  ⓘ Use "Análise Pluviométrica" acima para preencher automaticamente com dados históricos.
                 </p>
               )}
             </Section>
