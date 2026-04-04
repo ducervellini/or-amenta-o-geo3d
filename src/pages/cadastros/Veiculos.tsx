@@ -86,6 +86,27 @@ export default function Veiculos() {
     return data.filter((r: any) => r.nome?.toLowerCase().includes(search.toLowerCase()) || r.codigo?.toLowerCase().includes(search.toLowerCase()));
   }, [data, search]);
 
+  const flatFiltered = useMemo(() => filtered.map((row: any) => {
+    const f: VeiculoForm = { ...defaultForm };
+    for (const k of Object.keys(defaultForm) as (keyof VeiculoForm)[]) {
+      if (typeof defaultForm[k] === "number") (f as any)[k] = Number(row[k]) || (defaultForm as any)[k];
+      else (f as any)[k] = row[k] || (defaultForm as any)[k];
+    }
+    const rc = calcVeic(f);
+    return { ...row, _depKm: rc.depKm, _custoKmTotal: rc.custoKmTotal, _custoHora: rc.custoHora, _totalMes: rc.totalMes };
+  }), [filtered]);
+
+  const { sorted: sortedRows, sortKey, sortDirection, handleSort } = useTableSort(flatFiltered);
+
+  const SortTH = ({ sk, label, className }: { sk: string; label: string; className?: string }) => (
+    <TableHead className={`cursor-pointer select-none hover:bg-muted/50 ${className || ""}`} onClick={() => handleSort(sk)}>
+      <div className="flex items-center gap-1.5">
+        <span>{label}</span>
+        {sortKey === sk ? (sortDirection === "asc" ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />) : <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground/50" />}
+      </div>
+    </TableHead>
+  );
+
   const setField = (name: keyof VeiculoForm, value: any) => setForm(p => ({ ...p, [name]: value }));
   const setNum = (name: keyof VeiculoForm, v: string) => setField(name, parseFloat(v) || 0);
 
