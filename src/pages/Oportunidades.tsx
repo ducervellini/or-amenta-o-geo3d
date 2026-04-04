@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Plus, Search, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useSupabaseCrud } from "@/hooks/useSupabaseCrud";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CrudFormDialog } from "@/components/crud/CrudFormDialog";
 import { toast } from "sonner";
 
@@ -16,12 +15,12 @@ export default function Oportunidades() {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
+  const queryClient = useQueryClient();
 
-  const { data: oportunidades, isLoading, refetch } = useQuery({
+  const { data: oportunidades, isLoading } = useQuery({
     queryKey: ["oportunidades"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("oportunidades" as any)
+      const { data, error } = await (supabase.from as any)("oportunidades")
         .select("*, clientes(nome)")
         .eq("ativo", true)
         .order("created_at", { ascending: false });
@@ -33,8 +32,7 @@ export default function Oportunidades() {
   const { data: clientes } = useQuery({
     queryKey: ["clientes-select"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("clientes" as any)
+      const { data, error } = await (supabase.from as any)("clientes")
         .select("id, nome")
         .eq("ativo", true)
         .order("nome");
@@ -43,23 +41,21 @@ export default function Oportunidades() {
     },
   });
 
-  const handleSave = async (values: any) => {
+  const handleSave = async (values: Record<string, unknown>) => {
     try {
       if (editItem) {
-        const { error } = await supabase
-          .from("oportunidades" as any)
+        const { error } = await (supabase.from as any)("oportunidades")
           .update(values)
           .eq("id", editItem.id);
         if (error) throw error;
         toast.success("Oportunidade atualizada!");
       } else {
-        const { error } = await supabase
-          .from("oportunidades" as any)
+        const { error } = await (supabase.from as any)("oportunidades")
           .insert(values);
         if (error) throw error;
         toast.success("Oportunidade criada!");
       }
-      refetch();
+      queryClient.invalidateQueries({ queryKey: ["oportunidades"] });
       setDialogOpen(false);
       setEditItem(null);
     } catch (e: any) {
@@ -68,14 +64,13 @@ export default function Oportunidades() {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase
-      .from("oportunidades" as any)
+    const { error } = await (supabase.from as any)("oportunidades")
       .update({ ativo: false })
       .eq("id", id);
     if (error) toast.error(error.message);
     else {
       toast.success("Oportunidade removida!");
-      refetch();
+      queryClient.invalidateQueries({ queryKey: ["oportunidades"] });
     }
   };
 
@@ -86,17 +81,17 @@ export default function Oportunidades() {
   );
 
   const fields = [
-    { key: "codigo", label: "Código (4 dígitos)", type: "text" as const, required: true, placeholder: "0001" },
-    { key: "descricao", label: "Descrição", type: "text" as const, required: true },
+    { name: "codigo", label: "Código (4 dígitos)", type: "text" as const, required: true, placeholder: "0001" },
+    { name: "descricao", label: "Descrição", type: "text" as const, required: true },
     {
-      key: "cliente_id",
+      name: "cliente_id",
       label: "Cliente",
       type: "select" as const,
       options: (clientes || []).map((c: any) => ({ value: c.id, label: c.nome })),
     },
-    { key: "cidade", label: "Cidade", type: "text" as const },
+    { name: "cidade", label: "Cidade", type: "text" as const },
     {
-      key: "estado",
+      name: "estado",
       label: "Estado",
       type: "select" as const,
       options: ESTADOS_BR.map((uf) => ({ value: uf, label: uf })),
@@ -177,8 +172,8 @@ export default function Oportunidades() {
         onOpenChange={setDialogOpen}
         title={editItem ? "Editar Oportunidade" : "Nova Oportunidade"}
         fields={fields}
-        initialData={editItem || {}}
-        onSave={handleSave}
+        initialValues={editItem || {}}
+        onSubmit={handleSave}
       />
     </div>
   );
