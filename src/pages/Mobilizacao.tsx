@@ -1168,11 +1168,11 @@ export default function Mobilizacao() {
                 {/* Dias */}
                 <div className="grid grid-cols-2 gap-2">
                   <div className="p-2 rounded-md bg-primary/10 text-center">
-                    <div className="text-lg font-bold text-primary">{resultado.dias_produtivos}</div>
+                    <div className="text-lg font-bold text-primary">{diasProdutivos}</div>
                     <div className="text-[10px] text-muted-foreground">Dias Produtivos</div>
                   </div>
                   <div className="p-2 rounded-md bg-destructive/10 text-center">
-                    <div className="text-lg font-bold text-destructive">{resultado.dias_improdutivos}</div>
+                    <div className="text-lg font-bold text-destructive">{diasImprodutivos}</div>
                     <div className="text-[10px] text-muted-foreground">Dias Improdutivos</div>
                   </div>
                 </div>
@@ -1194,7 +1194,7 @@ export default function Mobilizacao() {
                     <div className="flex justify-between">
                       <span>Total estimado</span>
                       <span className="font-medium">
-                        {((distanciaBase * 2) + (distanciaMedia * resultado.dias_produtivos)).toLocaleString("pt-BR")} km
+                        {((distanciaBase * 2) + (distanciaMedia * diasProdutivos)).toLocaleString("pt-BR")} km
                       </span>
                     </div>
                   </div>
@@ -1232,13 +1232,14 @@ export default function Mobilizacao() {
                       .map(([cat, valor]) => {
                         const catInfo = CATEGORIAS_CUSTO.find((c) => c.value === cat);
                         const CatIcon = ICON_MAP[cat] || Users;
+                        const valorTotal = valor * duracaoMeses;
                         return (
                           <div key={cat} className="flex items-center justify-between text-xs">
                             <span className="flex items-center gap-1.5">
                               <CatIcon className="w-3 h-3 text-muted-foreground" />
                               {catInfo?.label || cat}
                             </span>
-                            <span className="font-medium">{fmt(valor)}</span>
+                            <span className="font-medium">{fmt(valorTotal)}</span>
                           </div>
                         );
                       })}
@@ -1251,15 +1252,15 @@ export default function Mobilizacao() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm font-bold text-primary">
                     <span>Custo Total</span>
-                    <span>{fmt(resultado.custo_total + custoHospedagemTotal + custoCombustivelTotal)}</span>
+                    <span>{fmt((resultado.custo_total * duracaoMeses) + custoHospedagemTotal + custoCombustivelTotal)}</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span>Custo/Dia</span>
-                    <span className="font-medium">{fmt(resultado.custo_por_dia)}</span>
+                    <span className="font-medium">{fmt(diasProdutivos > 0 ? ((resultado.custo_total * duracaoMeses) + custoHospedagemTotal + custoCombustivelTotal) / diasProdutivos : 0)}</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span>Custo/Pessoa</span>
-                    <span className="font-medium">{fmt(resultado.custo_por_equipe)}</span>
+                    <span className="font-medium">{fmt(resultado.total_equipes > 0 ? ((resultado.custo_total * duracaoMeses) + custoHospedagemTotal + custoCombustivelTotal) / resultado.total_equipes : 0)}</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span>Total equipe</span>
