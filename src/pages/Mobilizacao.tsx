@@ -1084,40 +1084,7 @@ export default function Mobilizacao() {
               </div>
             </Section>
 
-            {/* Equipes */}
-            <Section title="Equipes" icon={Users} badge={`${equipes.length}`}>
-              <div className="space-y-3">
-                {equipes.map((eq) => (
-                  <div key={eq._key} className="flex items-start gap-2 p-3 rounded-lg border bg-muted/30">
-                    <Users className="w-4 h-4 mt-2 text-muted-foreground shrink-0" />
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-2 flex-1">
-                      <div>
-                        <Label className="text-[10px]">Nome da Equipe</Label>
-                        <Input className="h-8 text-xs" value={eq.nome} onChange={(e) => updateEquipe(eq._key, "nome", e.target.value)} />
-                      </div>
-                      <div>
-                        <Label className="text-[10px]">Pessoas</Label>
-                        <Input className="h-8 text-xs" type="number" value={eq.quantidade_pessoas} onChange={(e) => updateEquipe(eq._key, "quantidade_pessoas", Number(e.target.value))} />
-                      </div>
-                      <div>
-                        <Label className="text-[10px]">Hospedagem/dia</Label>
-                        <Input className="h-8 text-xs" type="number" value={eq.custo_hospedagem} onChange={(e) => updateEquipe(eq._key, "custo_hospedagem", Number(e.target.value))} />
-                      </div>
-                      <div>
-                        <Label className="text-[10px]">Deslocamento/dia</Label>
-                        <Input className="h-8 text-xs" type="number" value={eq.custo_deslocamento} onChange={(e) => updateEquipe(eq._key, "custo_deslocamento", Number(e.target.value))} />
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 mt-1" onClick={() => removeEquipe(eq._key)}>
-                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                    </Button>
-                  </div>
-                ))}
-                <Button variant="outline" size="sm" className="gap-1" onClick={addEquipe}>
-                  <Plus className="w-3 h-3" /> Adicionar Equipe
-                </Button>
-              </div>
-            </Section>
+
           </div>
 
           {/* ── Coluna Direita: Resumo ── */}
