@@ -164,6 +164,7 @@ export default function Veiculos() {
               <SortTH sk="nome" label="Veículo" />
               <SortTH sk="tipo_propriedade" label="Tipo" />
               <SortTH sk="media_km_l" label="Média (km/L)" className="text-right" />
+              <SortTH sk="combustivel_preco_litro" label="R$/L" className="text-right" />
               <SortTH sk="tipo_combustivel" label="Combustível" />
               <SortTH sk="_custoKmTotal" label="Custo/km" className="text-right" />
               <SortTH sk="_custoHora" label="Custo/hora" className="text-right" />

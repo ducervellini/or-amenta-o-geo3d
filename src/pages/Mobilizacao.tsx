@@ -1327,7 +1327,7 @@ export default function Mobilizacao() {
                           </div>
                           <div className="text-[10px] text-muted-foreground">
                             <span className="block">Combustível (ida): <span className="font-medium text-foreground">{fmt(calc.custoCombustivelIda)}</span></span>
-                            <span>{calc.mediaKmL > 0 ? `${calc.mediaKmL.toFixed(1)} km/L · ` : ""}{fmt(calc.custoKm)}/km</span>
+                            <span>{calc.mediaKmL > 0 ? `${calc.mediaKmL.toFixed(1)} km/L · ` : ""}{fmt(calc.custoCombKm)}/km</span>
                           </div>
                           <div className="text-[10px] text-muted-foreground">
                             <span className="block">Pernoite (ida): <span className="font-medium text-foreground">{fmt(calc.custoPernoiteIda)}</span></span>
