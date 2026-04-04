@@ -277,7 +277,7 @@ export default function ComposicaoDetalhe() {
 
   const groupedItems = useMemo(() => {
     const groups: Record<string, typeof itensComCalculo> = {
-      mao_de_obra: [], equipamento: [], veiculo: [], material: [],
+      mao_de_obra: [], equipamento: [], material: [],
     };
     itensComCalculo.forEach((i) => {
       const tipo = String(i.tipo_insumo);
