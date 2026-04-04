@@ -118,8 +118,10 @@ export function calcularCustoDetalhado(
     .filter((b) => b.tipo === "percentual")
     .reduce((sum, b) => sum + salarioMensal * (b.valor / 100), 0);
 
-  // Custo total SEM redução por regime (folga remunerada = custo integral)
-  const custoTotal = salarioMensal + valorEncargos + valorBenFixos + valorBenPct;
+  // Custo efetivo mensal: folga remunerada eleva o custo por mês trabalhado
+  // Divide pelo fator regime para refletir que dias de folga são pagos
+  const custoBase = salarioMensal + valorEncargos + valorBenFixos + valorBenPct;
+  const custoTotal = fatorRegime < 1 ? custoBase / fatorRegime : custoBase;
 
   return {
     salario_mensal: salarioMensal,
