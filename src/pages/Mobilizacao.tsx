@@ -857,41 +857,6 @@ export default function Mobilizacao() {
 
 
 
-            {/* Clima */}
-            <Section title="Clima e Improdutividade" icon={Cloud} defaultOpen={false}>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <Label className="text-xs">Dias de Chuva/Mês</Label>
-                  <Input type="number" value={diasChuvaMes} onChange={(e) => setDiasChuvaMes(Number(e.target.value))} />
-                </div>
-                <div>
-                  <Label className="text-xs">Fator Improdutividade</Label>
-                  <Input type="number" value={fatorImprod} onChange={(e) => setFatorImprod(Number(e.target.value))} step="0.01" min="0" max="1" />
-                </div>
-                <div className="flex items-end">
-                  <div className="text-xs text-muted-foreground pb-2">
-                    <span className="inline-flex items-center gap-1">
-                      <Sun className="w-3 h-3 text-primary" /> {diasProdutivosMes}/mês · {diasProdutivos} total
-                    </span>
-                    <br />
-                    <span className="inline-flex items-center gap-1">
-                      <Cloud className="w-3 h-3 text-primary" /> {diasImprodutivosMes}/mês · {diasImprodutivos} total
-                    </span>
-                  </div>
-                </div>
-              </div>
-              {pluviometria && (
-                <p className="text-[10px] text-primary mt-2">
-                  ✓ Dias de chuva/mês baseados em dados históricos NASA POWER ({pluviometria.estacao.nome})
-                </p>
-              )}
-              {!pluviometria && (
-                <p className="text-[10px] text-muted-foreground mt-2">
-                  ⓘ Use "Análise Pluviométrica" acima para preencher automaticamente com dados históricos.
-                </p>
-              )}
-            </Section>
-
             {/* Hospedagem */}
             <Section title="Hospedagem" icon={Home} badge={fmt(custoHospedagemTotal) + " total"}>
               {/* Duração da hospedagem */}
