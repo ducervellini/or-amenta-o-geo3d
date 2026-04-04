@@ -15,7 +15,7 @@ import {
   type ResultadoCalculo,
 } from "@/lib/composicao-calculo";
 
-type TipoInsumo = "mao_de_obra" | "equipamento" | "veiculo" | "material";
+type TipoInsumo = "mao_de_obra" | "equipamento" | "material";
 
 interface Props {
   open: boolean;
