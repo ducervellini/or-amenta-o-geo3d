@@ -102,13 +102,15 @@ export function calcularCustoDetalhado(
   const horasAlmoco = horarioAlmoco ? horarioAlmoco.duracao_minutos / 60 : 0;
   const horasProdDia = j.horas_diarias - horasAlmoco;
 
-  // Encargos sociais — aplica os selecionados para qualquer regime
-  const encargosAtivos = encargos.filter((e) => e.ativo);
+  const isPJ = cargo.regime_contratacao === "pj";
+
+  // Encargos sociais (apenas CLT)
+  const encargosAtivos = isPJ ? [] : encargos.filter((e) => e.ativo);
   const totalEncargosPct = encargosAtivos.reduce((sum, e) => sum + e.percentual, 0);
   const valorEncargos = salarioMensal * (totalEncargosPct / 100);
 
-  // Benefícios — aplica os selecionados para qualquer regime
-  const beneficiosAtivos = beneficios.filter((b) => b.ativo);
+  // Benefícios (apenas CLT)
+  const beneficiosAtivos = isPJ ? [] : beneficios.filter((b) => b.ativo);
   const valorBenFixos = beneficiosAtivos
     .filter((b) => b.tipo === "fixo")
     .reduce((sum, b) => sum + b.valor, 0);
