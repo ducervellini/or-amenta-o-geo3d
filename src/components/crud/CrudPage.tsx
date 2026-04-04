@@ -141,51 +141,7 @@ export function CrudPage<T extends TableName>({
             Nenhum registro encontrado
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  {columns.map((col) => (
-                    <th key={col.key}>{col.label}</th>
-                  ))}
-                  <th className="text-center">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((row: any) => (
-                  <tr key={row.id}>
-                    {columns.map((col) => (
-                      <td key={col.key}>
-                        {col.render
-                          ? col.render(row[col.key], row)
-                          : String(row[col.key] ?? "-")}
-                      </td>
-                    ))}
-                    <td className="text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleEdit(row)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive"
-                          onClick={() => setDeleteId(row.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <SortableTable data={filtered} columns={columns} onEdit={handleEdit} onDelete={(id) => setDeleteId(id)} />
         )}
       </div>
 
