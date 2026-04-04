@@ -25,6 +25,11 @@ export function useSupabaseQuery(
       if (options?.filter) {
         query = query.eq(options.filter.column, options.filter.value);
       }
+      if (options?.filters) {
+        for (const [col, val] of Object.entries(options.filters)) {
+          query = query.eq(col, val);
+        }
+      }
 
       const { data, error } = await query;
       if (error) throw error;
