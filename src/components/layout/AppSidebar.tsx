@@ -55,7 +55,7 @@ const navigation: NavItem[] = [
     label: "Mão de Obra",
     icon: Users,
     children: [
-      { label: "Cargos e Salários", path: "/cadastros/cargos" },
+      { label: "Cargos e Salários", path: "/cadastros/cargos", icon: Calculator },
       { label: "Encargos Sociais", path: "/cadastros/encargos-sociais" },
       { label: "Benefícios", path: "/cadastros/beneficios" },
       { label: "Jornadas", path: "/cadastros/jornadas" },
