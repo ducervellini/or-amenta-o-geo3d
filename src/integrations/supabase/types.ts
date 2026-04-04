@@ -682,6 +682,221 @@ export type Database = {
         }
         Relationships: []
       }
+      mobilizacao_custos: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          consumo_km: number | null
+          created_at: string
+          custo_total: number
+          descricao: string | null
+          frequencia: string
+          id: string
+          mobilizacao_id: string
+          observacoes: string | null
+          preco_litro: number | null
+          quantidade: number
+          tipo_propriedade: string | null
+          updated_at: string
+          valor_aluguel: number | null
+          valor_unitario: number
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string
+          consumo_km?: number | null
+          created_at?: string
+          custo_total?: number
+          descricao?: string | null
+          frequencia?: string
+          id?: string
+          mobilizacao_id: string
+          observacoes?: string | null
+          preco_litro?: number | null
+          quantidade?: number
+          tipo_propriedade?: string | null
+          updated_at?: string
+          valor_aluguel?: number | null
+          valor_unitario?: number
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          consumo_km?: number | null
+          created_at?: string
+          custo_total?: number
+          descricao?: string | null
+          frequencia?: string
+          id?: string
+          mobilizacao_id?: string
+          observacoes?: string | null
+          preco_litro?: number | null
+          quantidade?: number
+          tipo_propriedade?: string | null
+          updated_at?: string
+          valor_aluguel?: number | null
+          valor_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mobilizacao_custos_mobilizacao_id_fkey"
+            columns: ["mobilizacao_id"]
+            isOneToOne: false
+            referencedRelation: "mobilizacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mobilizacao_equipes: {
+        Row: {
+          cargo_id: string | null
+          created_at: string
+          custo_alimentacao: number
+          custo_deslocamento: number
+          custo_hospedagem: number
+          custo_total: number
+          id: string
+          mobilizacao_id: string
+          nome: string
+          observacoes: string | null
+          quantidade_pessoas: number
+          updated_at: string
+        }
+        Insert: {
+          cargo_id?: string | null
+          created_at?: string
+          custo_alimentacao?: number
+          custo_deslocamento?: number
+          custo_hospedagem?: number
+          custo_total?: number
+          id?: string
+          mobilizacao_id: string
+          nome: string
+          observacoes?: string | null
+          quantidade_pessoas?: number
+          updated_at?: string
+        }
+        Update: {
+          cargo_id?: string | null
+          created_at?: string
+          custo_alimentacao?: number
+          custo_deslocamento?: number
+          custo_hospedagem?: number
+          custo_total?: number
+          id?: string
+          mobilizacao_id?: string
+          nome?: string
+          observacoes?: string | null
+          quantidade_pessoas?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mobilizacao_equipes_cargo_id_fkey"
+            columns: ["cargo_id"]
+            isOneToOne: false
+            referencedRelation: "cargos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mobilizacao_equipes_mobilizacao_id_fkey"
+            columns: ["mobilizacao_id"]
+            isOneToOne: false
+            referencedRelation: "mobilizacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mobilizacoes: {
+        Row: {
+          arquivo_geo: string | null
+          ativo: boolean
+          base_endereco: string | null
+          base_latitude: number | null
+          base_longitude: number | null
+          created_at: string
+          custo_por_dia: number
+          custo_por_equipe: number
+          custo_total: number
+          descricao: string | null
+          dias_chuva_mes: number
+          dias_improdutivos: number
+          dias_produtivos: number
+          dias_trabalho: number
+          distancia_base_projeto: number
+          distancia_media_diaria: number
+          estado: string | null
+          fator_improdutividade: number
+          id: string
+          jornada_diaria: number
+          latitude: number | null
+          longitude: number | null
+          municipio: string | null
+          municipios_considerados: Json
+          nome: string
+          orcamento_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          arquivo_geo?: string | null
+          ativo?: boolean
+          base_endereco?: string | null
+          base_latitude?: number | null
+          base_longitude?: number | null
+          created_at?: string
+          custo_por_dia?: number
+          custo_por_equipe?: number
+          custo_total?: number
+          descricao?: string | null
+          dias_chuva_mes?: number
+          dias_improdutivos?: number
+          dias_produtivos?: number
+          dias_trabalho?: number
+          distancia_base_projeto?: number
+          distancia_media_diaria?: number
+          estado?: string | null
+          fator_improdutividade?: number
+          id?: string
+          jornada_diaria?: number
+          latitude?: number | null
+          longitude?: number | null
+          municipio?: string | null
+          municipios_considerados?: Json
+          nome: string
+          orcamento_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          arquivo_geo?: string | null
+          ativo?: boolean
+          base_endereco?: string | null
+          base_latitude?: number | null
+          base_longitude?: number | null
+          created_at?: string
+          custo_por_dia?: number
+          custo_por_equipe?: number
+          custo_total?: number
+          descricao?: string | null
+          dias_chuva_mes?: number
+          dias_improdutivos?: number
+          dias_produtivos?: number
+          dias_trabalho?: number
+          distancia_base_projeto?: number
+          distancia_media_diaria?: number
+          estado?: string | null
+          fator_improdutividade?: number
+          id?: string
+          jornada_diaria?: number
+          latitude?: number | null
+          longitude?: number | null
+          municipio?: string | null
+          municipios_considerados?: Json
+          nome?: string
+          orcamento_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       modulos: {
         Row: {
           ativo: boolean

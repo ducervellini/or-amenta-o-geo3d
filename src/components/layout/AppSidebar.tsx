@@ -74,6 +74,7 @@ const navigation: NavItem[] = [
     ],
   },
   { label: "Composições", path: "/composicoes", icon: Layers },
+  { label: "Mobilização", path: "/mobilizacao", icon: Building },
   { label: "Orçamentos", path: "/orcamentos", icon: FileText },
   {
     label: "Parâmetros",
