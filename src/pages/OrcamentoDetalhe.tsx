@@ -390,14 +390,24 @@ export default function OrcamentoDetalhe() {
             <p className="page-subtitle">{oportunidade.descricao}</p>
           </div>
         </div>
-        <Button
-          className="gap-2"
-          onClick={handleSalvar}
-          disabled={!podesSalvar || saving}
-        >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          Salvar Orçamento
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            className="gap-2 print:hidden"
+            onClick={() => window.print()}
+          >
+            <Printer className="w-4 h-4" />
+            Imprimir
+          </Button>
+          <Button
+            className="gap-2 print:hidden"
+            onClick={handleSalvar}
+            disabled={!podesSalvar || saving}
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Salvar Orçamento
+          </Button>
+        </div>
       </div>
 
       {/* Oportunidade Info */}
