@@ -132,21 +132,7 @@ export default function Composicoes() {
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Código</th>
-                  <th>Nome</th>
-                  <th>Mercado</th>
-                  <th>Área da Empresa</th>
-                  <th>Departamento</th>
-                  <th>Descrição</th>
-                  <th>Unidade</th>
-                  <th>Custo Unitário</th>
-                  <th className="text-center">Ações</th>
-                </tr>
-              </thead>
+          <ComposicoesTable filtered={filtered} handleRowClick={handleRowClick} getMercadoNome={getMercadoNome} getAreaNome={getAreaNome} getModuloNome={getModuloNome} navigate={navigate} setDeletingId={setDeletingId} />
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
