@@ -518,7 +518,7 @@ export default function Mobilizacao() {
       case "unico": return item.valor_unitario * item.quantidade;
       default: return 0;
     }
-  }, [veiculosCadastrados, diasProdutivos, diasProdutivosMes, duracaoMeses]);
+  }, [veiculosCadastrados, diasProdutivos, diasProdutivosMes, diasTrabalho, duracaoMeses]);
 
   const custoDeslocamentosTotal = useMemo(() => {
     return deslocamentos.reduce((acc, item) => acc + calcularCustoDeslocamentoItem(item), 0);
