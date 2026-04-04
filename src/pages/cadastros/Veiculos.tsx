@@ -32,7 +32,7 @@ interface VeiculoForm {
 
 const defaultForm: VeiculoForm = {
   codigo: "", nome: "", unidade: "h",
-  tipo_propriedade: "proprio",
+  tipo_propriedade: "proprio", media_km_l: 0, tipo_combustivel: "diesel",
   valor_aquisicao: 0, valor_residual: 0, vida_util_km: 300000,
   valor_aluguel_mensal: 0, km_mensal_estimado: 3000,
   combustivel_consumo_km: 0, combustivel_preco_litro: 0,
