@@ -321,6 +321,54 @@ export type Database = {
           },
         ]
       }
+      custos_admin_local: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          quantidade: number
+          subcategoria: string | null
+          tipo_cobranca: string
+          unidade: string
+          updated_at: string
+          valor_diaria: number
+          valor_mensal: number
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          quantidade?: number
+          subcategoria?: string | null
+          tipo_cobranca?: string
+          unidade?: string
+          updated_at?: string
+          valor_diaria?: number
+          valor_mensal?: number
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          quantidade?: number
+          subcategoria?: string | null
+          tipo_cobranca?: string
+          unidade?: string
+          updated_at?: string
+          valor_diaria?: number
+          valor_mensal?: number
+        }
+        Relationships: []
+      }
       encargos_sociais: {
         Row: {
           ativo: boolean

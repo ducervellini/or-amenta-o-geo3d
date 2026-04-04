@@ -22,6 +22,12 @@ import Equipamentos from "./pages/cadastros/Equipamentos";
 import Veiculos from "./pages/cadastros/Veiculos";
 import Materiais from "./pages/cadastros/Materiais";
 import Combustiveis from "./pages/cadastros/Combustiveis";
+import AdminLocalEquipes from "./pages/admin-local/Equipes";
+import AdminLocalVeiculos from "./pages/admin-local/Veiculos";
+import AdminLocalCombustivel from "./pages/admin-local/Combustivel";
+import AdminLocalPedagios from "./pages/admin-local/Pedagios";
+import AdminLocalPassagens from "./pages/admin-local/Passagens";
+import AdminLocalHospedagem from "./pages/admin-local/Hospedagem";
 import Composicoes from "./pages/Composicoes";
 import ComposicaoDetalhe from "./pages/ComposicaoDetalhe";
 import Orcamentos from "./pages/Orcamentos";
@@ -72,6 +78,12 @@ const App = () => (
               <Route path="/composicoes" element={<Composicoes />} />
               <Route path="/composicoes/:id" element={<ComposicaoDetalhe />} />
               <Route path="/orcamentos" element={<Orcamentos />} />
+              <Route path="/admin-local/equipes" element={<AdminLocalEquipes />} />
+              <Route path="/admin-local/veiculos" element={<AdminLocalVeiculos />} />
+              <Route path="/admin-local/combustivel" element={<AdminLocalCombustivel />} />
+              <Route path="/admin-local/pedagios" element={<AdminLocalPedagios />} />
+              <Route path="/admin-local/passagens" element={<AdminLocalPassagens />} />
+              <Route path="/admin-local/hospedagem" element={<AdminLocalHospedagem />} />
               <Route path="/parametros/admin-local" element={<ParametrosAdminLocal />} />
               <Route path="/parametros/admin-central" element={<ParametrosAdminCentral />} />
               <Route path="/parametros/financiamento" element={<ParametrosFinanciamento />} />

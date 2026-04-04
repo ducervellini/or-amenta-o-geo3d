@@ -8,11 +8,12 @@ export function useSupabaseQuery(
     orderBy?: string;
     ascending?: boolean;
     filter?: { column: string; value: unknown };
+    filters?: Record<string, unknown>;
     enabled?: boolean;
   }
 ) {
   return useQuery({
-    queryKey: [table, options?.filter],
+    queryKey: [table, options?.filter, options?.filters],
     enabled: options?.enabled !== false,
     queryFn: async () => {
       let query = (supabase.from as any)(table)
@@ -23,6 +24,11 @@ export function useSupabaseQuery(
 
       if (options?.filter) {
         query = query.eq(options.filter.column, options.filter.value);
+      }
+      if (options?.filters) {
+        for (const [col, val] of Object.entries(options.filters)) {
+          query = query.eq(col, val);
+        }
       }
 
       const { data, error } = await query;

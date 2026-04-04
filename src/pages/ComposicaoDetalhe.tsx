@@ -34,13 +34,13 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-type TipoInsumo = "mao_de_obra" | "equipamento" | "veiculo" | "material";
+type TipoInsumo = "mao_de_obra" | "equipamento" | "material";
 
 const tipoIcons: Record<string, React.ElementType> = {
-  mao_de_obra: Users, equipamento: Wrench, veiculo: Truck, material: Package, combustivel: Package,
+  mao_de_obra: Users, equipamento: Wrench, material: Package, combustivel: Package,
 };
 const tipoLabels: Record<string, string> = {
-  mao_de_obra: "Mão de Obra", equipamento: "Equipamento", veiculo: "Veículo", material: "Material", combustivel: "Material",
+  mao_de_obra: "Mão de Obra", equipamento: "Equipamento", material: "Material", combustivel: "Material",
 };
 const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
@@ -196,7 +196,7 @@ export default function ComposicaoDetalhe() {
       try {
         if (tipo === "mao_de_obra") return { ...item, resultado: calcularMaoDeObra({ ...getDefaultParamsMaoDeObra(), ...params } as ParametrosMaoDeObra, qtd, coef) };
         if (tipo === "equipamento") return { ...item, resultado: calcularEquipamento({ ...getDefaultParamsEquipamento(), ...params } as ParametrosEquipamento, qtd, coef) };
-        if (tipo === "veiculo") return { ...item, resultado: calcularVeiculo({ ...getDefaultParamsVeiculo(), ...params } as ParametrosVeiculo, qtd, coef) };
+        if (tipo === "veiculo") return { ...item, resultado: calcularMaterial({ ...getDefaultParamsMaterial(), ...params } as ParametrosMaterial, qtd, coef) };
         return { ...item, resultado: calcularMaterial({ ...getDefaultParamsMaterial(), ...params } as ParametrosMaterial, qtd, coef) };
       } catch {
         return { ...item, resultado: { custo_unitario: Number(item.custo_unitario) || 0, custo_total: Number(item.custo_total) || 0, memoria: [] } };
@@ -277,7 +277,7 @@ export default function ComposicaoDetalhe() {
 
   const groupedItems = useMemo(() => {
     const groups: Record<string, typeof itensComCalculo> = {
-      mao_de_obra: [], equipamento: [], veiculo: [], material: [],
+      mao_de_obra: [], equipamento: [], material: [],
     };
     itensComCalculo.forEach((i) => {
       const tipo = String(i.tipo_insumo);
@@ -390,12 +390,12 @@ export default function ComposicaoDetalhe() {
                 <TabsList>
                   <TabsTrigger value="mao_de_obra" className="gap-1.5"><Users className="w-3.5 h-3.5" />M.O.</TabsTrigger>
                   <TabsTrigger value="equipamento" className="gap-1.5"><Wrench className="w-3.5 h-3.5" />Equip.</TabsTrigger>
-                  <TabsTrigger value="veiculo" className="gap-1.5"><Truck className="w-3.5 h-3.5" />Veíc.</TabsTrigger>
+                  <TabsTrigger value="material" className="gap-1.5"><Package className="w-3.5 h-3.5" />Mat.</TabsTrigger>
                   <TabsTrigger value="material" className="gap-1.5"><Package className="w-3.5 h-3.5" />Mat.</TabsTrigger>
                 </TabsList>
               </div>
 
-              {(["mao_de_obra", "equipamento", "veiculo", "material"] as const).map((tipo) => (
+              {(["mao_de_obra", "equipamento", "material"] as const).map((tipo) => (
                 <TabsContent key={tipo} value={tipo} className="space-y-3">
                   <div className="flex justify-end">
                     <Button size="sm" className="gap-1.5" onClick={() => { setTipoNovo(tipo); setEditingItem(null); setShowItemForm(true); }}>

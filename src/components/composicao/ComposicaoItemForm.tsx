@@ -15,7 +15,7 @@ import {
   type ResultadoCalculo,
 } from "@/lib/composicao-calculo";
 
-type TipoInsumo = "mao_de_obra" | "equipamento" | "veiculo" | "material";
+type TipoInsumo = "mao_de_obra" | "equipamento" | "material";
 
 interface Props {
   open: boolean;
@@ -29,7 +29,6 @@ interface Props {
 const tipoLabels: Record<TipoInsumo, string> = {
   mao_de_obra: "Mão de Obra",
   equipamento: "Equipamento",
-  veiculo: "Veículo",
   material: "Material",
 };
 
@@ -115,20 +114,6 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
           combustivel_preco_litro: comb ? Number(comb.preco_litro) : 0,
         }));
       }
-    } else if (tipo === "veiculo") {
-      const ve = veiculos?.find((v) => v.id === id);
-      if (ve) {
-        setDescricao(String(ve.nome));
-        setUnidade(String(ve.unidade));
-        const comb = combustiveis?.find((c) => c.ativo);
-        setParamsVe((prev) => ({
-          ...prev,
-          custo_hora: Number(ve.custo_hora),
-          manutencao_km: Number(ve.manutencao_hora),
-          depreciacao_km: Number(ve.custo_km),
-          combustivel_preco_litro: comb ? Number(comb.preco_litro) : 0,
-        }));
-      }
     } else if (tipo === "material") {
       const ma = materiais?.find((m) => m.id === id);
       if (ma) {
@@ -146,16 +131,15 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
     try {
       if (tipo === "mao_de_obra") return calcularMaoDeObra(paramsMO, quantidade, coeficiente);
       if (tipo === "equipamento") return calcularEquipamento(paramsEq, quantidade, coeficiente);
-      if (tipo === "veiculo") return calcularVeiculo(paramsVe, quantidade, coeficiente);
       return calcularMaterial(paramsMa, quantidade, coeficiente);
     } catch {
       return { custo_unitario: 0, custo_total: 0, memoria: [] };
     }
-  }, [tipo, paramsMO, paramsEq, paramsVe, paramsMa, quantidade, coeficiente]);
+  }, [tipo, paramsMO, paramsEq, paramsMa, quantidade, coeficiente]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const params = tipo === "mao_de_obra" ? paramsMO : tipo === "equipamento" ? paramsEq : tipo === "veiculo" ? paramsVe : paramsMa;
+    const params = tipo === "mao_de_obra" ? paramsMO : tipo === "equipamento" ? paramsEq : paramsMa;
     onSubmit({
       tipo_insumo: tipo,
       insumo_id: insumoId || crypto.randomUUID(),
@@ -174,9 +158,8 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
   const insumoOptions = useMemo(() => {
     if (tipo === "mao_de_obra") return (cargos || []).map((c) => ({ id: String(c.id), nome: String(c.nome) }));
     if (tipo === "equipamento") return (equipamentos || []).map((e) => ({ id: String(e.id), nome: String(e.nome) }));
-    if (tipo === "veiculo") return (veiculos || []).map((v) => ({ id: String(v.id), nome: String(v.nome) }));
     return (materiais || []).map((m) => ({ id: String(m.id), nome: String(m.nome) }));
-  }, [tipo, cargos, equipamentos, veiculos, materiais]);
+  }, [tipo, cargos, equipamentos, materiais]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -243,7 +226,7 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
             <TabsContent value="params" className="space-y-3 pt-2">
               {tipo === "mao_de_obra" && <ParamsMaoDeObra params={paramsMO} onChange={setParamsMO} />}
               {tipo === "equipamento" && <ParamsEquipamento params={paramsEq} onChange={setParamsEq} />}
-              {tipo === "veiculo" && <ParamsVeiculo params={paramsVe} onChange={setParamsVe} />}
+              {tipo === "material" && <ParamsMaterialForm params={paramsMa} onChange={setParamsMa} />}
               {tipo === "material" && <ParamsMaterialForm params={paramsMa} onChange={setParamsMa} />}
             </TabsContent>
 

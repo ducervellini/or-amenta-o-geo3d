@@ -29,7 +29,7 @@ export interface ColumnConfig {
   render?: (value: unknown, row: Record<string, unknown>) => React.ReactNode;
 }
 
-interface CrudPageProps<T extends TableName> {
+export interface CrudPageProps<T extends TableName> {
   table: T;
   title: string;
   subtitle: string;
@@ -37,6 +37,8 @@ interface CrudPageProps<T extends TableName> {
   formFields: FieldConfig[];
   searchField?: string;
   filter?: { column: string; value: unknown };
+  defaultFilters?: Record<string, unknown>;
+  hiddenDefaults?: Record<string, unknown>;
 }
 
 export function CrudPage<T extends TableName>({
@@ -47,13 +49,15 @@ export function CrudPage<T extends TableName>({
   formFields,
   searchField,
   filter,
+  defaultFilters,
+  hiddenDefaults,
 }: CrudPageProps<T>) {
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editItem, setEditItem] = useState<Record<string, unknown> | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { data, isLoading } = useSupabaseQuery(table, { filter });
+  const { data, isLoading } = useSupabaseQuery(table, { filter, filters: defaultFilters });
   const insertMutation = useSupabaseInsert(table);
   const updateMutation = useSupabaseUpdate(table);
   const deleteMutation = useSupabaseDelete(table);
@@ -66,13 +70,14 @@ export function CrudPage<T extends TableName>({
   });
 
   const handleSubmit = (values: Record<string, unknown>) => {
+    const mergedValues = { ...hiddenDefaults, ...values };
     if (editItem) {
       updateMutation.mutate(
-        { id: editItem.id as string, values: values as any },
+        { id: editItem.id as string, values: mergedValues as any },
         { onSuccess: () => { setFormOpen(false); setEditItem(null); } }
       );
     } else {
-      insertMutation.mutate(values as any, {
+      insertMutation.mutate(mergedValues as any, {
         onSuccess: () => setFormOpen(false),
       });
     }
