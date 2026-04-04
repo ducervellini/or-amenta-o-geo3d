@@ -857,41 +857,6 @@ export default function Mobilizacao() {
 
 
 
-            {/* Clima */}
-            <Section title="Clima e Improdutividade" icon={Cloud} defaultOpen={false}>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <Label className="text-xs">Dias de Chuva/Mês</Label>
-                  <Input type="number" value={diasChuvaMes} onChange={(e) => setDiasChuvaMes(Number(e.target.value))} />
-                </div>
-                <div>
-                  <Label className="text-xs">Fator Improdutividade</Label>
-                  <Input type="number" value={fatorImprod} onChange={(e) => setFatorImprod(Number(e.target.value))} step="0.01" min="0" max="1" />
-                </div>
-                <div className="flex items-end">
-                  <div className="text-xs text-muted-foreground pb-2">
-                    <span className="inline-flex items-center gap-1">
-                      <Sun className="w-3 h-3 text-primary" /> {diasProdutivosMes}/mês · {diasProdutivos} total
-                    </span>
-                    <br />
-                    <span className="inline-flex items-center gap-1">
-                      <Cloud className="w-3 h-3 text-primary" /> {diasImprodutivosMes}/mês · {diasImprodutivos} total
-                    </span>
-                  </div>
-                </div>
-              </div>
-              {pluviometria && (
-                <p className="text-[10px] text-primary mt-2">
-                  ✓ Dias de chuva/mês baseados em dados históricos NASA POWER ({pluviometria.estacao.nome})
-                </p>
-              )}
-              {!pluviometria && (
-                <p className="text-[10px] text-muted-foreground mt-2">
-                  ⓘ Use "Análise Pluviométrica" acima para preencher automaticamente com dados históricos.
-                </p>
-              )}
-            </Section>
-
             {/* Hospedagem */}
             <Section title="Hospedagem" icon={Home} badge={fmt(custoHospedagemTotal) + " total"}>
               {/* Duração da hospedagem */}
@@ -1119,40 +1084,7 @@ export default function Mobilizacao() {
               </div>
             </Section>
 
-            {/* Equipes */}
-            <Section title="Equipes" icon={Users} badge={`${equipes.length}`}>
-              <div className="space-y-3">
-                {equipes.map((eq) => (
-                  <div key={eq._key} className="flex items-start gap-2 p-3 rounded-lg border bg-muted/30">
-                    <Users className="w-4 h-4 mt-2 text-muted-foreground shrink-0" />
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-2 flex-1">
-                      <div>
-                        <Label className="text-[10px]">Nome da Equipe</Label>
-                        <Input className="h-8 text-xs" value={eq.nome} onChange={(e) => updateEquipe(eq._key, "nome", e.target.value)} />
-                      </div>
-                      <div>
-                        <Label className="text-[10px]">Pessoas</Label>
-                        <Input className="h-8 text-xs" type="number" value={eq.quantidade_pessoas} onChange={(e) => updateEquipe(eq._key, "quantidade_pessoas", Number(e.target.value))} />
-                      </div>
-                      <div>
-                        <Label className="text-[10px]">Hospedagem/dia</Label>
-                        <Input className="h-8 text-xs" type="number" value={eq.custo_hospedagem} onChange={(e) => updateEquipe(eq._key, "custo_hospedagem", Number(e.target.value))} />
-                      </div>
-                      <div>
-                        <Label className="text-[10px]">Deslocamento/dia</Label>
-                        <Input className="h-8 text-xs" type="number" value={eq.custo_deslocamento} onChange={(e) => updateEquipe(eq._key, "custo_deslocamento", Number(e.target.value))} />
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 mt-1" onClick={() => removeEquipe(eq._key)}>
-                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                    </Button>
-                  </div>
-                ))}
-                <Button variant="outline" size="sm" className="gap-1" onClick={addEquipe}>
-                  <Plus className="w-3 h-3" /> Adicionar Equipe
-                </Button>
-              </div>
-            </Section>
+
           </div>
 
           {/* ── Coluna Direita: Resumo ── */}
@@ -1258,14 +1190,7 @@ export default function Mobilizacao() {
                     <span>Custo/Dia</span>
                     <span className="font-medium">{fmt(diasProdutivos > 0 ? ((resultado.custo_total * duracaoMeses) + custoHospedagemTotal + custoCombustivelTotal) / diasProdutivos : 0)}</span>
                   </div>
-                  <div className="flex justify-between text-xs">
-                    <span>Custo/Pessoa</span>
-                    <span className="font-medium">{fmt(resultado.total_equipes > 0 ? ((resultado.custo_total * duracaoMeses) + custoHospedagemTotal + custoCombustivelTotal) / resultado.total_equipes : 0)}</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span>Total equipe</span>
-                    <span className="font-medium">{resultado.total_equipes} pessoas</span>
-                  </div>
+                
                 </div>
 
                 {/* Município */}
