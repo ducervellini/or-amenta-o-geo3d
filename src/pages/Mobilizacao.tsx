@@ -335,8 +335,7 @@ export default function Mobilizacao() {
   // Custos
   const [custos, setCustos] = useState<(CustoItem & { _key: number })[]>([
     { _key: 1, categoria: "hospedagem", descricao: "Diária hotel", valor_unitario: 150, quantidade: 1, frequencia: "diario" },
-    { _key: 2, categoria: "alimentacao", descricao: "Alimentação/dia", valor_unitario: 80, quantidade: 1, frequencia: "diario" },
-    { _key: 3, categoria: "combustivel", descricao: "Diesel", valor_unitario: 6.5, quantidade: 1, frequencia: "diario", consumo_km: 8, preco_litro: 6.5 },
+    { _key: 2, categoria: "veiculo", descricao: "Caminhonete", valor_unitario: 200, quantidade: 1, frequencia: "diario" },
   ]);
   let custoKeyRef = 4;
 
