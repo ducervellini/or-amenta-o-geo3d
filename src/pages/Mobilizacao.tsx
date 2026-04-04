@@ -661,6 +661,8 @@ export default function Mobilizacao() {
                         <span>{pluviometria.estacao.distancia_km} km do projeto</span>
                         <span className="text-muted-foreground">UF:</span>
                         <span>{pluviometria.estacao.uf}</span>
+                        <span className="text-muted-foreground">Anos analisados:</span>
+                        <span>{pluviometria.anos_analisados?.join(', ') || '—'}</span>
                       </div>
                     </div>
 
