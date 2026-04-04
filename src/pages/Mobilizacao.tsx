@@ -416,6 +416,7 @@ export default function Mobilizacao() {
   const diasProdutivos = diasProdutivosMes * duracaoMeses;
   const diasImprodutivos = diasImprodutivosMes * duracaoMeses;
   const custoCombustivelMensal = custoCombustivelDiario * diasProdutivosMes;
+  const custoCombustivelTotal = custoCombustivelMensal * duracaoMeses;
 
   // ── Pluviometria INMET ──
   const buscarPluviometria = async () => {
