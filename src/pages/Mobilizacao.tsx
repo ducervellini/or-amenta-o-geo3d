@@ -738,10 +738,12 @@ export default function Mobilizacao() {
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || "Erro desconhecido");
       setPluviometria(data);
-      // Auto-fill dias de chuva/mês
+      // Auto-fill dias de chuva/mês e dias improdutivos
       if (data.resumo?.media_dias_chuva_mes) {
-        setDiasChuvaMes(Math.round(data.resumo.media_dias_chuva_mes));
-        toast.success(`Dias de chuva/mês atualizado: ${Math.round(data.resumo.media_dias_chuva_mes)} dias`);
+        const diasChuva = Math.round(data.resumo.media_dias_chuva_mes);
+        setDiasChuvaMes(diasChuva);
+        setDiasImprodutivosUsuario(diasChuva);
+        toast.success(`Dias de chuva/mês atualizado: ${diasChuva} dias`);
       }
     } catch (err: any) {
       console.error("Erro pluviometria:", err);
