@@ -29,7 +29,7 @@ export interface ColumnConfig {
   render?: (value: unknown, row: Record<string, unknown>) => React.ReactNode;
 }
 
-interface CrudPageProps<T extends TableName> {
+export interface CrudPageProps<T extends TableName> {
   table: T;
   title: string;
   subtitle: string;
@@ -37,6 +37,8 @@ interface CrudPageProps<T extends TableName> {
   formFields: FieldConfig[];
   searchField?: string;
   filter?: { column: string; value: unknown };
+  defaultFilters?: Record<string, unknown>;
+  hiddenDefaults?: Record<string, unknown>;
 }
 
 export function CrudPage<T extends TableName>({
