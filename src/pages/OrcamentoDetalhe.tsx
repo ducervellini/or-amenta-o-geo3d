@@ -681,43 +681,161 @@ export default function OrcamentoDetalhe() {
 
             <Separator />
 
-            {/* ── BDI Detalhado ── */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Badge variant="outline" className="text-xs font-semibold">BDI</Badge>
-                <span className="text-sm font-semibold">
-                  {bdiData?.nome || "BDI"} — {fmtPct(bdiPercentual)}
-                </span>
-              </div>
-              {bdiComponentes.length > 0 ? (
-                <div className="space-y-1.5 pl-2">
-                  {bdiComponentes.map((comp, i) => (
-                    <div key={i} className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">{comp.nome}</span>
-                      <div className="flex items-center gap-4">
-                        <span className="text-xs text-muted-foreground w-16 text-right">{fmtPct(comp.percentual)}</span>
-                        <span className="font-medium w-28 text-right">{fmt(custoTotal * (comp.percentual / 100))}</span>
+            {/* ── DRE / BDI Detalhado ── */}
+            {(() => {
+              // Categorize BDI components for DRE
+              const tributos: typeof bdiComponentes = [];
+              const despesasIndiretas: typeof bdiComponentes = [];
+              let lucroComp: typeof bdiComponentes[0] | null = null;
+              let riscoComp: typeof bdiComponentes[0] | null = null;
+
+              for (const comp of bdiComponentes) {
+                const nomeUpper = comp.nome.toUpperCase();
+                if (nomeUpper.includes("LUCRO")) {
+                  lucroComp = comp;
+                } else if (nomeUpper.includes("RISCO")) {
+                  riscoComp = comp;
+                } else if (
+                  ["ISS", "PIS", "COFINS", "CPRB", "ICMS", "IRPJ", "CSLL"].some(t => nomeUpper.includes(t)) ||
+                  nomeUpper.includes("TRIBUT") || nomeUpper.includes("IMPOSTO") || nomeUpper.includes("CONTRIBUI")
+                ) {
+                  tributos.push(comp);
+                } else {
+                  despesasIndiretas.push(comp);
+                }
+              }
+
+              const totalTributosPct = tributos.reduce((s, c) => s + c.percentual, 0);
+              const totalTributos = custoTotal * (totalTributosPct / 100);
+              const totalDespIndPct = despesasIndiretas.reduce((s, c) => s + c.percentual, 0);
+              const totalDespInd = custoTotal * (totalDespIndPct / 100);
+              const valorLucro = lucroComp ? custoTotal * (lucroComp.percentual / 100) : 0;
+              const valorRisco = riscoComp ? custoTotal * (riscoComp.percentual / 100) : 0;
+              const lucroLiquido = valorLucro - valorRisco;
+
+              return (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Badge variant="outline" className="text-xs font-semibold">DRE + BDI</Badge>
+                    <span className="text-sm font-semibold">
+                      Demonstrativo de Resultado — {bdiData?.nome || "BDI"} ({fmtPct(bdiPercentual)})
+                    </span>
+                  </div>
+
+                  <div className="space-y-1 pl-2">
+                    {/* Receita Bruta = Preço de Venda */}
+                    <div className="flex justify-between text-sm font-semibold bg-muted/30 p-2 rounded">
+                      <span>Receita Bruta (Preço de Venda)</span>
+                      <span>{fmt(precoTotal)}</span>
+                    </div>
+
+                    {/* (-) Tributos */}
+                    {tributos.length > 0 && (
+                      <div className="pt-2">
+                        <div className="text-xs font-medium text-muted-foreground mb-1 pl-1">(-) Tributos e Contribuições</div>
+                        {tributos.map((comp, i) => (
+                          <div key={i} className="flex items-center justify-between text-sm pl-3 py-0.5">
+                            <span className="text-muted-foreground">{comp.nome}</span>
+                            <div className="flex items-center gap-4">
+                              <span className="text-xs text-muted-foreground w-16 text-right">{fmtPct(comp.percentual)}</span>
+                              <span className="font-medium w-28 text-right text-destructive">-{fmt(custoTotal * (comp.percentual / 100))}</span>
+                            </div>
+                          </div>
+                        ))}
+                        <div className="flex justify-between text-sm font-medium pl-3 pt-1 border-t border-dashed mt-1">
+                          <span>Total Tributos</span>
+                          <div className="flex items-center gap-4">
+                            <span className="text-xs w-16 text-right">{fmtPct(totalTributosPct)}</span>
+                            <span className="w-28 text-right text-destructive">-{fmt(totalTributos)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* = Receita Líquida */}
+                    <div className="flex justify-between text-sm font-semibold bg-muted/30 p-2 rounded mt-2">
+                      <span>= Receita Líquida</span>
+                      <span>{fmt(precoTotal - totalTributos)}</span>
+                    </div>
+
+                    {/* (-) Custos Diretos */}
+                    <div className="pt-2">
+                      <div className="text-xs font-medium text-muted-foreground mb-1 pl-1">(-) Custos Diretos</div>
+                      <div className="flex items-center justify-between text-sm pl-3 py-0.5">
+                        <span className="text-muted-foreground">Serviços (Subtotal 1)</span>
+                        <span className="font-medium w-28 text-right text-destructive">-{fmt(custoServicos)}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm pl-3 py-0.5">
+                        <span className="text-muted-foreground">ADM Local (Subtotal 2)</span>
+                        <span className="font-medium w-28 text-right text-destructive">-{fmt(custoAdmLocal)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm font-medium pl-3 pt-1 border-t border-dashed mt-1">
+                        <span>Total Custos Diretos</span>
+                        <span className="w-28 text-right text-destructive">-{fmt(custoTotal)}</span>
                       </div>
                     </div>
-                  ))}
-                  <Separator className="my-2" />
-                  <div className="flex items-center justify-between text-sm font-semibold">
-                    <span className="flex items-center gap-2">
-                      <TrendingUp className="w-3.5 h-3.5 text-primary" /> Total BDI
-                    </span>
-                    <div className="flex items-center gap-4">
-                      <span className="text-xs w-16 text-right">{fmtPct(bdiPercentual)}</span>
-                      <span className="w-28 text-right">{fmt(valorBdi)}</span>
+
+                    {/* = Lucro Bruto */}
+                    <div className="flex justify-between text-sm font-semibold bg-muted/30 p-2 rounded mt-2">
+                      <span>= Lucro Bruto</span>
+                      <span>{fmt(precoTotal - totalTributos - custoTotal)}</span>
+                    </div>
+
+                    {/* (-) Despesas Indiretas */}
+                    {(despesasIndiretas.length > 0 || riscoComp) && (
+                      <div className="pt-2">
+                        <div className="text-xs font-medium text-muted-foreground mb-1 pl-1">(-) Despesas Indiretas</div>
+                        {despesasIndiretas.map((comp, i) => (
+                          <div key={i} className="flex items-center justify-between text-sm pl-3 py-0.5">
+                            <span className="text-muted-foreground">{comp.nome}</span>
+                            <div className="flex items-center gap-4">
+                              <span className="text-xs text-muted-foreground w-16 text-right">{fmtPct(comp.percentual)}</span>
+                              <span className="font-medium w-28 text-right text-destructive">-{fmt(custoTotal * (comp.percentual / 100))}</span>
+                            </div>
+                          </div>
+                        ))}
+                        {riscoComp && (
+                          <div className="flex items-center justify-between text-sm pl-3 py-0.5">
+                            <span className="text-muted-foreground">{riscoComp.nome}</span>
+                            <div className="flex items-center gap-4">
+                              <span className="text-xs text-muted-foreground w-16 text-right">{fmtPct(riscoComp.percentual)}</span>
+                              <span className="font-medium w-28 text-right text-destructive">-{fmt(valorRisco)}</span>
+                            </div>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-sm font-medium pl-3 pt-1 border-t border-dashed mt-1">
+                          <span>Total Despesas Indiretas</span>
+                          <div className="flex items-center gap-4">
+                            <span className="text-xs w-16 text-right">{fmtPct(totalDespIndPct + (riscoComp?.percentual || 0))}</span>
+                            <span className="w-28 text-right text-destructive">-{fmt(totalDespInd + valorRisco)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <Separator className="my-3" />
+
+                    {/* = Lucro Líquido */}
+                    <div className="flex justify-between items-center text-base font-bold p-3 rounded-lg border-2 border-primary/30 bg-primary/5">
+                      <span className="flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-primary" />
+                        Lucro Líquido
+                      </span>
+                      <div className="text-right">
+                        <span className={`text-lg ${lucroLiquido >= 0 ? "text-primary" : "text-destructive"}`}>
+                          {fmt(lucroLiquido)}
+                        </span>
+                        {precoTotal > 0 && (
+                          <div className="text-xs text-muted-foreground">
+                            {((lucroLiquido / precoTotal) * 100).toFixed(2)}% da receita
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              ) : (
-                <div className="flex justify-between text-sm pl-2">
-                  <span className="text-muted-foreground">BDI ({fmtPct(bdiPercentual)})</span>
-                  <span className="font-medium">{fmt(valorBdi)}</span>
-                </div>
-              )}
-            </div>
+              );
+            })()}
 
             <Separator />
 
