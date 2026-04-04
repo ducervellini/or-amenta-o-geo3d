@@ -575,7 +575,7 @@ export default function Cargos() {
                         </td>
                         <td>
                           <Badge variant="outline" className="text-xs">
-                            {row._regime ? `${row._regime.dias_trabalho}/${row._regime.dias_folga} (${(custo.fator_regime * 100).toFixed(1)}%)` : "—"}
+                            {row._regime ? `${row._regime.dias_trabalho}/${row._regime.dias_folga} (×${(1 / custo.fator_regime).toFixed(3)})` : "—"}
                           </Badge>
                         </td>
                         <td>
