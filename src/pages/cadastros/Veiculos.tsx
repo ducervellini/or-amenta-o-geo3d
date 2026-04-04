@@ -10,8 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, Search, Car, Calculator } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Car, Calculator, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
+import { useTableSort, type SortDirection } from "@/components/ui/sortable-header";
 
 const R = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -85,6 +86,27 @@ export default function Veiculos() {
     return data.filter((r: any) => r.nome?.toLowerCase().includes(search.toLowerCase()) || r.codigo?.toLowerCase().includes(search.toLowerCase()));
   }, [data, search]);
 
+  const flatFiltered = useMemo(() => filtered.map((row: any) => {
+    const f: VeiculoForm = { ...defaultForm };
+    for (const k of Object.keys(defaultForm) as (keyof VeiculoForm)[]) {
+      if (typeof defaultForm[k] === "number") (f as any)[k] = Number(row[k]) || (defaultForm as any)[k];
+      else (f as any)[k] = row[k] || (defaultForm as any)[k];
+    }
+    const rc = calcVeic(f);
+    return { ...row, _depKm: rc.depKm, _custoKmTotal: rc.custoKmTotal, _custoHora: rc.custoHora, _totalMes: rc.totalMes };
+  }), [filtered]);
+
+  const { sorted: sortedRows, sortKey, sortDirection, handleSort } = useTableSort(flatFiltered);
+
+  const SortTH = ({ sk, label, className }: { sk: string; label: string; className?: string }) => (
+    <TableHead className={`cursor-pointer select-none hover:bg-muted/50 ${className || ""}`} onClick={() => handleSort(sk)}>
+      <div className="flex items-center gap-1.5">
+        <span>{label}</span>
+        {sortKey === sk ? (sortDirection === "asc" ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />) : <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground/50" />}
+      </div>
+    </TableHead>
+  );
+
   const setField = (name: keyof VeiculoForm, value: any) => setForm(p => ({ ...p, [name]: value }));
   const setNum = (name: keyof VeiculoForm, v: string) => setField(name, parseFloat(v) || 0);
 
@@ -137,47 +159,39 @@ export default function Veiculos() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Código</TableHead>
-              <TableHead>Veículo</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead className="text-right">Deprec./km</TableHead>
-              <TableHead className="text-right">Custo/km</TableHead>
-              <TableHead className="text-right">Custo/hora</TableHead>
-              <TableHead className="text-right">Custo/mês</TableHead>
+              <SortTH sk="codigo" label="Código" />
+              <SortTH sk="nome" label="Veículo" />
+              <SortTH sk="tipo_propriedade" label="Tipo" />
+              <SortTH sk="_depKm" label="Deprec./km" className="text-right" />
+              <SortTH sk="_custoKmTotal" label="Custo/km" className="text-right" />
+              <SortTH sk="_custoHora" label="Custo/hora" className="text-right" />
+              <SortTH sk="_totalMes" label="Custo/mês" className="text-right" />
               <TableHead className="w-24">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((row: any) => {
-              const f: VeiculoForm = { ...defaultForm };
-              for (const k of Object.keys(defaultForm) as (keyof VeiculoForm)[]) {
-                if (typeof defaultForm[k] === "number") (f as any)[k] = Number(row[k]) || (defaultForm as any)[k];
-                else (f as any)[k] = row[k] || (defaultForm as any)[k];
-              }
-              const rc = calcVeic(f);
-              return (
-                <TableRow key={row.id}>
-                  <TableCell className="font-medium text-accent">{row.codigo}</TableCell>
-                  <TableCell className="font-medium">{row.nome}</TableCell>
-                  <TableCell>
-                    <Badge variant={row.tipo_propriedade === "proprio" ? "default" : "secondary"}>
-                      {row.tipo_propriedade === "proprio" || !row.tipo_propriedade ? "Próprio" : "Alugado"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">{R(rc.depKm)}</TableCell>
-                  <TableCell className="text-right font-medium">{R(rc.custoKmTotal)}</TableCell>
-                  <TableCell className="text-right font-medium">{R(rc.custoHora)}</TableCell>
-                  <TableCell className="text-right font-medium">{R(rc.totalMes)}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => openEdit(row)}><Pencil className="h-4 w-4" /></Button>
-                      <Button size="icon" variant="ghost" onClick={() => remove(row.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-            {filtered.length === 0 && (
+            {sortedRows.map((row: any) => (
+              <TableRow key={row.id}>
+                <TableCell className="font-medium text-accent">{row.codigo}</TableCell>
+                <TableCell className="font-medium">{row.nome}</TableCell>
+                <TableCell>
+                  <Badge variant={row.tipo_propriedade === "proprio" ? "default" : "secondary"}>
+                    {row.tipo_propriedade === "proprio" || !row.tipo_propriedade ? "Próprio" : "Alugado"}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">{R(row._depKm)}</TableCell>
+                <TableCell className="text-right font-medium">{R(row._custoKmTotal)}</TableCell>
+                <TableCell className="text-right font-medium">{R(row._custoHora)}</TableCell>
+                <TableCell className="text-right font-medium">{R(row._totalMes)}</TableCell>
+                <TableCell>
+                  <div className="flex gap-1">
+                    <Button size="icon" variant="ghost" onClick={() => openEdit(row)}><Pencil className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" onClick={() => remove(row.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+            {sortedRows.length === 0 && (
               <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhum veículo cadastrado</TableCell></TableRow>
             )}
           </TableBody>
