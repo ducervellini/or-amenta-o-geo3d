@@ -1071,12 +1071,12 @@ export default function Mobilizacao() {
               <div className="space-y-3">
                 {custos.map((c) => {
                   const CatIcon = ICON_MAP[c.categoria] || CreditCard;
-                  const selectedVeiculo = c.veiculo_id ? (veiculosCadastrados as any[])?.find((v: any) => v.id === c.veiculo_id) : null;
-                  const custoKmCalc = selectedVeiculo && (selectedVeiculo.media_km_l > 0)
-                    ? (selectedVeiculo.combustivel_preco_litro / selectedVeiculo.media_km_l)
-                    : 0;
-                  const custoDiaCalc = custoKmCalc * (c.km_dia || 0);
-                  const custoTotalCalc = custoDiaCalc * diasProdutivos * c.quantidade;
+                   const selectedVeiculo = c.veiculo_id ? (veiculosCadastrados as any[])?.find((v: any) => v.id === c.veiculo_id) : null;
+                   const mediaKmL = selectedVeiculo?.media_km_l || 0;
+                   const precoComb = c.preco_combustivel || 0;
+                   const custoKmCalc = mediaKmL > 0 ? precoComb / mediaKmL : 0;
+                   const custoDiaCalc = custoKmCalc * (c.km_dia || 0);
+                   const custoTotalCalc = custoDiaCalc * diasProdutivos * c.quantidade;
                   return (
                     <div key={c._key} className="flex items-start gap-2 p-3 rounded-lg border bg-muted/30">
                       <CatIcon className="w-4 h-4 mt-2 text-muted-foreground shrink-0" />
