@@ -344,7 +344,7 @@ export default function Mobilizacao() {
       }
     } catch (err: any) {
       console.error("Erro pluviometria:", err);
-      toast.error("Erro ao consultar INMET: " + (err.message || "tente novamente"));
+      toast.error("Erro ao consultar dados pluviométricos: " + (err.message || "tente novamente"));
     } finally {
       setLoadingPluv(false);
     }
@@ -626,12 +626,12 @@ export default function Mobilizacao() {
             </Section>
 
             {/* Análise Pluviométrica */}
-            <Section title="Análise Pluviométrica (INMET)" icon={CloudRain} defaultOpen={false}>
+            <Section title="Análise Pluviométrica (NASA POWER)" icon={CloudRain} defaultOpen={false}>
               <div className="space-y-3">
                 <div className="flex items-end gap-3">
                   <div className="flex-1">
                     <p className="text-xs text-muted-foreground mb-2">
-                      Consulta dados históricos de precipitação do INMET (últimos 5 anos) para estimar o regime de chuvas
+                      Consulta dados satelitais de precipitação (NASA POWER) dos últimos 5 anos para estimar o regime de chuvas
                       mês a mês durante a duração do projeto. O resultado atualiza automaticamente os dias de chuva/mês.
                     </p>
                   </div>
@@ -643,7 +643,7 @@ export default function Mobilizacao() {
                     disabled={loadingPluv}
                   >
                     {loadingPluv ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CloudRain className="w-3.5 h-3.5" />}
-                    {loadingPluv ? "Consultando..." : "Consultar INMET"}
+                    {loadingPluv ? "Consultando..." : "Consultar NASA POWER"}
                   </Button>
                 </div>
 
