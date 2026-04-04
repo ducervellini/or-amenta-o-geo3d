@@ -524,6 +524,11 @@ export default function Mobilizacao() {
       const meses = item.meses_hospedagem ?? duracaoMeses;
       return item.valor_unitario * item.quantidade * meses;
     }
+    // Pedágios, passagens: valor × quantidade (livre)
+    if (item.categoria === "pedagios" || item.categoria === "passagens") {
+      return item.valor_unitario * item.quantidade;
+    }
+    // Diversos: mantém frequência
     switch (item.frequencia) {
       case "diario": return item.valor_unitario * item.quantidade * diasProdutivos;
       case "mensal": return item.valor_unitario * item.quantidade * duracaoMeses;
@@ -564,6 +569,8 @@ export default function Mobilizacao() {
         const custoCombMes = custoKmComb * kmMesProd * item.quantidade;
         const aluguelMes = Number(selectedVeiculo?.valor_aluguel_mensal || 0) * item.quantidade;
         custoMes = custoCombMes + aluguelMes;
+      } else if (item.categoria === "pedagios" || item.categoria === "passagens") {
+        custoMes = duracaoMeses > 0 ? (item.valor_unitario * item.quantidade) / duracaoMeses : 0;
       } else if (item.frequencia === "diario") {
         custoMes = item.valor_unitario * item.quantidade * diasProdutivosMes;
       } else if (item.frequencia === "mensal") {
@@ -1010,6 +1017,8 @@ export default function Mobilizacao() {
                     ? (isHotelType(item.tipo_hospedagem) ? (duracaoMeses > 0 ? (item.valor_unitario * item.quantidade) / duracaoMeses : 0) : item.valor_unitario * item.quantidade)
                     : item.categoria === "combustivel" && selectedVeiculo
                     ? (custoKmComb * kmMesProd * item.quantidade) + (aluguelMesVeic * item.quantidade)
+                    : (item.categoria === "pedagios" || item.categoria === "passagens")
+                    ? (duracaoMeses > 0 ? (item.valor_unitario * item.quantidade) / duracaoMeses : 0)
                     : item.frequencia === "diario" ? item.valor_unitario * item.quantidade * diasProdutivosMes
                     : item.frequencia === "mensal" ? item.valor_unitario * item.quantidade
                     : item.valor_unitario * item.quantidade / duracaoMeses;
@@ -1125,8 +1134,31 @@ export default function Mobilizacao() {
                           </>
                         )}
 
-                        {/* ── OUTROS (pedágios, passagens, diversos) ── */}
-                        {!["veiculo", "hospedagem", "combustivel"].includes(item.categoria) && (
+                        {/* ── PEDÁGIOS / PASSAGENS (livre) ── */}
+                        {(item.categoria === "pedagios" || item.categoria === "passagens") && (
+                          <>
+                            <div>
+                              <Label className="text-[10px]">Descrição</Label>
+                              <Input className="h-8 text-xs" value={item.descricao} onChange={(e) => updateDeslocamento(item._key, "descricao", e.target.value)} placeholder="Descrição do item" />
+                            </div>
+                            <div>
+                              <Label className="text-[10px]">Valor Unitário (R$)</Label>
+                              <Input className="h-8 text-xs" type="number" step="0.01" value={item.valor_unitario || ""} onChange={(e) => updateDeslocamento(item._key, "valor_unitario", Number(e.target.value))} />
+                            </div>
+                            <div>
+                              <Label className="text-[10px]">Quantidade</Label>
+                              <Input className="h-8 text-xs" type="number" value={item.quantidade} onChange={(e) => updateDeslocamento(item._key, "quantidade", Number(e.target.value))} min={1} />
+                            </div>
+                            <div className="flex items-end">
+                              <div className="text-[10px] text-muted-foreground pb-1.5">
+                                Total: <span className="font-bold text-primary">{fmt(custoItem)}</span>
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        {/* ── DIVERSOS ── */}
+                        {item.categoria === "diversos" && (
                           <>
                             <div>
                               <Label className="text-[10px]">Descrição</Label>
