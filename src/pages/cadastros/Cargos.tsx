@@ -145,6 +145,16 @@ export default function Cargos() {
       ],
       defaultValue: "mensal",
     },
+    {
+      name: "local_trabalho",
+      label: "Local de Trabalho",
+      type: "select" as const,
+      options: [
+        { label: "Campo", value: "campo" },
+        { label: "Escritório", value: "escritorio" },
+      ],
+      defaultValue: "campo",
+    },
     { name: "descricao", label: "Descrição", type: "textarea" as const },
   ];
 
