@@ -1341,6 +1341,16 @@ export default function Mobilizacao() {
                           </div>
                         );
                       })}
+                    {/* Mob/Desmob */}
+                    {custoMobDesmobTotal > 0 && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-1.5">
+                          <Route className="w-3 h-3 text-muted-foreground" />
+                          Mob/Desmob (ida+volta)
+                        </span>
+                        <span className="font-medium">{fmt(custoMobDesmobTotal)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1350,11 +1360,11 @@ export default function Mobilizacao() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm font-bold text-primary">
                     <span>Custo Total</span>
-                    <span>{fmt((resultado.custo_total * duracaoMeses) + custoHospedagemTotal + custoCombustivelTotal)}</span>
+                    <span>{fmt((resultado.custo_total * duracaoMeses) + custoHospedagemTotal + custoCombustivelTotal + custoMobDesmobTotal)}</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span>Custo/Dia</span>
-                    <span className="font-medium">{fmt(diasProdutivos > 0 ? ((resultado.custo_total * duracaoMeses) + custoHospedagemTotal + custoCombustivelTotal) / diasProdutivos : 0)}</span>
+                    <span className="font-medium">{fmt(diasProdutivos > 0 ? ((resultado.custo_total * duracaoMeses) + custoHospedagemTotal + custoCombustivelTotal + custoMobDesmobTotal) / diasProdutivos : 0)}</span>
                   </div>
                 
                 </div>
