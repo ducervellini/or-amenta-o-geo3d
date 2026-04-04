@@ -102,7 +102,7 @@ export function calcularCustoDetalhado(
   const horasAlmoco = horarioAlmoco ? horarioAlmoco.duracao_minutos / 60 : 0;
   const horasProdDia = j.horas_diarias - horasAlmoco;
 
-  const isPJ = cargo.regime_contratacao === "pj";
+  const isPJ = cargo.regime_contratacao === "pj" || cargo.regime_contratacao === "estagio";
 
   // Encargos sociais (apenas CLT)
   const encargosAtivos = isPJ ? [] : encargos.filter((e) => e.ativo);
