@@ -388,7 +388,7 @@ export default function Mobilizacao() {
   };
 
   // Max bar for chart
-  const maxPrecip = pluviometria ? Math.max(...pluviometria.mensal.map((m) => m.precipitacao_total), 1) : 1;
+  const maxPrecip = pluviometria ? Math.max(...pluviometria.mensal.map((m) => m.precipitacao_max), 1) : 1;
 
   return (
     <TooltipProvider>
