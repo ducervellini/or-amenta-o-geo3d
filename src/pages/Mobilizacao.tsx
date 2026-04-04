@@ -957,6 +957,7 @@ export default function Mobilizacao() {
                         const file = e.target.files?.[0];
                         if (file) {
                           setArquivoGeo(file.name);
+                          setArquivoGeoFile(file);
                           setLoadingGeo(true);
                           setGeoProgress("Lendo arquivo...");
                           try {
