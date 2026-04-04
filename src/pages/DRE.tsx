@@ -58,21 +58,15 @@ export default function DRE() {
     const financiamento = baseFinanciamento * (financiamentoPct / 100);
     const totalDespesas = adminLocal + adminCentral + financiamento;
 
-    // Caminho inverso:
-    // Lucro Líquido = Lucro antes IR - IR
-    // IR = Receita Bruta × (IRPJ% + CSLL%)
-    // Lucro antes IR = Lucro Bruto - Despesas
-    // Lucro Bruto = Receita Líquida - Custos Diretos
-    // Receita Líquida = Receita Bruta - Tributos Receita
-    // Receita Líquida = Receita Bruta × (1 - tributosReceita%)
-    // 
-    // Lucro Líquido = Receita Bruta × (1 - tributosReceita%) - custoDireto - totalDespesas - Receita Bruta × IR%
-    // Lucro Líquido = Receita Bruta × (1 - tributosReceita% - IR%) - custoDireto - totalDespesas
-    // Receita Bruta = (Lucro Líquido + custoDireto + totalDespesas) / (1 - tributosReceita% - IR%)
+    // Caminho inverso com lucro líquido em %:
+    // Lucro Líquido = Receita Bruta × lucroLiquidoPct%
+    // Receita Bruta × (1 - tributos% - IR%) - custoDireto - totalDespesas = Receita Bruta × lucroLiquidoPct%
+    // Receita Bruta × (1 - tributos% - IR% - lucroLiquidoPct%) = custoDireto + totalDespesas
+    // Receita Bruta = (custoDireto + totalDespesas) / (1 - tributos% - IR% - lucroLiquidoPct%)
 
-    const denominador = 1 - (totalTributosReceitaPct / 100) - (totalIRPct / 100);
+    const denominador = 1 - (totalTributosReceitaPct / 100) - (totalIRPct / 100) - (lucroLiquidoPct / 100);
     const receitaBruta = denominador > 0
-      ? (lucroLiquidoDesejado + custoDireto + totalDespesas) / denominador
+      ? (custoDireto + totalDespesas) / denominador
       : 0;
 
     const tributosTotal = receitaBruta * (totalTributosReceitaPct / 100);
