@@ -1,5 +1,5 @@
 import { type ResumoComposicao as Resumo } from "@/lib/composicao-calculo";
-import { Users, Wrench, Truck, Package } from "lucide-react";
+import { Users, Wrench, Package } from "lucide-react";
 
 interface Props {
   resumo: Resumo;
