@@ -1217,13 +1217,13 @@ export default function Mobilizacao() {
                       </div>
                     )}
                     {/* Combustível (km rodado) */}
-                    {custoCombustivelMensal > 0 && (
+                    {custoCombustivelTotal > 0 && (
                       <div className="flex items-center justify-between text-xs">
                         <span className="flex items-center gap-1.5">
                           <Fuel className="w-3 h-3 text-muted-foreground" />
-                          Combustível (km)
+                          Combustível ({duracaoMeses}m)
                         </span>
-                        <span className="font-medium">{fmt(custoCombustivelMensal)}</span>
+                        <span className="font-medium">{fmt(custoCombustivelTotal)}</span>
                       </div>
                     )}
                     {Object.entries(resultado.custos_por_categoria)
