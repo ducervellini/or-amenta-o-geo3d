@@ -368,6 +368,7 @@ export default function Mobilizacao() {
     pedagios_ida: number;
     quantidade_pessoas: number;
     quantidade_veiculos: number;
+    custo_hora_pessoa: number;
   }[]>([]);
   const mobDesmobKeyRef = useRef(1);
 
@@ -385,6 +386,7 @@ export default function Mobilizacao() {
         pedagios_ida: 0,
         quantidade_pessoas: 1,
         quantidade_veiculos: 1,
+        custo_hora_pessoa: 0,
       },
     ]);
   };
