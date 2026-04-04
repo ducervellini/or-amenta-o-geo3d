@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Eye, Trash2, Loader2 } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSupabaseQuery, useSupabaseDelete } from "@/hooks/useSupabaseCrud";
 import {
