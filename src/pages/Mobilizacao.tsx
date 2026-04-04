@@ -805,57 +805,39 @@ export default function Mobilizacao() {
                 </div>
               </div>
 
-              {/* Alimentação */}
+              {/* Custo por km rodado */}
               <Separator className="my-3" />
               <div className="space-y-3">
                 <Label className="text-xs font-medium flex items-center gap-1.5">
-                  <Utensils className="w-3.5 h-3.5 text-primary" /> Alimentação da Equipe
+                  <Fuel className="w-3.5 h-3.5 text-primary" /> Custo por km Rodado
                 </Label>
-                <div className="grid grid-cols-2 gap-3">
-                  <div
-                    className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${alimentacaoLocal === "local" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}
-                    onClick={() => setAlimentacaoLocal("local")}
-                  >
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <Utensils className="w-4 h-4" />
-                      No local do projeto
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      Refeições preparadas/servidas no canteiro. Sem deslocamento adicional.
-                    </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <Label className="text-[10px]">Consumo Médio (km/L)</Label>
+                    <Input className="h-8 text-xs" type="number" value={consumoMedioKmL} onChange={(e) => setConsumoMedioKmL(Number(e.target.value))} step="0.1" min="0.1" />
                   </div>
-                  <div
-                    className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${alimentacaoLocal === "cidade" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}
-                    onClick={() => setAlimentacaoLocal("cidade")}
-                  >
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <Navigation className="w-4 h-4" />
-                      Município mais próximo
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      Equipe se desloca até a cidade. Tempo e km adicionais contabilizados.
-                    </p>
+                  <div>
+                    <Label className="text-[10px]">Preço Combustível (R$/L)</Label>
+                    <Input className="h-8 text-xs" type="number" value={precoCombustivel} onChange={(e) => setPrecoCombustivel(Number(e.target.value))} step="0.01" />
                   </div>
-                </div>
-                {alimentacaoLocal === "cidade" && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-3 rounded-lg bg-muted/30 border">
-                    <div>
-                      <Label className="text-[10px]">Cidade para alimentação</Label>
-                      <Input className="h-8 text-xs" value={cidadeAlimentacao} onChange={(e) => setCidadeAlimentacao(e.target.value)} placeholder="Ex: Presidente Prudente" />
-                    </div>
-                    <div>
-                      <Label className="text-[10px]">Dist. ida (km)</Label>
-                      <Input className="h-8 text-xs" type="number" value={distanciaCidadeAlimentacao} onChange={(e) => setDistanciaCidadeAlimentacao(Number(e.target.value))} />
-                    </div>
-                    <div className="flex items-end">
-                      <div className="text-[10px] text-muted-foreground pb-1.5">
-                        <span className="font-medium text-foreground">{(distanciaCidadeAlimentacao * 2).toFixed(0)} km/dia</span> ida+volta
-                        <br />
-                        <span className="font-medium text-foreground">{((distanciaCidadeAlimentacao * 2) / 60).toFixed(1)}h</span> aprox. (60km/h)
+                  <div>
+                    <Label className="text-[10px]">Km Médio/Dia</Label>
+                    <Input className="h-8 text-xs" type="number" value={kmMedioDiario} onChange={(e) => setKmMedioDiario(Number(e.target.value))} />
+                  </div>
+                  <div className="flex items-end">
+                    <div className="text-[10px] text-muted-foreground pb-1.5 space-y-0.5">
+                      <div>
+                        <span className="font-medium text-foreground">{fmt(custoKmRodado)}</span>/km
+                      </div>
+                      <div>
+                        <span className="font-medium text-foreground">{fmt(custoCombustivelDiario)}</span>/dia
+                      </div>
+                      <div>
+                        <span className="font-medium text-foreground">{fmt(custoCombustivelMensal)}</span>/mês ({diasProdutivos}d)
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
             </Section>
 
