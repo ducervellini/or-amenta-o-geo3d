@@ -982,9 +982,7 @@ export default function Mobilizacao() {
                   const CatIcon = ICON_MAP[item.categoria] || CreditCard;
                   const selectedVeiculo = item.veiculo_id ? (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id) : null;
                   const custoItem = calcularCustoDeslocamentoItem(item);
-                  const custoMes = item.categoria === "veiculo"
-                    ? (item.tipo_veiculo === "alugado" ? (item.valor_aluguel_mensal || item.valor_unitario || 0) * item.quantidade : item.valor_unitario * item.quantidade)
-                    : item.categoria === "hospedagem"
+                  const custoMes = item.categoria === "hospedagem"
                     ? item.valor_unitario * item.quantidade * diasProdutivosMes
                     : item.categoria === "combustivel" && selectedVeiculo
                     ? (() => {
