@@ -18,6 +18,7 @@ const defaultBDI: BDIItem[] = [
   { label: "Seguro e Garantia", sigla: "S+G", percentual: 0.80, descricao: "Seguros e garantias contratuais" },
   { label: "Risco", sigla: "R", percentual: 1.27, descricao: "Margem de risco do empreendimento" },
   { label: "Despesas Financeiras", sigla: "DF", percentual: 1.23, descricao: "Custo financeiro do capital" },
+  { label: "Comissões", sigla: "COM", percentual: 0.00, descricao: "Comissões sobre venda ou intermediação" },
   { label: "Lucro", sigla: "L", percentual: 7.40, descricao: "Margem de lucro bruto" },
   { label: "PIS", sigla: "PIS", percentual: 0.65, descricao: "Programa de Integração Social" },
   { label: "COFINS", sigla: "COFINS", percentual: 3.00, descricao: "Contrib. p/ Financiamento da Seg. Social" },
