@@ -1017,6 +1017,8 @@ export default function Mobilizacao() {
                     ? (isHotelType(item.tipo_hospedagem) ? (duracaoMeses > 0 ? (item.valor_unitario * item.quantidade) / duracaoMeses : 0) : item.valor_unitario * item.quantidade)
                     : item.categoria === "combustivel" && selectedVeiculo
                     ? (custoKmComb * kmMesProd * item.quantidade) + (aluguelMesVeic * item.quantidade)
+                    : (item.categoria === "pedagios" || item.categoria === "passagens")
+                    ? (duracaoMeses > 0 ? (item.valor_unitario * item.quantidade) / duracaoMeses : 0)
                     : item.frequencia === "diario" ? item.valor_unitario * item.quantidade * diasProdutivosMes
                     : item.frequencia === "mensal" ? item.valor_unitario * item.quantidade
                     : item.valor_unitario * item.quantidade / duracaoMeses;
