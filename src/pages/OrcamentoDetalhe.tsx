@@ -377,8 +377,18 @@ export default function OrcamentoDetalhe() {
 
   return (
     <div className="page-container animate-fade-in space-y-6">
+      {/* Print header */}
+      <div className="hidden print:block mb-4">
+        <h1 className="text-xl font-bold">Orçamento Detalhado — {oportunidade.codigo}</h1>
+        <p className="text-sm text-muted-foreground">{oportunidade.descricao}</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Cliente: {oportunidade.clientes?.nome || "—"} | Local: {oportunidade.cidade || ""}{oportunidade.estado ? `/${oportunidade.estado}` : ""} | Emitido em: {new Date().toLocaleDateString("pt-BR")}
+        </p>
+        <hr className="mt-2" />
+      </div>
+
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between print:hidden">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate("/orcamentos")}>
             <ArrowLeft className="w-5 h-5" />
