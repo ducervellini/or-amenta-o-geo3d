@@ -975,7 +975,7 @@ export default function Mobilizacao() {
             {/* Deslocamentos do Projeto */}
             <Section title="Deslocamentos do Projeto" icon={Truck} badge={deslocamentos.length > 0 ? fmt(custoDeslocamentosTotal) + " total" : undefined}>
               <p className="text-xs text-muted-foreground mb-3">
-                Itens de custo recorrentes do projeto: veículos, hospedagem, combustível, pedágios, passagens e diversos.
+                Itens de custo recorrentes do projeto: hospedagem, combustível, pedágios, passagens e diversos.
               </p>
               <div className="space-y-3">
                 {deslocamentos.map((item) => {
