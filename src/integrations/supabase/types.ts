@@ -857,6 +857,7 @@ export type Database = {
           custo_por_dia: number
           custo_por_equipe: number
           custo_total: number
+          data_inicio: string | null
           descricao: string | null
           dias_chuva_mes: number
           dias_improdutivos: number
@@ -877,6 +878,7 @@ export type Database = {
           nome: string
           oportunidade_id: string | null
           orcamento_id: string | null
+          pluviometria_dados: Json | null
           updated_at: string
         }
         Insert: {
@@ -889,6 +891,7 @@ export type Database = {
           custo_por_dia?: number
           custo_por_equipe?: number
           custo_total?: number
+          data_inicio?: string | null
           descricao?: string | null
           dias_chuva_mes?: number
           dias_improdutivos?: number
@@ -909,6 +912,7 @@ export type Database = {
           nome: string
           oportunidade_id?: string | null
           orcamento_id?: string | null
+          pluviometria_dados?: Json | null
           updated_at?: string
         }
         Update: {
@@ -921,6 +925,7 @@ export type Database = {
           custo_por_dia?: number
           custo_por_equipe?: number
           custo_total?: number
+          data_inicio?: string | null
           descricao?: string | null
           dias_chuva_mes?: number
           dias_improdutivos?: number
@@ -941,6 +946,7 @@ export type Database = {
           nome?: string
           oportunidade_id?: string | null
           orcamento_id?: string | null
+          pluviometria_dados?: Json | null
           updated_at?: string
         }
         Relationships: [
