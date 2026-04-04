@@ -325,7 +325,7 @@ export default function ComposicaoDetalhe() {
 
             {/* 1. Service selection (primary) */}
             <div className="space-y-1.5">
-              <Label>Serviço *</Label>
+              <Label>Serviço</Label>
               <Select value={servicoId} onValueChange={setServicoId}>
                 <SelectTrigger><SelectValue placeholder="Selecione um serviço" /></SelectTrigger>
                 <SelectContent>
@@ -339,8 +339,59 @@ export default function ComposicaoDetalhe() {
               </Select>
             </div>
 
-            {/* 2. Auto-filled: Mercado, Área, Departamento */}
-            {servicoId !== "_none_" && (
+            {/* 2. Avulsa: editable fields / Serviço: auto-filled read-only */}
+            {servicoId === "_none_" ? (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Código *</Label>
+                    <Input value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="AVU-001" className="font-mono" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Nome *</Label>
+                    <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome da composição" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Mercado</Label>
+                    <Select value={mercadoNome || "_none_"} onValueChange={(v) => setMercadoNome(v === "_none_" ? "" : v)}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_none_">—</SelectItem>
+                        {(mercados || []).map((m) => (
+                          <SelectItem key={String(m.id)} value={String(m.nome)}>{String(m.nome)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Área da Empresa</Label>
+                    <Select value={areaNome || "_none_"} onValueChange={(v) => setAreaNome(v === "_none_" ? "" : v)}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_none_">—</SelectItem>
+                        {(areasEmpresa || []).map((a) => (
+                          <SelectItem key={String(a.id)} value={String(a.nome)}>{String(a.nome)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Departamento</Label>
+                    <Select value={departamentoNome || "_none_"} onValueChange={(v) => setDepartamentoNome(v === "_none_" ? "" : v)}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_none_">—</SelectItem>
+                        {(departamentos || []).map((d) => (
+                          <SelectItem key={String(d.id)} value={String(d.nome)}>{String(d.nome)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </>
+            ) : (
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-muted-foreground">Mercado</Label>
@@ -357,12 +408,14 @@ export default function ComposicaoDetalhe() {
               </div>
             )}
 
-            {/* 3. Code (auto, read-only) and Unit */}
+            {/* Code (auto for service, manual for avulsa) and Unit */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-muted-foreground">Código</Label>
-                <Input value={codigo} disabled className="bg-muted font-mono" />
-              </div>
+              {servicoId !== "_none_" && (
+                <div className="space-y-1.5">
+                  <Label className="text-muted-foreground">Código</Label>
+                  <Input value={codigo} disabled className="bg-muted font-mono" />
+                </div>
+              )}
               <div className="space-y-1.5">
                 <Label>Unidade</Label>
                 <Select value={unidade} onValueChange={setUnidade}>
