@@ -1,4 +1,5 @@
 import { CrudPage } from "@/components/crud/CrudPage";
+import { Badge } from "@/components/ui/badge";
 
 export default function Beneficios() {
   return (
@@ -20,6 +21,18 @@ export default function Beneficios() {
           label: "Tipo",
           render: (v) => <span className="capitalize">{String(v)}</span>,
         },
+        {
+          key: "local_trabalho",
+          label: "Local",
+          render: (v) => {
+            const labels: Record<string, string> = { campo: "Campo", escritorio: "Escritório", todos: "Todos" };
+            return (
+              <Badge variant="outline" className="text-xs">
+                {labels[String(v)] || "Todos"}
+              </Badge>
+            );
+          },
+        },
         { key: "descricao", label: "Descrição" },
       ]}
       formFields={[
@@ -34,6 +47,17 @@ export default function Beneficios() {
             { label: "Percentual (%)", value: "percentual" },
           ],
           defaultValue: "fixo",
+        },
+        {
+          name: "local_trabalho",
+          label: "Local de Trabalho",
+          type: "select",
+          options: [
+            { label: "Todos", value: "todos" },
+            { label: "Campo", value: "campo" },
+            { label: "Escritório", value: "escritorio" },
+          ],
+          defaultValue: "todos",
         },
         { name: "descricao", label: "Descrição", type: "textarea" },
       ]}
