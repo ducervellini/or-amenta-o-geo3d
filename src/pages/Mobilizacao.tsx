@@ -260,7 +260,8 @@ export default function Mobilizacao() {
   const [geoProgress, setGeoProgress] = useState("");
   const [baseLat, setBaseLat] = useState<number | null>(null);
   const [baseLng, setBaseLng] = useState<number | null>(null);
-  const [diasTrabalho, setDiasTrabalho] = useState(30);
+  const [diasUteisMes, setDiasUteisMes] = useState(24);
+  const [diasTrabalho, setDiasTrabalho] = useState(24);
   const [jornadaDiaria, setJornadaDiaria] = useState(8);
   const [diasChuvaMes, setDiasChuvaMes] = useState(5);
   const [fatorImprod, setFatorImprod] = useState(0.15);
