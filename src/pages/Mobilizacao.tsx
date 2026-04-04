@@ -561,24 +561,21 @@ export default function Mobilizacao() {
                 </TabsContent>
 
                 <TabsContent value="manual" className="mt-3">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     <div className="col-span-2">
                       <Label className="text-xs">Município</Label>
-                      <Input value={municipio} onChange={(e) => setMunicipio(e.target.value)} placeholder="Ex: São Paulo" />
+                      <Input value={municipio} onChange={(e) => setMunicipio(e.target.value)} placeholder="Ex: Presidente Prudente" />
                     </div>
                     <div>
                       <Label className="text-xs">Estado</Label>
-                      <Input value={estado} onChange={(e) => setEstado(e.target.value)} placeholder="SP" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Latitude</Label>
-                      <Input type="number" value={lat} onChange={(e) => setLat(Number(e.target.value))} step="0.0001" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Longitude</Label>
-                      <Input type="number" value={lng} onChange={(e) => setLng(Number(e.target.value))} step="0.0001" />
+                      <Input value={estado} onChange={(e) => setEstado(e.target.value)} placeholder="SP" maxLength={2} />
                     </div>
                   </div>
+                  {lat && lng && (
+                    <p className="text-[10px] text-muted-foreground mt-2">
+                      📍 Coordenadas: {lat.toFixed(4)}, {lng.toFixed(4)}
+                    </p>
+                  )}
                 </TabsContent>
               </Tabs>
 
