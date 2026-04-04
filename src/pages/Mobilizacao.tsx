@@ -1171,7 +1171,6 @@ export default function Mobilizacao() {
                       <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 mt-1" onClick={() => removeDeslocamento(item._key)}>
                         <Trash2 className="w-3.5 h-3.5 text-destructive" />
                       </Button>
-                      </Button>
                     </div>
                   );
                 })}
