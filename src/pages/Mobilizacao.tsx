@@ -341,6 +341,83 @@ export default function Mobilizacao() {
   // Veículos cadastrados
   const { data: veiculosCadastrados } = useSupabaseQuery("veiculos");
 
+  // ── Load existing mobilização from query param ──
+  useEffect(() => {
+    const opId = searchParams.get("oportunidade");
+    if (!opId || loadedRef.current) return;
+    
+    // Set oportunidade
+    setOportunidadeId(opId);
+
+    // Load existing mobilização for this oportunidade
+    const loadMobilizacao = async () => {
+      try {
+        const { data: mobData, error: mobErr } = await (supabase.from as any)("mobilizacoes")
+          .select("*")
+          .eq("oportunidade_id", opId)
+          .eq("ativo", true)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        if (mobErr) throw mobErr;
+        const mob = mobData?.[0];
+        if (!mob) return;
+
+        loadedRef.current = true;
+        setMobilizacaoId(mob.id);
+        setNome(mob.nome || "");
+        setMunicipio(mob.municipio || "");
+        setEstado(mob.estado || "");
+        setLat(mob.latitude ? Number(mob.latitude) : null);
+        setLng(mob.longitude ? Number(mob.longitude) : null);
+        setBaseLat(mob.base_latitude ? Number(mob.base_latitude) : null);
+        setBaseLng(mob.base_longitude ? Number(mob.base_longitude) : null);
+        setDiasTrabalho(Number(mob.dias_trabalho) || 24);
+        setJornadaDiaria(Number(mob.jornada_diaria) || 8);
+        setDiasChuvaMes(Number(mob.dias_chuva_mes) || 5);
+        setFatorImprod(Number(mob.fator_improdutividade) || 0.15);
+        setDistanciaBase(Number(mob.distancia_base_projeto) || 0);
+        setDistanciaMedia(Number(mob.distancia_media_diaria) || 0);
+        setArquivoGeo(mob.arquivo_geo || "");
+        if (mob.municipios_considerados && Array.isArray(mob.municipios_considerados)) {
+          setMunicipiosRota(mob.municipios_considerados as MunicipioRota[]);
+        }
+
+        // Load custos (deslocamentos)
+        const { data: custosData, error: custosErr } = await (supabase.from as any)("mobilizacao_custos")
+          .select("*")
+          .eq("mobilizacao_id", mob.id);
+        if (custosErr) throw custosErr;
+
+        if (custosData && custosData.length > 0) {
+          let keyCounter = 1;
+          const loadedDeslocamentos = custosData.map((c: any) => {
+            let obs: any = {};
+            try { obs = JSON.parse(c.observacoes || "{}"); } catch { /* ignore */ }
+            return {
+              _key: keyCounter++,
+              categoria: c.categoria,
+              descricao: c.descricao || "",
+              valor_unitario: Number(c.valor_unitario) || 0,
+              quantidade: Number(c.quantidade) || 1,
+              frequencia: c.frequencia || "mensal",
+              veiculo_id: obs.veiculo_id || undefined,
+              km_dia: obs.km_dia || undefined,
+              tipo_hospedagem: obs.tipo_hospedagem || undefined,
+              tipo_veiculo: obs.tipo_veiculo || undefined,
+              valor_aluguel_mensal: obs.valor_aluguel_mensal || undefined,
+              meses_hospedagem: obs.meses_hospedagem || undefined,
+            };
+          });
+          setDeslocamentos(loadedDeslocamentos);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar mobilização:", err);
+      }
+    };
+
+    loadMobilizacao();
+  }, [searchParams]);
+
   // ── Deslocamentos do Projeto (unified: hospedagem, combustível, pedágios, passagens, diversos) ──
   interface DeslocamentoItem {
     _key: number;
