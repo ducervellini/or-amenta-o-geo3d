@@ -572,6 +572,9 @@ export default function Cargos() {
                             </TooltipContent>
                           </Tooltip>
                         </td>
+                        <td>
+                          <span className="font-medium">{fmt(row.valor_hh)}</span>
+                        </td>
                         <td className="text-center">
                           <div className="flex items-center justify-center gap-1">
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditItem(row); setFormOpen(true); }}>
