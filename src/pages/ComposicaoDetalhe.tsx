@@ -50,6 +50,10 @@ export default function ComposicaoDetalhe() {
   const isNew = id === "novo";
 
   const { data: servicos } = useSupabaseQuery("servicos");
+  const { data: mercados } = useSupabaseQuery("mercados");
+  const { data: areasEmpresa } = useSupabaseQuery("areas_empresa");
+  const { data: departamentos } = useSupabaseQuery("modulos");
+  const { data: composicoesExistentes } = useSupabaseQuery("composicoes");
 
   // Composition header
   const [codigo, setCodigo] = useState("");
@@ -59,6 +63,16 @@ export default function ComposicaoDetalhe() {
   const [servicoId, setServicoId] = useState("_none_");
   const [status, setStatus] = useState("rascunho");
   const [travado, setTravado] = useState(false);
+
+  // Auto-filled from service
+  const [mercadoNome, setMercadoNome] = useState("");
+  const [areaNome, setAreaNome] = useState("");
+  const [departamentoNome, setDepartamentoNome] = useState("");
+
+  // Productivity
+  const [produtividadeValor, setProdutividadeValor] = useState<number>(0);
+  const [produtividadeUnidade, setProdutividadeUnidade] = useState("un");
+  const [produtividadeTempo, setProdutividadeTempo] = useState("dia");
 
   // Service metrics
   const [tipoGeometria, setTipoGeometria] = useState("");
@@ -106,7 +120,26 @@ export default function ComposicaoDetalhe() {
     }
   }, [id, isNew]);
 
-  // Load service geometry type when service changes
+  // Helper to generate 3-char abbreviation
+  const abrev = (str: string) => {
+    if (!str) return "XXX";
+    return str.replace(/[^a-zA-Z0-9]/g, "").substring(0, 3).toUpperCase().padEnd(3, "X");
+  };
+
+  // Auto-generate code based on service hierarchy
+  const gerarCodigo = (mercNome: string, areNome: string, deptNome: string) => {
+    const prefix = `COMP-${abrev(mercNome)}-${abrev(areNome)}-${abrev(deptNome)}-`;
+    const existentes = (composicoesExistentes || [])
+      .filter((c) => String(c.codigo).startsWith(prefix))
+      .map((c) => {
+        const num = parseInt(String(c.codigo).replace(prefix, ""), 10);
+        return isNaN(num) ? 0 : num;
+      });
+    const proximo = existentes.length > 0 ? Math.max(...existentes) + 1 : 1;
+    return `${prefix}${String(proximo).padStart(3, "0")}`;
+  };
+
+  // Load service geometry type and auto-fill when service changes
   useEffect(() => {
     if (servicoId && servicoId !== "_none_") {
       const servico = servicos?.find((s) => String(s.id) === servicoId);
@@ -114,11 +147,43 @@ export default function ComposicaoDetalhe() {
         setTipoGeometria(String(servico.tipo_geometria || ""));
         const premissas = (servico.premissas_padrao as Record<string, unknown>) || {};
         setMetricas(premissas);
+
+        // Set unit from service
+        setUnidade(String(servico.unidade_medicao || "un"));
+        setNome(String(servico.nome || ""));
+
+        // Auto-fill mercado, area, departamento
+        const merc = mercados?.find((m) => String(m.id) === String(servico.mercado_id));
+        const area = areasEmpresa?.find((a) => String(a.id) === String(servico.area_empresa_id));
+        const dept = departamentos?.find((d) => String(d.id) === String(servico.modulo_id));
+
+        const mercNome = merc ? String(merc.nome) : "";
+        const areNome = area ? String(area.nome) : "";
+        const deptNome = dept ? String(dept.nome) : "";
+
+        setMercadoNome(mercNome);
+        setAreaNome(areNome);
+        setDepartamentoNome(deptNome);
+
+        // Auto-fill productivity from service
+        if (servico.produtividade_padrao) {
+          setProdutividadeValor(Number(servico.produtividade_padrao));
+          setProdutividadeUnidade(String(servico.unidade_medicao || "un"));
+          setProdutividadeTempo(String(servico.unidade_tempo_produtividade || "dia"));
+        }
+
+        // Auto-generate code only for new compositions
+        if (isNew) {
+          setCodigo(gerarCodigo(mercNome, areNome, deptNome));
+        }
       }
     } else {
       setTipoGeometria("");
+      setMercadoNome("");
+      setAreaNome("");
+      setDepartamentoNome("");
     }
-  }, [servicoId, servicos]);
+  }, [servicoId, servicos, mercados, areasEmpresa, departamentos, composicoesExistentes]);
 
   type ItemComCalculo = Record<string, unknown> & { resultado: { custo_unitario: number; custo_total: number; memoria: import("@/lib/composicao-calculo").MemoriaCalculo[] } };
 
@@ -257,10 +322,46 @@ export default function ComposicaoDetalhe() {
           {/* Info card */}
           <div className="bg-card rounded-lg border shadow-sm p-5 space-y-4">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Dados da Composição</h3>
+
+            {/* 1. Service selection (primary) */}
+            <div className="space-y-1.5">
+              <Label>Serviço *</Label>
+              <Select value={servicoId} onValueChange={setServicoId}>
+                <SelectTrigger><SelectValue placeholder="Selecione um serviço" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none_">Avulsa (sem serviço)</SelectItem>
+                  {(servicos || []).map((s) => (
+                    <SelectItem key={String(s.id)} value={String(s.id)}>
+                      {String(s.codigo)} - {String(s.nome)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 2. Auto-filled: Mercado, Área, Departamento */}
+            {servicoId !== "_none_" && (
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-muted-foreground">Mercado</Label>
+                  <Input value={mercadoNome || "—"} disabled className="bg-muted" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-muted-foreground">Área da Empresa</Label>
+                  <Input value={areaNome || "—"} disabled className="bg-muted" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-muted-foreground">Departamento</Label>
+                  <Input value={departamentoNome || "—"} disabled className="bg-muted" />
+                </div>
+              </div>
+            )}
+
+            {/* 3. Code (semi-auto) and Unit */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Código</Label>
-                <Input value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="COMP-001" />
+                <Input value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="COMP-MER-ARE-DEP-001" />
               </div>
               <div className="space-y-1.5">
                 <Label>Unidade</Label>
@@ -274,22 +375,50 @@ export default function ComposicaoDetalhe() {
                 </Select>
               </div>
             </div>
+
+            {/* 4. Name */}
             <div className="space-y-1.5">
               <Label>Nome</Label>
               <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome da composição" />
             </div>
+
+            {/* 5. Productivity */}
             <div className="space-y-1.5">
-              <Label>Serviço (opcional)</Label>
-              <Select value={servicoId} onValueChange={setServicoId}>
-                <SelectTrigger><SelectValue placeholder="Avulsa (sem serviço)" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_none_">Avulsa (sem serviço)</SelectItem>
-                  {(servicos || []).map((s) => (
-                    <SelectItem key={String(s.id)} value={String(s.id)}>{String(s.nome)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Produtividade</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  value={produtividadeValor || ""}
+                  onChange={(e) => setProdutividadeValor(Number(e.target.value))}
+                  placeholder="Ex: 5"
+                  className="w-24"
+                  step="0.01"
+                />
+                <Select value={produtividadeUnidade} onValueChange={setProdutividadeUnidade}>
+                  <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["ha","m","km","km²","m²","un","pt","propriedades","unidades","pontos","cadastros","imóveis","amostras","torres","marcos","vértices","bandeiras","plantas","travessias","seções","piquetes","relatórios","laudos"].map((u) => (
+                      <SelectItem key={u} value={u}>{u}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span className="text-muted-foreground">/</span>
+                <Select value={produtividadeTempo} onValueChange={setProdutividadeTempo}>
+                  <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="hora">Hora</SelectItem>
+                    <SelectItem value="dia">Dia</SelectItem>
+                    <SelectItem value="mes">Mês</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {produtividadeValor > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {produtividadeValor} {produtividadeUnidade}/{produtividadeTempo}
+                </p>
+              )}
             </div>
+
             <Button onClick={handleSaveHeader} className="gap-2" disabled={insertComposicao.isPending || updateComposicao.isPending}>
               <Save className="w-4 h-4" />
               {isNew ? "Criar Composição" : "Salvar"}
