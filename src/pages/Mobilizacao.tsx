@@ -859,64 +859,7 @@ export default function Mobilizacao() {
               </div>
             </Section>
 
-            {/* Parâmetros Operacionais */}
-            <Section title="Parâmetros Operacionais" icon={Calculator}>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div>
-                  <Label className="text-xs">Dias de Trabalho</Label>
-                  <Input type="number" value={diasTrabalho} onChange={(e) => setDiasTrabalho(Number(e.target.value))} />
-                </div>
-                <div>
-                  <Label className="text-xs">Jornada Diária (h)</Label>
-                  <Input type="number" value={jornadaDiaria} onChange={(e) => setJornadaDiaria(Number(e.target.value))} step="0.5" />
-                </div>
-                <div>
-                  <Label className="text-xs">Dist. Média Diária (km)</Label>
-                  <Input type="number" value={distanciaMedia} onChange={(e) => setDistanciaMedia(Number(e.target.value))} />
-                </div>
-                <div>
-                  <Label className="text-xs">—</Label>
-                  <div className="text-xs text-muted-foreground pt-2">
-                    Horas totais: {(diasProdutivos * jornadaDiaria).toFixed(0)}h
-                  </div>
-                </div>
-              </div>
 
-              {/* Custo por km rodado */}
-              <Separator className="my-3" />
-              <div className="space-y-3">
-                <Label className="text-xs font-medium flex items-center gap-1.5">
-                  <Fuel className="w-3.5 h-3.5 text-primary" /> Custo por km Rodado
-                </Label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div>
-                    <Label className="text-[10px]">Consumo Médio (km/L)</Label>
-                    <Input className="h-8 text-xs" type="number" value={consumoMedioKmL} onChange={(e) => setConsumoMedioKmL(Number(e.target.value))} step="0.1" min="0.1" />
-                  </div>
-                  <div>
-                    <Label className="text-[10px]">Preço Combustível (R$/L)</Label>
-                    <Input className="h-8 text-xs" type="number" value={precoCombustivel} onChange={(e) => setPrecoCombustivel(Number(e.target.value))} step="0.01" />
-                  </div>
-                  <div>
-                    <Label className="text-[10px]">Km Médio/Dia</Label>
-                    <Input className="h-8 text-xs" type="number" value={kmMedioDiario} onChange={(e) => setKmMedioDiario(Number(e.target.value))} />
-                  </div>
-                  <div className="flex items-end">
-                    <div className="text-[10px] text-muted-foreground pb-1.5 space-y-0.5">
-                      <div>
-                        <span className="font-medium text-foreground">{fmt(custoKmRodado)}</span>/km
-                      </div>
-                      <div>
-                        <span className="font-medium text-foreground">{fmt(custoCombustivelDiario)}</span>/dia
-                      </div>
-                      <div>
-                        <span className="font-medium text-foreground">{fmt(custoCombustivelMensal)}</span>/mês ({diasProdutivos}d)
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Section>
 
             {/* Clima */}
             <Section title="Clima e Improdutividade" icon={Cloud} defaultOpen={false}>
