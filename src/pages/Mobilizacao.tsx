@@ -449,15 +449,46 @@ export default function Mobilizacao() {
   };
 
   const resultado = useMemo(
-    () => calcularMobilizacao(params, custos, equipes),
-    [diasTrabalho, jornadaDiaria, diasChuvaMes, fatorImprod, distanciaBase, distanciaMedia, custos, equipes, duracaoMeses]
+    () => calcularMobilizacao(params, [], []),
+    [diasTrabalho, jornadaDiaria, diasChuvaMes, fatorImprod, distanciaBase, distanciaMedia, duracaoMeses]
   );
 
   const { diasProdutivos: diasProdutivosMes, diasImprodutivos: diasImprodutivosMes } = calcularDiasProdutivos(params);
   const diasProdutivos = diasProdutivosMes * duracaoMeses;
   const diasImprodutivos = diasImprodutivosMes * duracaoMeses;
-  const custoCombustivelMensal = custoCombustivelDiario * diasProdutivosMes;
-  const custoCombustivelTotal = custoCombustivelMensal * duracaoMeses;
+
+  // Calculate deslocamento costs
+  const calcularCustoDeslocamentoItem = useCallback((item: typeof deslocamentos[0]) => {
+    if (item.categoria === "combustivel" && item.veiculo_id) {
+      const veic = (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id);
+      const mediaKmL = veic?.media_km_l || 0;
+      const precoComb = item.preco_combustivel || 0;
+      const custoKm = mediaKmL > 0 ? precoComb / mediaKmL : 0;
+      const custoDia = custoKm * (item.km_dia || 0);
+      if (item.frequencia === "diario") return custoDia * diasProdutivos * item.quantidade;
+      if (item.frequencia === "mensal") return custoDia * diasProdutivosMes * item.quantidade * duracaoMeses;
+      return custoDia * item.quantidade;
+    }
+    switch (item.frequencia) {
+      case "diario": return item.valor_unitario * item.quantidade * diasProdutivos;
+      case "mensal": return item.valor_unitario * item.quantidade * duracaoMeses;
+      case "unico": return item.valor_unitario * item.quantidade;
+      default: return 0;
+    }
+  }, [veiculosCadastrados, diasProdutivos, diasProdutivosMes, duracaoMeses]);
+
+  const custoDeslocamentosTotal = useMemo(() => {
+    return deslocamentos.reduce((acc, item) => acc + calcularCustoDeslocamentoItem(item), 0);
+  }, [deslocamentos, calcularCustoDeslocamentoItem]);
+
+  const custosDeslocamentoPorCategoria = useMemo(() => {
+    const result: Record<string, number> = {};
+    for (const item of deslocamentos) {
+      const custo = calcularCustoDeslocamentoItem(item);
+      result[item.categoria] = (result[item.categoria] || 0) + custo;
+    }
+    return result;
+  }, [deslocamentos, calcularCustoDeslocamentoItem]);
 
   // ── Pluviometria INMET ──
   const buscarPluviometria = async () => {
