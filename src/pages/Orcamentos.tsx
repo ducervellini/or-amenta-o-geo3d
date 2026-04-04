@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Search, Eye, FileText } from "lucide-react";
+import { Search, Eye, FileText, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 
@@ -16,6 +17,7 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
 export default function Orcamentos() {
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: oportunidades, isLoading } = useQuery({
     queryKey: ["orcamentos-oportunidades"],
@@ -157,8 +159,37 @@ export default function Orcamentos() {
                             size="icon"
                             className="h-8 w-8"
                             onClick={() => navigate(`/orcamentos/${o.id}`)}
+                            title="Abrir orçamento"
                           >
                             <FileText className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => navigate(`/orcamentos/${o.id}`)}
+                            title="Editar"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive"
+                            onClick={async () => {
+                              const { error } = await (supabase.from as any)("oportunidades")
+                                .update({ ativo: false })
+                                .eq("id", o.id);
+                              if (error) {
+                                toast.error(error.message);
+                              } else {
+                                toast.success("Orçamento removido");
+                                queryClient.invalidateQueries({ queryKey: ["orcamentos-oportunidades"] });
+                              }
+                            }}
+                            title="Excluir"
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </td>
