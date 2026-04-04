@@ -33,6 +33,7 @@ import Composicoes from "./pages/Composicoes";
 import Mobilizacao from "./pages/Mobilizacao";
 import ComposicaoDetalhe from "./pages/ComposicaoDetalhe";
 import Orcamentos from "./pages/Orcamentos";
+import OrcamentoDetalhe from "./pages/OrcamentoDetalhe";
 import Oportunidades from "./pages/Oportunidades";
 import ParametrosAdminLocal from "./pages/parametros/AdminLocal";
 import ParametrosAdminCentral from "./pages/parametros/AdminCentral";
@@ -83,6 +84,7 @@ const App = () => (
               <Route path="/composicoes/:id" element={<ComposicaoDetalhe />} />
               <Route path="/mobilizacao" element={<Mobilizacao />} />
               <Route path="/orcamentos" element={<Orcamentos />} />
+              <Route path="/orcamentos/:id" element={<OrcamentoDetalhe />} />
               <Route path="/oportunidades" element={<Oportunidades />} />
               <Route path="/admin-local/equipes" element={<AdminLocalEquipes />} />
               <Route path="/admin-local/veiculos" element={<AdminLocalVeiculos />} />
