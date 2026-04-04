@@ -989,7 +989,7 @@ export default function Mobilizacao() {
                   const custoKmVeic = Number(selectedVeiculo?.custo_km || 0);
                   const custoKm = custoKmComb + custoKmVeic;
                   const custoMes = item.categoria === "hospedagem"
-                    ? item.valor_unitario * item.quantidade * diasProdutivosMes
+                    ? item.valor_unitario * item.quantidade * diasTrabalho
                     : item.categoria === "combustivel" && selectedVeiculo
                     ? custoKm * (item.km_dia || 0) * diasProdutivosMes * item.quantidade
                     : item.frequencia === "diario" ? item.valor_unitario * item.quantidade * diasProdutivosMes
