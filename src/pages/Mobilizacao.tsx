@@ -330,10 +330,51 @@ export default function Mobilizacao() {
   const [pluviometria, setPluviometria] = useState<PluviometriaResult | null>(null);
   const [loadingPluv, setLoadingPluv] = useState(false);
 
-  // Custos
+  // Hospedagem
+  const [tipoHospedagem, setTipoHospedagem] = useState<"hotel" | "alojamento_mobiliado" | "alojamento_mobiliar">("hotel");
+  // Hotel
+  interface QuartoHotel { _key: number; tipo: "single" | "duplo" | "triplo"; diaria: number; quantidade: number }
+  const [quartosHotel, setQuartosHotel] = useState<QuartoHotel[]>([
+    { _key: 1, tipo: "single", diaria: 180, quantidade: 2 },
+  ]);
+  let quartoKeyRef = useRef(2);
+  const addQuarto = () => {
+    setQuartosHotel(prev => [...prev, { _key: quartoKeyRef.current++, tipo: "single", diaria: 0, quantidade: 1 }]);
+  };
+  const removeQuarto = (key: number) => setQuartosHotel(prev => prev.filter(q => q._key !== key));
+  const updateQuarto = (key: number, field: string, value: any) => {
+    setQuartosHotel(prev => prev.map(q => q._key === key ? { ...q, [field]: value } : q));
+  };
+  // Alojamento mobiliado
+  const [alojamentoMobiliadoValor, setAlojamentoMobiliadoValor] = useState(3000);
+  const [alojamentoMobiliadoQtd, setAlojamentoMobiliadoQtd] = useState(1);
+  // Alojamento a mobiliar
+  const [alojamentoMobiliarAluguel, setAlojamentoMobiliarAluguel] = useState(2000);
+  const [alojamentoMobiliarQtd, setAlojamentoMobiliarQtd] = useState(1);
+  const [alojamentoMobiliarMobilia, setAlojamentoMobiliarMobilia] = useState(5000);
+  const [alojamentoMobiliarRevenda, setAlojamentoMobiliarRevenda] = useState(50); // % de revenda
+
+  const custoHospedagemMensal = useMemo(() => {
+    if (tipoHospedagem === "hotel") {
+      return quartosHotel.reduce((acc, q) => acc + q.diaria * q.quantidade * diasTrabalho, 0);
+    }
+    if (tipoHospedagem === "alojamento_mobiliado") {
+      return alojamentoMobiliadoValor * alojamentoMobiliadoQtd;
+    }
+    // alojamento_mobiliar: aluguel + mobília amortizada - revenda
+    const aluguelTotal = alojamentoMobiliarAluguel * alojamentoMobiliarQtd;
+    const mobiliaTotal = alojamentoMobiliarMobilia * alojamentoMobiliarQtd;
+    const revendaTotal = mobiliaTotal * (alojamentoMobiliarRevenda / 100);
+    const custoLiquidoMobilia = mobiliaTotal - revendaTotal;
+    // Amortizar mobília sobre a duração do projeto
+    const amortizacaoMensal = duracaoMeses > 0 ? custoLiquidoMobilia / duracaoMeses : custoLiquidoMobilia;
+    return aluguelTotal + amortizacaoMensal;
+  }, [tipoHospedagem, quartosHotel, diasTrabalho, alojamentoMobiliadoValor, alojamentoMobiliadoQtd,
+    alojamentoMobiliarAluguel, alojamentoMobiliarQtd, alojamentoMobiliarMobilia, alojamentoMobiliarRevenda, duracaoMeses]);
+
+  // Custos (sem hospedagem, que agora é separada)
   const [custos, setCustos] = useState<(CustoItem & { _key: number })[]>([
-    { _key: 1, categoria: "hospedagem", descricao: "Diária hotel", valor_unitario: 150, quantidade: 1, frequencia: "diario" },
-    { _key: 2, categoria: "veiculo", descricao: "Caminhonete", valor_unitario: 200, quantidade: 1, frequencia: "diario" },
+    { _key: 1, categoria: "veiculo", descricao: "Caminhonete", valor_unitario: 200, quantidade: 1, frequencia: "diario" },
   ]);
   let custoKeyRef = 4;
 
