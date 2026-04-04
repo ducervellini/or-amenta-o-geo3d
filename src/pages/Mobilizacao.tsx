@@ -377,6 +377,12 @@ export default function Mobilizacao() {
         setJornadaDiaria(Number(mob.jornada_diaria) || 8);
         setDiasChuvaMes(Number(mob.dias_chuva_mes) || 5);
         setFatorImprod(Number(mob.fator_improdutividade) || 0.15);
+        // Restore user-chosen improdutivos: use dias_improdutivos/duracaoMeses if available, else diasChuvaMes
+        const savedDuracaoMeses = Number(mob.duracao_meses) || 3;
+        const savedDiasImprodMes = mob.dias_improdutivos && savedDuracaoMeses > 0
+          ? Math.round(Number(mob.dias_improdutivos) / savedDuracaoMeses)
+          : Number(mob.dias_chuva_mes) || 5;
+        setDiasImprodutivosUsuario(savedDiasImprodMes);
         setDistanciaBase(Number(mob.distancia_base_projeto) || 0);
         setDistanciaMedia(Number(mob.distancia_media_diaria) || 0);
         setArquivoGeo(mob.arquivo_geo || "");
