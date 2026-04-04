@@ -222,28 +222,14 @@ export default function Mobilizacao() {
             <Card>
               <CardContent className="p-0">
                 <div className="h-[300px] rounded-lg overflow-hidden">
-                  <MapContainer
-                    center={[lat, lng]}
-                    zoom={8}
-                    className="h-full w-full"
-                    scrollWheelZoom
-                  >
-                    <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                    <RecenterMap lat={lat} lng={lng} />
-                    {lat && lng && (
-                      <Marker position={[lat, lng]}>
-                        <Popup>Projeto: {municipio || "Local do projeto"}</Popup>
-                      </Marker>
-                    )}
-                    {baseLat && baseLng && (
-                      <Marker position={[baseLat, baseLng]}>
-                        <Popup>Base: {baseEndereco || "Ponto inicial"}</Popup>
-                      </Marker>
-                    )}
-                  </MapContainer>
+                  <LeafletMap
+                    projectLat={lat}
+                    projectLng={lng}
+                    baseLat={baseLat}
+                    baseLng={baseLng}
+                    municipio={municipio}
+                    baseEndereco={baseEndereco}
+                  />
                 </div>
               </CardContent>
             </Card>
