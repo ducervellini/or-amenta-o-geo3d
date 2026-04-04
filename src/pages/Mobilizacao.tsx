@@ -398,6 +398,68 @@ export default function Mobilizacao() {
   ]);
   let equipeKeyRef = 2;
 
+  // ── Mobilização / Desmobilização ──
+  const [mobDesmobItens, setMobDesmobItens] = useState<{
+    _key: number;
+    municipio_saida: string;
+    estado_saida: string;
+    veiculo_id: string;
+    distancia_km: number;
+    km_max_dia: number;
+    hospedagem_pernoite: number;
+    pedagios_ida: number;
+    quantidade_pessoas: number;
+    quantidade_veiculos: number;
+  }[]>([]);
+  const mobDesmobKeyRef = useRef(1);
+
+  const addMobDesmob = () => {
+    setMobDesmobItens((prev) => [
+      ...prev,
+      {
+        _key: mobDesmobKeyRef.current++,
+        municipio_saida: "",
+        estado_saida: "",
+        veiculo_id: "",
+        distancia_km: 0,
+        km_max_dia: 500,
+        hospedagem_pernoite: 150,
+        pedagios_ida: 0,
+        quantidade_pessoas: 1,
+        quantidade_veiculos: 1,
+      },
+    ]);
+  };
+
+  const updateMobDesmob = (key: number, field: string, value: any) => {
+    setMobDesmobItens((prev) =>
+      prev.map((item) => (item._key === key ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const removeMobDesmob = (key: number) => {
+    setMobDesmobItens((prev) => prev.filter((item) => item._key !== key));
+  };
+
+  const calcularMobDesmobItem = useCallback((item: typeof mobDesmobItens[0]) => {
+    const veic = (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id);
+    const mediaKmL = veic?.media_km_l || 0;
+    const precoComb = veic?.combustivel_preco_litro || 0;
+    const custoKm = mediaKmL > 0 ? precoComb / mediaKmL : 0;
+    const distancia = item.distancia_km;
+    const diasViagem = item.km_max_dia > 0 ? Math.ceil(distancia / item.km_max_dia) : 1;
+    const pernoites = Math.max(0, diasViagem - 1);
+    const custoCombustivelIda = custoKm * distancia * item.quantidade_veiculos;
+    const custoPernoiteIda = pernoites * item.hospedagem_pernoite * item.quantidade_pessoas;
+    const custoIda = custoCombustivelIda + custoPernoiteIda + item.pedagios_ida;
+    const custoTotal = custoIda * 2;
+    return { veic, mediaKmL, custoKm, diasViagem, pernoites, custoCombustivelIda, custoPernoiteIda, custoIda, custoTotal };
+  }, [veiculosCadastrados]);
+
+  const custoMobDesmobTotal = useMemo(() => {
+    return mobDesmobItens.reduce((acc, item) => acc + calcularMobDesmobItem(item).custoTotal, 0);
+  }, [mobDesmobItens, calcularMobDesmobItem]);
+
   const params: MobilizacaoParams = {
     dias_trabalho: diasTrabalho,
     jornada_diaria: jornadaDiaria,
