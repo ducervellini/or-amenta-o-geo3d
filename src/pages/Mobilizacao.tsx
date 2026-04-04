@@ -267,10 +267,21 @@ export default function Mobilizacao() {
   const [distanciaBase, setDistanciaBase] = useState(50);
   const [distanciaMedia, setDistanciaMedia] = useState(30);
 
-  // Alimentação
-  const [alimentacaoLocal, setAlimentacaoLocal] = useState<"local" | "cidade">("local");
-  const [distanciaCidadeAlimentacao, setDistanciaCidadeAlimentacao] = useState(0);
-  const [cidadeAlimentacao, setCidadeAlimentacao] = useState("");
+  // Veículo / Custo por km
+  const [consumoMedioKmL, setConsumoMedioKmL] = useState(8); // km/L
+  const [precoCombustivel, setPrecoCombustivel] = useState(6.5); // R$/L
+  const [kmMedioDiario, setKmMedioDiario] = useState(80); // km/dia
+
+  const custoKmRodado = useMemo(() => {
+    if (consumoMedioKmL <= 0) return 0;
+    return precoCombustivel / consumoMedioKmL;
+  }, [precoCombustivel, consumoMedioKmL]);
+
+  const custoCombustivelDiario = useMemo(() => {
+    return custoKmRodado * kmMedioDiario;
+  }, [custoKmRodado, kmMedioDiario]);
+
+  // custoCombustivelMensal calculated after diasProdutivos is available
 
   // Datas do projeto (data início = hoje)
   const [dataInicio, setDataInicio] = useState(() => {
@@ -322,14 +333,13 @@ export default function Mobilizacao() {
   // Custos
   const [custos, setCustos] = useState<(CustoItem & { _key: number })[]>([
     { _key: 1, categoria: "hospedagem", descricao: "Diária hotel", valor_unitario: 150, quantidade: 1, frequencia: "diario" },
-    { _key: 2, categoria: "alimentacao", descricao: "Alimentação/dia", valor_unitario: 80, quantidade: 1, frequencia: "diario" },
-    { _key: 3, categoria: "combustivel", descricao: "Diesel", valor_unitario: 6.5, quantidade: 1, frequencia: "diario", consumo_km: 8, preco_litro: 6.5 },
+    { _key: 2, categoria: "veiculo", descricao: "Caminhonete", valor_unitario: 200, quantidade: 1, frequencia: "diario" },
   ]);
   let custoKeyRef = 4;
 
   // Equipes
   const [equipes, setEquipes] = useState<(EquipeItem & { _key: number })[]>([
-    { _key: 1, nome: "Equipe Campo", quantidade_pessoas: 4, custo_deslocamento: 0, custo_hospedagem: 150, custo_alimentacao: 80 },
+    { _key: 1, nome: "Equipe Campo", quantidade_pessoas: 4, custo_deslocamento: 0, custo_hospedagem: 150, custo_alimentacao: 0 },
   ]);
   let equipeKeyRef = 2;
 
@@ -348,6 +358,7 @@ export default function Mobilizacao() {
   );
 
   const { diasProdutivos, diasImprodutivos } = calcularDiasProdutivos(params);
+  const custoCombustivelMensal = custoCombustivelDiario * diasProdutivos;
 
   // ── Pluviometria INMET ──
   const buscarPluviometria = async () => {
@@ -793,57 +804,39 @@ export default function Mobilizacao() {
                 </div>
               </div>
 
-              {/* Alimentação */}
+              {/* Custo por km rodado */}
               <Separator className="my-3" />
               <div className="space-y-3">
                 <Label className="text-xs font-medium flex items-center gap-1.5">
-                  <Utensils className="w-3.5 h-3.5 text-primary" /> Alimentação da Equipe
+                  <Fuel className="w-3.5 h-3.5 text-primary" /> Custo por km Rodado
                 </Label>
-                <div className="grid grid-cols-2 gap-3">
-                  <div
-                    className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${alimentacaoLocal === "local" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}
-                    onClick={() => setAlimentacaoLocal("local")}
-                  >
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <Utensils className="w-4 h-4" />
-                      No local do projeto
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      Refeições preparadas/servidas no canteiro. Sem deslocamento adicional.
-                    </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <Label className="text-[10px]">Consumo Médio (km/L)</Label>
+                    <Input className="h-8 text-xs" type="number" value={consumoMedioKmL} onChange={(e) => setConsumoMedioKmL(Number(e.target.value))} step="0.1" min="0.1" />
                   </div>
-                  <div
-                    className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${alimentacaoLocal === "cidade" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}
-                    onClick={() => setAlimentacaoLocal("cidade")}
-                  >
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <Navigation className="w-4 h-4" />
-                      Município mais próximo
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      Equipe se desloca até a cidade. Tempo e km adicionais contabilizados.
-                    </p>
+                  <div>
+                    <Label className="text-[10px]">Preço Combustível (R$/L)</Label>
+                    <Input className="h-8 text-xs" type="number" value={precoCombustivel} onChange={(e) => setPrecoCombustivel(Number(e.target.value))} step="0.01" />
                   </div>
-                </div>
-                {alimentacaoLocal === "cidade" && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-3 rounded-lg bg-muted/30 border">
-                    <div>
-                      <Label className="text-[10px]">Cidade para alimentação</Label>
-                      <Input className="h-8 text-xs" value={cidadeAlimentacao} onChange={(e) => setCidadeAlimentacao(e.target.value)} placeholder="Ex: Presidente Prudente" />
-                    </div>
-                    <div>
-                      <Label className="text-[10px]">Dist. ida (km)</Label>
-                      <Input className="h-8 text-xs" type="number" value={distanciaCidadeAlimentacao} onChange={(e) => setDistanciaCidadeAlimentacao(Number(e.target.value))} />
-                    </div>
-                    <div className="flex items-end">
-                      <div className="text-[10px] text-muted-foreground pb-1.5">
-                        <span className="font-medium text-foreground">{(distanciaCidadeAlimentacao * 2).toFixed(0)} km/dia</span> ida+volta
-                        <br />
-                        <span className="font-medium text-foreground">{((distanciaCidadeAlimentacao * 2) / 60).toFixed(1)}h</span> aprox. (60km/h)
+                  <div>
+                    <Label className="text-[10px]">Km Médio/Dia</Label>
+                    <Input className="h-8 text-xs" type="number" value={kmMedioDiario} onChange={(e) => setKmMedioDiario(Number(e.target.value))} />
+                  </div>
+                  <div className="flex items-end">
+                    <div className="text-[10px] text-muted-foreground pb-1.5 space-y-0.5">
+                      <div>
+                        <span className="font-medium text-foreground">{fmt(custoKmRodado)}</span>/km
+                      </div>
+                      <div>
+                        <span className="font-medium text-foreground">{fmt(custoCombustivelDiario)}</span>/dia
+                      </div>
+                      <div>
+                        <span className="font-medium text-foreground">{fmt(custoCombustivelMensal)}</span>/mês ({diasProdutivos}d)
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
             </Section>
 
@@ -988,10 +981,6 @@ export default function Mobilizacao() {
                       <div>
                         <Label className="text-[10px]">Hospedagem/dia</Label>
                         <Input className="h-8 text-xs" type="number" value={eq.custo_hospedagem} onChange={(e) => updateEquipe(eq._key, "custo_hospedagem", Number(e.target.value))} />
-                      </div>
-                      <div>
-                        <Label className="text-[10px]">Alimentação/dia</Label>
-                        <Input className="h-8 text-xs" type="number" value={eq.custo_alimentacao} onChange={(e) => updateEquipe(eq._key, "custo_alimentacao", Number(e.target.value))} />
                       </div>
                       <div>
                         <Label className="text-[10px]">Deslocamento/dia</Label>
