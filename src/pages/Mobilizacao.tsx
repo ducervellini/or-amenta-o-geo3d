@@ -430,6 +430,24 @@ export default function Mobilizacao() {
           setDeslocamentos(loadedDeslocamentos);
           deslKeyRef.current = keyCounter;
         }
+
+        // Download and parse geo file from storage
+        if (mob.arquivo_geo && mob.id) {
+          try {
+            const filePath = `${mob.id}/${mob.arquivo_geo}`;
+            const { data: fileData, error: dlErr } = await supabase.storage
+              .from("geo-files")
+              .download(filePath);
+            if (!dlErr && fileData) {
+              const file = new File([fileData], mob.arquivo_geo, { type: fileData.type });
+              const geojson = await parseGeoFile(file);
+              setGeoJsonData(geojson);
+              setModoLocalizacao("arquivo");
+            }
+          } catch (geoErr) {
+            console.error("Erro ao carregar arquivo geo:", geoErr);
+          }
+        }
       } catch (err) {
         console.error("Erro ao carregar mobilização:", err);
       }
