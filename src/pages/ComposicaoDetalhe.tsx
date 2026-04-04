@@ -120,7 +120,26 @@ export default function ComposicaoDetalhe() {
     }
   }, [id, isNew]);
 
-  // Load service geometry type when service changes
+  // Helper to generate 3-char abbreviation
+  const abrev = (str: string) => {
+    if (!str) return "XXX";
+    return str.replace(/[^a-zA-Z0-9]/g, "").substring(0, 3).toUpperCase().padEnd(3, "X");
+  };
+
+  // Auto-generate code based on service hierarchy
+  const gerarCodigo = (mercNome: string, areNome: string, deptNome: string) => {
+    const prefix = `COMP-${abrev(mercNome)}-${abrev(areNome)}-${abrev(deptNome)}-`;
+    const existentes = (composicoesExistentes || [])
+      .filter((c) => String(c.codigo).startsWith(prefix))
+      .map((c) => {
+        const num = parseInt(String(c.codigo).replace(prefix, ""), 10);
+        return isNaN(num) ? 0 : num;
+      });
+    const proximo = existentes.length > 0 ? Math.max(...existentes) + 1 : 1;
+    return `${prefix}${String(proximo).padStart(3, "0")}`;
+  };
+
+  // Load service geometry type and auto-fill when service changes
   useEffect(() => {
     if (servicoId && servicoId !== "_none_") {
       const servico = servicos?.find((s) => String(s.id) === servicoId);
@@ -128,11 +147,43 @@ export default function ComposicaoDetalhe() {
         setTipoGeometria(String(servico.tipo_geometria || ""));
         const premissas = (servico.premissas_padrao as Record<string, unknown>) || {};
         setMetricas(premissas);
+
+        // Set unit from service
+        setUnidade(String(servico.unidade_medicao || "un"));
+        setNome(String(servico.nome || ""));
+
+        // Auto-fill mercado, area, departamento
+        const merc = mercados?.find((m) => String(m.id) === String(servico.mercado_id));
+        const area = areasEmpresa?.find((a) => String(a.id) === String(servico.area_empresa_id));
+        const dept = departamentos?.find((d) => String(d.id) === String(servico.modulo_id));
+
+        const mercNome = merc ? String(merc.nome) : "";
+        const areNome = area ? String(area.nome) : "";
+        const deptNome = dept ? String(dept.nome) : "";
+
+        setMercadoNome(mercNome);
+        setAreaNome(areNome);
+        setDepartamentoNome(deptNome);
+
+        // Auto-fill productivity from service
+        if (servico.produtividade_padrao) {
+          setProdutividadeValor(Number(servico.produtividade_padrao));
+          setProdutividadeUnidade(String(servico.unidade_medicao || "un"));
+          setProdutividadeTempo(String(servico.unidade_tempo_produtividade || "dia"));
+        }
+
+        // Auto-generate code only for new compositions
+        if (isNew) {
+          setCodigo(gerarCodigo(mercNome, areNome, deptNome));
+        }
       }
     } else {
       setTipoGeometria("");
+      setMercadoNome("");
+      setAreaNome("");
+      setDepartamentoNome("");
     }
-  }, [servicoId, servicos]);
+  }, [servicoId, servicos, mercados, areasEmpresa, departamentos, composicoesExistentes]);
 
   type ItemComCalculo = Record<string, unknown> & { resultado: { custo_unitario: number; custo_total: number; memoria: import("@/lib/composicao-calculo").MemoriaCalculo[] } };
 
