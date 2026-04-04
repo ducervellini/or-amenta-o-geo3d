@@ -1,75 +1,120 @@
 import { useState, useMemo } from "react";
-import { DollarSign, Info, ArrowUp, TrendingUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { DollarSign, ArrowUp, TrendingUp, Link2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useSupabaseQuery } from "@/hooks/useSupabaseCrud";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const fmtPct = (v: number) => `${v.toFixed(2)}%`;
 
-export default function DRE() {
-  const { data: paramTributos } = useSupabaseQuery("parametros_tributos");
-  const { data: paramAdminCentral } = useSupabaseQuery("parametros_admin_central");
-  const { data: paramAdminLocal } = useSupabaseQuery("parametros_admin_local");
-  const { data: paramFinanciamento } = useSupabaseQuery("parametros_financiamento");
-  const { data: paramMargem } = useSupabaseQuery("parametros_margem");
+interface BDIComp {
+  sigla: string;
+  label: string;
+  percentual: number;
+  descricao: string;
+}
 
-  // Inputs do usuário
+export default function DRE() {
   const [custoDireto, setCustoDireto] = useState(850000);
   const [lucroLiquidoPct, setLucroLiquidoPct] = useState(8);
   const [irpjPct, setIrpjPct] = useState(4.80);
   const [csllPct, setCsllPct] = useState(2.88);
+  const [selectedBdiId, setSelectedBdiId] = useState<string>("");
 
-  // Percentuais do banco
-  const tributosReceita = useMemo(() => {
-    return (paramTributos?.filter(t => t.ativo) || []).map(t => ({
-      nome: String(t.nome),
-      sigla: String(t.sigla),
-      percentual: Number(t.percentual),
+  // Carregar BDIs salvos
+  const { data: savedBdis } = useQuery({
+    queryKey: ["parametros_bdi"],
+    queryFn: async () => {
+      const { data, error } = await (supabase.from as any)("parametros_bdi")
+        .select("*")
+        .eq("ativo", true)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
+  // Componentes do BDI selecionado
+  const bdiComponentes = useMemo((): BDIComp[] => {
+    if (!selectedBdiId || !savedBdis) return [];
+    const bdi = savedBdis.find((b: any) => b.id === selectedBdiId);
+    if (!bdi) return [];
+    const comp = bdi.componentes as Record<string, any>;
+    return Object.entries(comp).map(([sigla, val]: [string, any]) => ({
+      sigla,
+      label: val?.label || sigla,
+      percentual: Number(val?.percentual ?? 0),
+      descricao: val?.descricao || "",
     }));
-  }, [paramTributos]);
+  }, [selectedBdiId, savedBdis]);
 
-  const adminCentralPct = useMemo(() => {
-    return (paramAdminCentral?.filter(p => p.ativo) || []).reduce((s, p) => s + Number(p.percentual), 0);
-  }, [paramAdminCentral]);
+  const selectedBdi = savedBdis?.find((b: any) => b.id === selectedBdiId);
 
-  const adminLocalPct = useMemo(() => {
-    return (paramAdminLocal?.filter(p => p.ativo) || []).reduce((s, p) => s + Number(p.percentual), 0);
-  }, [paramAdminLocal]);
+  // Categorizar componentes do BDI
+  const categorias = useMemo(() => {
+    const TRIBUTOS_SIGLAS = ["PIS", "COFINS", "ISS", "CPRB", "ICMS"];
+    const tributos: BDIComp[] = [];
+    const despesas: BDIComp[] = [];
+    let lucroComp: BDIComp | null = null;
+    let riscoComp: BDIComp | null = null;
+    let comissaoComp: BDIComp | null = null;
 
-  const financiamentoPct = useMemo(() => {
-    const fin = paramFinanciamento?.filter(p => p.ativo);
-    return fin?.[0] ? Number(fin[0].percentual) : 1.5;
-  }, [paramFinanciamento]);
+    for (const c of bdiComponentes) {
+      const s = c.sigla.toUpperCase();
+      const l = c.label.toUpperCase();
+      if (s === "L" || l.includes("LUCRO")) {
+        lucroComp = c;
+      } else if (s === "R" || l.includes("RISCO")) {
+        riscoComp = c;
+      } else if (s === "COM" || l.includes("COMISS")) {
+        comissaoComp = c;
+      } else if (TRIBUTOS_SIGLAS.includes(s) || l.includes("TRIBUT") || l.includes("IMPOSTO")) {
+        tributos.push(c);
+      } else {
+        despesas.push(c);
+      }
+    }
+    return { tributos, despesas, lucroComp, riscoComp, comissaoComp };
+  }, [bdiComponentes]);
 
   // Cálculo inverso da DRE
   const resultado = useMemo(() => {
-    const totalTributosReceitaPct = tributosReceita.reduce((s, t) => s + t.percentual, 0);
+    const totalTributosPct = categorias.tributos.reduce((s, t) => s + t.percentual, 0);
     const totalIRPct = irpjPct + csllPct;
+    const comissaoPct = categorias.comissaoComp?.percentual || 0;
 
-    // Despesas indiretas sobre custo direto
-    const adminLocal = custoDireto * (adminLocalPct / 100);
-    const adminCentral = custoDireto * (adminCentralPct / 100);
-    const baseFinanciamento = custoDireto + adminLocal + adminCentral;
-    const financiamento = baseFinanciamento * (financiamentoPct / 100);
-    const totalDespesas = adminLocal + adminCentral + financiamento;
+    // Despesas BDI aplicadas sobre custo direto
+    const despesasDetail = categorias.despesas.map(d => ({
+      ...d,
+      valor: custoDireto * (d.percentual / 100),
+    }));
+    const riscoPct = categorias.riscoComp?.percentual || 0;
+    const riscoValor = custoDireto * (riscoPct / 100);
+    const totalDespesasPct = categorias.despesas.reduce((s, d) => s + d.percentual, 0) + riscoPct + comissaoPct;
+    const totalDespesas = despesasDetail.reduce((s, d) => s + d.valor, 0) + riscoValor + custoDireto * (comissaoPct / 100);
 
-    // Caminho inverso com lucro líquido em %:
+    // Caminho inverso:
     // Lucro Líquido = Receita Bruta × lucroLiquidoPct%
     // Receita Bruta × (1 - tributos% - IR%) - custoDireto - totalDespesas = Receita Bruta × lucroLiquidoPct%
-    // Receita Bruta × (1 - tributos% - IR% - lucroLiquidoPct%) = custoDireto + totalDespesas
     // Receita Bruta = (custoDireto + totalDespesas) / (1 - tributos% - IR% - lucroLiquidoPct%)
-
-    const denominador = 1 - (totalTributosReceitaPct / 100) - (totalIRPct / 100) - (lucroLiquidoPct / 100);
+    const denominador = 1 - (totalTributosPct / 100) - (totalIRPct / 100) - (lucroLiquidoPct / 100);
     const receitaBruta = denominador > 0
       ? (custoDireto + totalDespesas) / denominador
       : 0;
 
-    const tributosTotal = receitaBruta * (totalTributosReceitaPct / 100);
+    const tributosTotal = receitaBruta * (totalTributosPct / 100);
     const receitaLiquida = receitaBruta - tributosTotal;
     const lucroBruto = receitaLiquida - custoDireto;
     const lucroAntesIR = lucroBruto - totalDespesas;
@@ -86,19 +131,22 @@ export default function DRE() {
 
     return {
       receitaBruta,
-      tributosReceita: tributosReceita.map(t => ({
+      tributosReceita: categorias.tributos.map(t => ({
         ...t,
         valor: receitaBruta * (t.percentual / 100),
       })),
       tributosTotal,
-      totalTributosReceitaPct,
+      totalTributosPct,
       receitaLiquida,
       custoDireto,
       lucroBruto,
-      adminLocal,
-      adminCentral,
-      financiamento,
+      despesasDetail,
+      riscoValor,
+      riscoPct,
+      comissaoValor: custoDireto * (comissaoPct / 100),
+      comissaoPct,
       totalDespesas,
+      totalDespesasPct,
       lucroAntesIR,
       irpjValor,
       csllValor,
@@ -111,7 +159,7 @@ export default function DRE() {
       margemBruta,
       margemEbit,
     };
-  }, [custoDireto, lucroLiquidoPct, tributosReceita, adminCentralPct, adminLocalPct, financiamentoPct, irpjPct, csllPct]);
+  }, [custoDireto, lucroLiquidoPct, categorias, irpjPct, csllPct]);
 
   type DreRow = {
     label: string;
@@ -124,25 +172,44 @@ export default function DRE() {
 
   const dreRows: DreRow[] = [
     { label: "Receita Bruta (Preço de Venda)", value: resultado.receitaBruta, level: 0, highlight: true },
-    { label: "(-) Tributos sobre Receita", value: -resultado.tributosTotal, level: 1, pct: resultado.totalTributosReceitaPct },
-    ...resultado.tributosReceita.map(t => ({
-      label: `${t.nome} (${t.sigla})`,
-      value: -t.valor,
-      level: 2,
-      pct: t.percentual,
-    })),
+    // Tributos sobre receita
+    ...(resultado.tributosReceita.length > 0 ? [
+      { label: "(-) Tributos sobre Receita", value: -resultado.tributosTotal, level: 1, pct: resultado.totalTributosPct },
+      ...resultado.tributosReceita.map(t => ({
+        label: `${t.label} (${t.sigla})`,
+        value: -t.valor,
+        level: 2,
+        pct: t.percentual,
+      })),
+    ] : []),
     { label: "(=) Receita Líquida", value: resultado.receitaLiquida, level: 0, highlight: true },
     { label: "(-) Custos Diretos", value: -resultado.custoDireto, level: 1 },
     { label: "(=) Lucro Bruto", value: resultado.lucroBruto, level: 0, highlight: true },
-    { label: "(-) Despesas Operacionais", value: -resultado.totalDespesas, level: 1 },
-    { label: `Administração Local (${fmtPct(adminLocalPct)})`, value: -resultado.adminLocal, level: 2 },
-    { label: `Administração Central (${fmtPct(adminCentralPct)})`, value: -resultado.adminCentral, level: 2 },
-    { label: `Financiamento (${fmtPct(financiamentoPct)})`, value: -resultado.financiamento, level: 2 },
+    // Despesas operacionais do BDI
+    { label: "(-) Despesas Operacionais", value: -resultado.totalDespesas, level: 1, pct: resultado.totalDespesasPct },
+    ...resultado.despesasDetail.map(d => ({
+      label: `${d.label}`,
+      value: -d.valor,
+      level: 2,
+      pct: d.percentual,
+    })),
+    ...(resultado.riscoPct > 0 ? [{
+      label: categorias.riscoComp?.label || "Risco",
+      value: -resultado.riscoValor,
+      level: 2,
+      pct: resultado.riscoPct,
+    }] : []),
+    ...(resultado.comissaoPct > 0 ? [{
+      label: categorias.comissaoComp?.label || "Comissões",
+      value: -resultado.comissaoValor,
+      level: 2,
+      pct: resultado.comissaoPct,
+    }] : []),
     { label: "(=) Lucro antes do IR (EBIT)", value: resultado.lucroAntesIR, level: 0, highlight: true },
     { label: "(-) Impostos sobre o Lucro", value: -resultado.totalIR, level: 1, pct: resultado.totalIRPct },
-    { label: `IRPJ`, value: -resultado.irpjValor, level: 2, pct: irpjPct },
-    { label: `CSLL`, value: -resultado.csllValor, level: 2, pct: csllPct },
-    { label: "(=) Lucro Líquido", value: resultado.lucroLiquidoFinal, level: 0, accent: true },
+    { label: "IRPJ", value: -resultado.irpjValor, level: 2, pct: irpjPct },
+    { label: "CSLL", value: -resultado.csllValor, level: 2, pct: csllPct },
+    { label: "(=) Lucro Líquido", value: resultado.lucroLiquidoFinal, level: 0, accent: true, pct: resultado.margemLiquida },
   ];
 
   return (
@@ -151,7 +218,7 @@ export default function DRE() {
         <div>
           <h1 className="page-title">Formação de Preço por DRE</h1>
           <p className="page-subtitle">
-            Defina o lucro líquido desejado e o sistema calcula o preço de venda necessário
+            Defina o lucro líquido desejado e o sistema calcula o preço de venda com base no BDI
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
@@ -163,9 +230,56 @@ export default function DRE() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Inputs */}
         <div className="space-y-4">
+          {/* Seleção do BDI */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Parâmetros de Entrada</CardTitle>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Link2 className="w-4 h-4" />
+                Configuração BDI
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <Label className="text-xs">Selecione o BDI</Label>
+                <Select value={selectedBdiId} onValueChange={setSelectedBdiId}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Escolha uma configuração BDI" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(savedBdis || []).map((bdi: any) => (
+                      <SelectItem key={bdi.id} value={bdi.id}>
+                        {bdi.nome} ({Number(bdi.bdi_calculado).toFixed(2)}%)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {selectedBdi && (
+                <div className="bg-muted/50 rounded-md p-3 space-y-1">
+                  <div className="text-xs font-medium">{selectedBdi.nome}</div>
+                  <div className="text-xs text-muted-foreground">
+                    BDI: {Number(selectedBdi.bdi_calculado).toFixed(2)}% — {bdiComponentes.length} componentes
+                  </div>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {bdiComponentes.map(c => (
+                      <Badge key={c.sigla} variant="outline" className="text-[10px]">
+                        {c.sigla} {c.percentual.toFixed(2)}%
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {!selectedBdiId && (
+                <p className="text-xs text-muted-foreground italic">
+                  Selecione um BDI salvo para vincular os componentes à DRE
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Parâmetros</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -190,7 +304,7 @@ export default function DRE() {
                   />
                   <span className="text-sm text-muted-foreground">%</span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Percentual sobre a receita bruta</p>
+                <p className="text-xs text-muted-foreground mt-1">% sobre a receita bruta</p>
               </div>
               <Separator />
               <div className="text-xs font-medium text-muted-foreground">Impostos sobre Lucro</div>
@@ -255,9 +369,9 @@ export default function DRE() {
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Carga Tributária Total</span>
+                <span className="text-muted-foreground">Carga Tributária</span>
                 <span className="font-medium font-mono">
-                  {fmtPct(resultado.totalTributosReceitaPct + resultado.totalIRPct)}
+                  {fmtPct(resultado.totalTributosPct + resultado.totalIRPct)}
                 </span>
               </div>
             </CardContent>
@@ -269,40 +383,54 @@ export default function DRE() {
           <div className="p-5 border-b flex items-center gap-2">
             <DollarSign className="w-5 h-5 text-accent" />
             <h2 className="text-lg font-semibold">DRE — Caminho Inverso</h2>
+            {selectedBdi && (
+              <Badge variant="secondary" className="text-xs ml-2">
+                <Link2 className="w-3 h-3 mr-1" />
+                {selectedBdi.nome}
+              </Badge>
+            )}
             <span className="ml-auto text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-              Preço calculado: {fmt(resultado.receitaBruta)}
+              Preço: {fmt(resultado.receitaBruta)}
             </span>
           </div>
           <div className="p-5">
-            {dreRows.map((row, idx) => (
-              <div
-                key={idx}
-                className={`flex items-center justify-between py-2.5 px-3 rounded-md ${
-                  row.highlight
-                    ? "bg-muted font-semibold"
-                    : row.accent
-                    ? "bg-primary/10 font-bold border border-primary/30"
-                    : ""
-                }`}
-                style={{ paddingLeft: `${row.level * 24 + 12}px` }}
-              >
-                <span className={`text-sm ${row.level === 2 ? "text-muted-foreground" : ""}`}>
-                  {row.label}
-                </span>
-                <div className="flex items-center gap-3">
-                  {row.pct !== undefined && (
-                    <span className="text-xs text-muted-foreground w-14 text-right">{fmtPct(row.pct)}</span>
-                  )}
-                  <span
-                    className={`text-sm font-mono w-32 text-right ${
-                      row.value < 0 ? "text-destructive" : ""
-                    } ${row.accent ? "text-primary text-base" : ""}`}
-                  >
-                    {row.value < 0 ? "-" : ""}{fmt(Math.abs(row.value))}
-                  </span>
-                </div>
+            {!selectedBdiId ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Link2 className="w-8 h-8 mx-auto mb-3 opacity-50" />
+                <p className="text-sm font-medium">Selecione uma configuração BDI</p>
+                <p className="text-xs mt-1">A DRE será gerada com os componentes do BDI selecionado</p>
               </div>
-            ))}
+            ) : (
+              dreRows.map((row, idx) => (
+                <div
+                  key={idx}
+                  className={`flex items-center justify-between py-2.5 px-3 rounded-md ${
+                    row.highlight
+                      ? "bg-muted font-semibold"
+                      : row.accent
+                      ? "bg-primary/10 font-bold border border-primary/30"
+                      : ""
+                  }`}
+                  style={{ paddingLeft: `${row.level * 24 + 12}px` }}
+                >
+                  <span className={`text-sm ${row.level === 2 ? "text-muted-foreground" : ""}`}>
+                    {row.label}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    {row.pct !== undefined && (
+                      <span className="text-xs text-muted-foreground w-14 text-right">{fmtPct(row.pct)}</span>
+                    )}
+                    <span
+                      className={`text-sm font-mono w-32 text-right ${
+                        row.value < 0 ? "text-destructive" : ""
+                      } ${row.accent ? "text-primary text-base" : ""}`}
+                    >
+                      {row.value < 0 ? "-" : ""}{fmt(Math.abs(row.value))}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
