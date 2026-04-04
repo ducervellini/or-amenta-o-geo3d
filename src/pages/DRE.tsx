@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { DollarSign, ArrowUp, TrendingUp, Link2 } from "lucide-react";
+import { DollarSign, ArrowUp, TrendingUp, Link2, Briefcase } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
