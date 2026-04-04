@@ -75,12 +75,17 @@ const FREQUENCIAS_DESL = [
 ];
 
 const TIPOS_HOSPEDAGEM = [
-  { value: "hotel_single", label: "Hotel (Single)" },
-  { value: "hotel_duplo", label: "Hotel (Duplo)" },
-  { value: "hotel_triplo", label: "Hotel (Triplo)" },
-  { value: "alojamento_mobiliado", label: "Alojamento Mobiliado" },
-  { value: "alojamento_sem_mobilia", label: "Alojamento sem Mobília" },
+  { value: "hotel_single", label: "Hotel (Single)", isHotel: true },
+  { value: "hotel_duplo", label: "Hotel (Duplo)", isHotel: true },
+  { value: "hotel_triplo", label: "Hotel (Triplo)", isHotel: true },
+  { value: "alojamento_mobiliado", label: "Alojamento Mobiliado", isHotel: false },
+  { value: "alojamento_sem_mobilia", label: "Alojamento sem Mobília", isHotel: false },
 ];
+
+const isHotelType = (tipo?: string) => {
+  const found = TIPOS_HOSPEDAGEM.find(t => t.value === tipo);
+  return found ? found.isHotel : true;
+};
 
 const TIPOS_VEICULO_DESL = [
   { value: "alugado", label: "Alugado" },
