@@ -378,8 +378,18 @@ export default function Mobilizacao() {
         setDistanciaBase(Number(mob.distancia_base_projeto) || 0);
         setDistanciaMedia(Number(mob.distancia_media_diaria) || 0);
         setArquivoGeo(mob.arquivo_geo || "");
+        if (mob.duracao_meses) setDuracaoMeses(Number(mob.duracao_meses));
         if (mob.municipios_considerados && Array.isArray(mob.municipios_considerados)) {
           setMunicipiosRota(mob.municipios_considerados as MunicipioRota[]);
+        }
+        // Load mob/desmob itens from JSON
+        if (mob.mob_desmob_itens && Array.isArray(mob.mob_desmob_itens) && mob.mob_desmob_itens.length > 0) {
+          let mdKey = 1;
+          setMobDesmobItens(mob.mob_desmob_itens.map((item: any) => ({
+            ...item,
+            _key: mdKey++,
+          })));
+          mobDesmobKeyRef.current = mdKey;
         }
 
         // Load custos (deslocamentos)
@@ -409,6 +419,7 @@ export default function Mobilizacao() {
             };
           });
           setDeslocamentos(loadedDeslocamentos);
+          deslKeyRef.current = keyCounter;
         }
       } catch (err) {
         console.error("Erro ao carregar mobilização:", err);
@@ -757,6 +768,8 @@ export default function Mobilizacao() {
         custo_por_dia: diasProdutivos > 0 ? (custoDeslocamentosTotal + custoMobDesmobTotal) / diasProdutivos : 0,
         municipios_considerados: municipiosRota as any,
         arquivo_geo: arquivoGeo || null,
+        duracao_meses: duracaoMeses,
+        mob_desmob_itens: mobDesmobItens.map(({ _key, ...rest }) => rest) as any,
       } as any;
 
       let mobId = mobilizacaoId;

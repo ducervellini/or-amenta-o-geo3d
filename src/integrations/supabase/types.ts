@@ -864,12 +864,14 @@ export type Database = {
           dias_trabalho: number
           distancia_base_projeto: number
           distancia_media_diaria: number
+          duracao_meses: number
           estado: string | null
           fator_improdutividade: number
           id: string
           jornada_diaria: number
           latitude: number | null
           longitude: number | null
+          mob_desmob_itens: Json
           municipio: string | null
           municipios_considerados: Json
           nome: string
@@ -894,12 +896,14 @@ export type Database = {
           dias_trabalho?: number
           distancia_base_projeto?: number
           distancia_media_diaria?: number
+          duracao_meses?: number
           estado?: string | null
           fator_improdutividade?: number
           id?: string
           jornada_diaria?: number
           latitude?: number | null
           longitude?: number | null
+          mob_desmob_itens?: Json
           municipio?: string | null
           municipios_considerados?: Json
           nome: string
@@ -924,12 +928,14 @@ export type Database = {
           dias_trabalho?: number
           distancia_base_projeto?: number
           distancia_media_diaria?: number
+          duracao_meses?: number
           estado?: string | null
           fator_improdutividade?: number
           id?: string
           jornada_diaria?: number
           latitude?: number | null
           longitude?: number | null
+          mob_desmob_itens?: Json
           municipio?: string | null
           municipios_considerados?: Json
           nome?: string
