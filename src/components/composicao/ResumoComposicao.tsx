@@ -1,5 +1,5 @@
 import { type ResumoComposicao as Resumo } from "@/lib/composicao-calculo";
-import { Users, Wrench, Truck, Package } from "lucide-react";
+import { Users, Wrench, Package } from "lucide-react";
 
 interface Props {
   resumo: Resumo;
@@ -11,7 +11,6 @@ export function ResumoComposicao({ resumo }: Props) {
   const itens = [
     { label: "Mão de Obra", valor: resumo.mao_de_obra, icon: Users, cor: "text-blue-400" },
     { label: "Equipamentos", valor: resumo.equipamentos, icon: Wrench, cor: "text-amber-400" },
-    { label: "Veículos", valor: resumo.veiculos, icon: Truck, cor: "text-emerald-400" },
     { label: "Materiais", valor: resumo.materiais, icon: Package, cor: "text-purple-400" },
   ];
 
@@ -36,7 +35,7 @@ export function ResumoComposicao({ resumo }: Props) {
         <span className="font-mono font-bold text-lg text-primary">R$ {fmt(resumo.custo_direto)}</span>
       </div>
       {resumo.custo_direto > 0 && (
-        <div className="grid grid-cols-4 gap-2 pt-2">
+        <div className="grid grid-cols-3 gap-2 pt-2">
           {itens.map((item) => {
             const pct = resumo.custo_direto > 0 ? (item.valor / resumo.custo_direto) * 100 : 0;
             return (
