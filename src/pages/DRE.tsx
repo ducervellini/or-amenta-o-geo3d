@@ -322,6 +322,56 @@ export default function DRE() {
             </CardContent>
           </Card>
 
+          {/* Seleção da Oportunidade */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Briefcase className="w-4 h-4" />
+                Oportunidade
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <Label className="text-xs">Selecione a Oportunidade</Label>
+                <Select value={selectedOportunidadeId} onValueChange={setSelectedOportunidadeId}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Vincular oportunidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(oportunidades || []).map((op) => (
+                      <SelectItem key={op.id} value={op.id}>
+                        {op.codigo} — {op.descricao}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {selectedOportunidade && (
+                <div className="bg-muted/50 rounded-md p-3 space-y-1">
+                  <div className="text-xs font-medium">{selectedOportunidade.codigo} — {selectedOportunidade.descricao}</div>
+                  <div className="text-xs text-muted-foreground">
+                    Cliente: {(selectedOportunidade as any).clientes?.nome || "—"}
+                  </div>
+                  {selectedOportunidade.cidade && (
+                    <div className="text-xs text-muted-foreground">
+                      Local: {selectedOportunidade.cidade}{selectedOportunidade.estado ? ` / ${selectedOportunidade.estado}` : ""}
+                    </div>
+                  )}
+                  {orcamentoOportunidade && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Custo Total Orçamento: {fmt(Number(orcamentoOportunidade.custo_total))}
+                    </div>
+                  )}
+                  {!orcamentoOportunidade && (
+                    <div className="text-xs text-destructive mt-1">
+                      Nenhum orçamento encontrado para esta oportunidade
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm">Parâmetros</CardTitle>
