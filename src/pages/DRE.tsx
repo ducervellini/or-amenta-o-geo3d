@@ -179,13 +179,18 @@ export default function DRE() {
               </div>
               <Separator />
               <div>
-                <Label className="text-xs font-semibold text-primary">Lucro Líquido Desejado (R$)</Label>
-                <Input
-                  type="number"
-                  value={lucroLiquidoDesejado}
-                  onChange={e => setLucroLiquidoDesejado(parseFloat(e.target.value) || 0)}
-                  className="mt-1 border-primary/50 focus:border-primary"
-                />
+                <Label className="text-xs font-semibold text-primary">Lucro Líquido Desejado (%)</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={lucroLiquidoPct}
+                    onChange={e => setLucroLiquidoPct(parseFloat(e.target.value) || 0)}
+                    className="border-primary/50 focus:border-primary"
+                  />
+                  <span className="text-sm text-muted-foreground">%</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Percentual sobre a receita bruta</p>
               </div>
               <Separator />
               <div className="text-xs font-medium text-muted-foreground">Impostos sobre Lucro</div>
