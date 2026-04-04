@@ -2,7 +2,8 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import {
   MapPin, Plus, Trash2, Save, Loader2, Cloud, Sun,
   Truck, Home, Utensils, Fuel, CreditCard, Plane,
-  Users, Calculator, ChevronDown, ChevronUp, Info, Upload
+  Users, Calculator, ChevronDown, ChevronUp, Info, Upload,
+  FileUp, Navigation, CloudRain, BarChart3, Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,8 @@ import {
   Tooltip, TooltipContent, TooltipTrigger, TooltipProvider,
 } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 import {
   useSupabaseQuery, useSupabaseInsert, useSupabaseUpdate, useSupabaseDelete,
 } from "@/hooks/useSupabaseCrud";
@@ -28,6 +31,7 @@ import {
   type EquipeItem,
   type MobilizacaoParams,
 } from "@/lib/mobilizacao-calculo";
+import { supabase } from "@/integrations/supabase/client";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -51,17 +55,50 @@ const ICON_MAP: Record<string, React.ElementType> = {
   viagem_avulsa: Plane,
 };
 
+// ── Types ──
+interface MunicipioRota {
+  nome: string;
+  uf: string;
+  distancia_km: number;
+}
+
+interface PluviometriaResult {
+  estacao: {
+    codigo: string;
+    nome: string;
+    municipio: string;
+    uf: string;
+    distancia_km: number;
+  };
+  periodo: { inicio: string; fim: string };
+  resumo: {
+    precipitacao_total_mm: number;
+    dias_com_chuva: number;
+    dias_registrados: number;
+    media_dias_chuva_mes: number;
+    media_precipitacao_diaria_mm: number;
+  };
+  mensal: {
+    mes: string;
+    precipitacao_total: number;
+    dias_chuva: number;
+    dias_registro: number;
+    precipitacao_media_diaria: number;
+  }[];
+}
+
 // ── Plain Leaflet Map Component ──
 function LeafletMap({
-  projectLat, projectLng, baseLat, baseLng, municipio, baseEndereco,
+  projectLat, projectLng, baseLat, baseLng, municipio, baseEndereco, municipiosRota,
 }: {
   projectLat: number; projectLng: number;
   baseLat: number; baseLng: number;
   municipio: string; baseEndereco: string;
+  municipiosRota?: MunicipioRota[];
 }) {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const markersRef = useRef<L.Marker[]>([]);
+  const markersRef = useRef<L.Layer[]>([]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -77,23 +114,35 @@ function LeafletMap({
 
   useEffect(() => {
     if (!mapRef.current) return;
-    // Clear old markers
-    markersRef.current.forEach((m) => m.remove());
+    markersRef.current.forEach((m) => mapRef.current?.removeLayer(m));
     markersRef.current = [];
-    // Add project marker
+
     if (projectLat && projectLng) {
       const m = L.marker([projectLat, projectLng])
         .addTo(mapRef.current)
         .bindPopup(`Projeto: ${municipio || "Local do projeto"}`);
       markersRef.current.push(m);
     }
-    // Add base marker
     if (baseLat && baseLng && (baseLat !== projectLat || baseLng !== projectLng)) {
-      const m = L.marker([baseLat, baseLng])
+      const baseIcon = L.divIcon({
+        className: "",
+        html: `<div style="background:hsl(var(--primary));width:12px;height:12px;border-radius:50%;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>`,
+        iconSize: [12, 12],
+        iconAnchor: [6, 6],
+      });
+      const m = L.marker([baseLat, baseLng], { icon: baseIcon })
         .addTo(mapRef.current)
         .bindPopup(`Base: ${baseEndereco || "Ponto inicial"}`);
       markersRef.current.push(m);
+
+      // Draw line between base and project
+      const line = L.polyline(
+        [[baseLat, baseLng], [projectLat, projectLng]],
+        { color: "hsl(var(--primary))", weight: 2, dashArray: "6 4", opacity: 0.6 }
+      ).addTo(mapRef.current);
+      markersRef.current.push(line);
     }
+
     mapRef.current.setView([projectLat, projectLng], 8);
   }, [projectLat, projectLng, baseLat, baseLng, municipio, baseEndereco]);
 
@@ -131,6 +180,7 @@ function Section({
 export default function Mobilizacao() {
   // ── State ──
   const [nome, setNome] = useState("Nova Mobilização");
+  const [modoLocalizacao, setModoLocalizacao] = useState<"manual" | "arquivo">("manual");
   const [municipio, setMunicipio] = useState("");
   const [estado, setEstado] = useState("");
   const [lat, setLat] = useState(-15.78);
@@ -145,6 +195,27 @@ export default function Mobilizacao() {
   const [fatorImprod, setFatorImprod] = useState(0.15);
   const [distanciaBase, setDistanciaBase] = useState(50);
   const [distanciaMedia, setDistanciaMedia] = useState(30);
+
+  // Datas do projeto
+  const [dataInicio, setDataInicio] = useState(() => {
+    const d = new Date();
+    return d.toISOString().split("T")[0];
+  });
+  const [dataFim, setDataFim] = useState(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 3);
+    return d.toISOString().split("T")[0];
+  });
+
+  // Municípios na rota
+  const [municipiosRota, setMunicipiosRota] = useState<MunicipioRota[]>([]);
+  const [novoMunicipioNome, setNovoMunicipioNome] = useState("");
+  const [novoMunicipioUF, setNovoMunicipioUF] = useState("");
+  const [novoMunicipioDist, setNovoMunicipioDist] = useState(0);
+
+  // Pluviometria
+  const [pluviometria, setPluviometria] = useState<PluviometriaResult | null>(null);
+  const [loadingPluv, setLoadingPluv] = useState(false);
 
   // Custos
   const [custos, setCustos] = useState<(CustoItem & { _key: number })[]>([
@@ -176,6 +247,51 @@ export default function Mobilizacao() {
 
   const { diasProdutivos, diasImprodutivos } = calcularDiasProdutivos(params);
 
+  // ── Pluviometria INMET ──
+  const buscarPluviometria = async () => {
+    if (!lat || !lng) {
+      toast.error("Informe latitude e longitude do projeto");
+      return;
+    }
+    setLoadingPluv(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("inmet-pluviometria", {
+        body: {
+          latitude: lat,
+          longitude: lng,
+          data_inicio: dataInicio,
+          data_fim: dataFim,
+        },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Erro desconhecido");
+      setPluviometria(data);
+      // Auto-fill dias de chuva/mês
+      if (data.resumo?.media_dias_chuva_mes) {
+        setDiasChuvaMes(Math.round(data.resumo.media_dias_chuva_mes));
+        toast.success(`Dias de chuva/mês atualizado: ${Math.round(data.resumo.media_dias_chuva_mes)} dias`);
+      }
+    } catch (err: any) {
+      console.error("Erro pluviometria:", err);
+      toast.error("Erro ao consultar INMET: " + (err.message || "tente novamente"));
+    } finally {
+      setLoadingPluv(false);
+    }
+  };
+
+  // ── Município handlers ──
+  const addMunicipioRota = () => {
+    if (!novoMunicipioNome.trim()) return;
+    setMunicipiosRota((prev) => [
+      ...prev,
+      { nome: novoMunicipioNome, uf: novoMunicipioUF, distancia_km: novoMunicipioDist },
+    ]);
+    setNovoMunicipioNome("");
+    setNovoMunicipioUF("");
+    setNovoMunicipioDist(0);
+  };
+  const removeMunicipioRota = (idx: number) => setMunicipiosRota((prev) => prev.filter((_, i) => i !== idx));
+
   // ── Custo handlers ──
   const addCusto = () => {
     setCustos((prev) => [
@@ -199,6 +315,9 @@ export default function Mobilizacao() {
   const updateEquipe = (key: number, field: string, value: any) => {
     setEquipes((prev) => prev.map((e) => (e._key === key ? { ...e, [field]: value } : e)));
   };
+
+  // Max bar for chart
+  const maxPrecip = pluviometria ? Math.max(...pluviometria.mensal.map((m) => m.precipitacao_total), 1) : 1;
 
   return (
     <TooltipProvider>
@@ -230,6 +349,7 @@ export default function Mobilizacao() {
                     baseLng={baseLng}
                     municipio={municipio}
                     baseEndereco={baseEndereco}
+                    municipiosRota={municipiosRota}
                   />
                 </div>
               </CardContent>
@@ -237,62 +357,250 @@ export default function Mobilizacao() {
 
             {/* Local do Projeto */}
             <Section title="Local do Projeto" icon={MapPin}>
-              <div className="flex items-center gap-2 mb-3">
-                <Label className="text-xs font-medium text-muted-foreground">Importar arquivo geográfico:</Label>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => document.getElementById("geo-file-input")?.click()}
-                >
-                  <Upload className="w-3.5 h-3.5" />
-                  Importar KMZ / SHP
-                </Button>
-                <input
-                  id="geo-file-input"
-                  type="file"
-                  accept=".kmz,.kml,.shp,.zip"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setArquivoGeo(file.name);
-                    }
-                    e.target.value = "";
-                  }}
-                />
-                {arquivoGeo && (
-                  <Badge variant="secondary" className="text-xs gap-1">
-                    {arquivoGeo}
-                    <button onClick={() => setArquivoGeo("")} className="ml-1 hover:text-destructive">×</button>
-                  </Badge>
-                )}
-              </div>
+              <Tabs value={modoLocalizacao} onValueChange={(v) => setModoLocalizacao(v as any)} className="mb-3">
+                <TabsList className="grid w-full grid-cols-2 h-9">
+                  <TabsTrigger value="manual" className="text-xs gap-1.5">
+                    <MapPin className="w-3 h-3" />
+                    Inserir Manualmente
+                  </TabsTrigger>
+                  <TabsTrigger value="arquivo" className="text-xs gap-1.5">
+                    <FileUp className="w-3 h-3" />
+                    Importar KMZ / SHP
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="arquivo" className="mt-3">
+                  <div className="border-2 border-dashed rounded-lg p-6 text-center space-y-3">
+                    <Upload className="w-8 h-8 mx-auto text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium">Arraste o arquivo ou clique para selecionar</p>
+                      <p className="text-xs text-muted-foreground">Formatos aceitos: .kmz, .kml, .shp, .zip</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => document.getElementById("geo-file-input")?.click()}
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      Selecionar Arquivo
+                    </Button>
+                    <input
+                      id="geo-file-input"
+                      type="file"
+                      accept=".kmz,.kml,.shp,.zip"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setArquivoGeo(file.name);
+                          toast.info(`Arquivo "${file.name}" carregado. Parsing de coordenadas será implementado com API geográfica.`);
+                        }
+                        e.target.value = "";
+                      }}
+                    />
+                    {arquivoGeo && (
+                      <div className="flex items-center justify-center gap-2">
+                        <Badge variant="secondary" className="text-xs gap-1">
+                          <FileUp className="w-3 h-3" />
+                          {arquivoGeo}
+                          <button onClick={() => setArquivoGeo("")} className="ml-1 hover:text-destructive">×</button>
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="manual" className="mt-3">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="col-span-2">
+                      <Label className="text-xs">Município</Label>
+                      <Input value={municipio} onChange={(e) => setMunicipio(e.target.value)} placeholder="Ex: São Paulo" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Estado</Label>
+                      <Input value={estado} onChange={(e) => setEstado(e.target.value)} placeholder="SP" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Latitude</Label>
+                      <Input type="number" value={lat} onChange={(e) => setLat(Number(e.target.value))} step="0.0001" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Longitude</Label>
+                      <Input type="number" value={lng} onChange={(e) => setLng(Number(e.target.value))} step="0.0001" />
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+
+              {/* Ponto de Partida (sempre visível) */}
+              <Separator className="my-3" />
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="col-span-2">
-                  <Label className="text-xs">Município</Label>
-                  <Input value={municipio} onChange={(e) => setMunicipio(e.target.value)} placeholder="Ex: São Paulo" />
-                </div>
-                <div>
-                  <Label className="text-xs">Estado</Label>
-                  <Input value={estado} onChange={(e) => setEstado(e.target.value)} placeholder="SP" />
-                </div>
-                <div>
-                  <Label className="text-xs">Latitude</Label>
-                  <Input type="number" value={lat} onChange={(e) => setLat(Number(e.target.value))} step="0.01" />
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-xs">Endereço da Base</Label>
-                  <Input value={baseEndereco} onChange={(e) => setBaseEndereco(e.target.value)} placeholder="Endereço do ponto de partida" />
-                </div>
-                <div>
-                  <Label className="text-xs">Longitude</Label>
-                  <Input type="number" value={lng} onChange={(e) => setLng(Number(e.target.value))} step="0.01" />
+                  <Label className="text-xs">Endereço da Base (ponto de partida)</Label>
+                  <Input value={baseEndereco} onChange={(e) => setBaseEndereco(e.target.value)} placeholder="Endereço ou cidade de origem" />
                 </div>
                 <div>
                   <Label className="text-xs">Dist. Base→Projeto (km)</Label>
                   <Input type="number" value={distanciaBase} onChange={(e) => setDistanciaBase(Number(e.target.value))} />
                 </div>
+              </div>
+
+              {/* Datas do Projeto */}
+              <Separator className="my-3" />
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div>
+                  <Label className="text-xs flex items-center gap-1">
+                    <Calendar className="w-3 h-3" /> Data Início
+                  </Label>
+                  <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs flex items-center gap-1">
+                    <Calendar className="w-3 h-3" /> Data Fim
+                  </Label>
+                  <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+                </div>
+                <div className="flex items-end">
+                  <div className="text-xs text-muted-foreground pb-2">
+                    Duração: {Math.round((new Date(dataFim).getTime() - new Date(dataInicio).getTime()) / (1000 * 60 * 60 * 24))} dias
+                  </div>
+                </div>
+              </div>
+            </Section>
+
+            {/* Municípios na Rota */}
+            <Section title="Municípios na Rota" icon={Navigation} defaultOpen={false} badge={`${municipiosRota.length}`}>
+              <p className="text-xs text-muted-foreground mb-3">
+                Municípios ao longo da rota entre a base e o local do projeto. Preparado para integração com API de roteamento.
+              </p>
+              {municipiosRota.length > 0 && (
+                <div className="space-y-1.5 mb-3">
+                  {municipiosRota.map((m, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs p-2 rounded border bg-muted/30">
+                      <MapPin className="w-3 h-3 text-primary shrink-0" />
+                      <span className="font-medium flex-1">{m.nome}{m.uf ? ` - ${m.uf}` : ""}</span>
+                      <span className="text-muted-foreground">{m.distancia_km} km</span>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeMunicipioRota(i)}>
+                        <Trash2 className="w-3 h-3 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <Label className="text-[10px]">Município</Label>
+                  <Input className="h-8 text-xs" value={novoMunicipioNome} onChange={(e) => setNovoMunicipioNome(e.target.value)} placeholder="Nome do município" />
+                </div>
+                <div className="w-16">
+                  <Label className="text-[10px]">UF</Label>
+                  <Input className="h-8 text-xs" value={novoMunicipioUF} onChange={(e) => setNovoMunicipioUF(e.target.value)} placeholder="SP" maxLength={2} />
+                </div>
+                <div className="w-24">
+                  <Label className="text-[10px]">Dist. (km)</Label>
+                  <Input className="h-8 text-xs" type="number" value={novoMunicipioDist} onChange={(e) => setNovoMunicipioDist(Number(e.target.value))} />
+                </div>
+                <Button variant="outline" size="sm" className="gap-1 h-8" onClick={addMunicipioRota}>
+                  <Plus className="w-3 h-3" /> Adicionar
+                </Button>
+              </div>
+            </Section>
+
+            {/* Análise Pluviométrica */}
+            <Section title="Análise Pluviométrica (INMET)" icon={CloudRain} defaultOpen={false}>
+              <div className="space-y-3">
+                <div className="flex items-end gap-3">
+                  <div className="flex-1">
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Consulta dados históricos de precipitação do INMET para a estação mais próxima do local do projeto,
+                      no período definido. O resultado atualiza automaticamente os dias de chuva/mês.
+                    </p>
+                  </div>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="gap-1.5 shrink-0"
+                    onClick={buscarPluviometria}
+                    disabled={loadingPluv}
+                  >
+                    {loadingPluv ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CloudRain className="w-3.5 h-3.5" />}
+                    {loadingPluv ? "Consultando..." : "Consultar INMET"}
+                  </Button>
+                </div>
+
+                {pluviometria && (
+                  <div className="space-y-3 pt-2">
+                    {/* Station info */}
+                    <div className="p-3 rounded-lg border bg-muted/30">
+                      <div className="text-xs font-medium mb-1">Estação Meteorológica</div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                        <span className="text-muted-foreground">Nome:</span>
+                        <span className="font-medium">{pluviometria.estacao.nome}</span>
+                        <span className="text-muted-foreground">Código:</span>
+                        <span>{pluviometria.estacao.codigo}</span>
+                        <span className="text-muted-foreground">Distância:</span>
+                        <span>{pluviometria.estacao.distancia_km} km do projeto</span>
+                        <span className="text-muted-foreground">UF:</span>
+                        <span>{pluviometria.estacao.uf}</span>
+                      </div>
+                    </div>
+
+                    {/* Summary cards */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      <div className="p-2 rounded-md bg-primary/10 text-center">
+                        <div className="text-lg font-bold text-primary">{pluviometria.resumo.precipitacao_total_mm}</div>
+                        <div className="text-[10px] text-muted-foreground">mm total</div>
+                      </div>
+                      <div className="p-2 rounded-md bg-primary/10 text-center">
+                        <div className="text-lg font-bold text-primary">{pluviometria.resumo.dias_com_chuva}</div>
+                        <div className="text-[10px] text-muted-foreground">dias c/ chuva</div>
+                      </div>
+                      <div className="p-2 rounded-md bg-primary/10 text-center">
+                        <div className="text-lg font-bold text-primary">{pluviometria.resumo.media_dias_chuva_mes}</div>
+                        <div className="text-[10px] text-muted-foreground">dias chuva/mês</div>
+                      </div>
+                      <div className="p-2 rounded-md bg-primary/10 text-center">
+                        <div className="text-lg font-bold text-primary">{pluviometria.resumo.media_precipitacao_diaria_mm}</div>
+                        <div className="text-[10px] text-muted-foreground">mm/dia médio</div>
+                      </div>
+                    </div>
+
+                    {/* Monthly chart */}
+                    <div>
+                      <div className="text-xs font-medium mb-2 flex items-center gap-1">
+                        <BarChart3 className="w-3 h-3" /> Precipitação Mensal (mm)
+                      </div>
+                      <div className="space-y-1">
+                        {pluviometria.mensal.map((m) => {
+                          const pct = (m.precipitacao_total / maxPrecip) * 100;
+                          const mesLabel = new Date(m.mes + "-01").toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
+                          return (
+                            <div key={m.mes} className="flex items-center gap-2 text-[11px]">
+                              <span className="w-16 text-right text-muted-foreground">{mesLabel}</span>
+                              <div className="flex-1 h-5 bg-muted rounded-sm overflow-hidden">
+                                <div
+                                  className="h-full bg-primary/60 rounded-sm flex items-center px-1"
+                                  style={{ width: `${Math.max(pct, 2)}%` }}
+                                >
+                                  {pct > 20 && (
+                                    <span className="text-[9px] text-primary-foreground font-medium">
+                                      {Math.round(m.precipitacao_total)}mm
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              {pct <= 20 && (
+                                <span className="text-[9px] text-muted-foreground w-12">{Math.round(m.precipitacao_total)}mm</span>
+                              )}
+                              <span className="w-16 text-[9px] text-muted-foreground">{m.dias_chuva}d chuva</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </Section>
 
@@ -334,18 +642,25 @@ export default function Mobilizacao() {
                 <div className="flex items-end">
                   <div className="text-xs text-muted-foreground pb-2">
                     <span className="inline-flex items-center gap-1">
-                      <Sun className="w-3 h-3 text-amber-500" /> {diasProdutivos} dias produtivos
+                      <Sun className="w-3 h-3 text-primary" /> {diasProdutivos} dias produtivos
                     </span>
                     <br />
                     <span className="inline-flex items-center gap-1">
-                      <Cloud className="w-3 h-3 text-blue-400" /> {diasImprodutivos} dias improdutivos
+                      <Cloud className="w-3 h-3 text-primary" /> {diasImprodutivos} dias improdutivos
                     </span>
                   </div>
                 </div>
               </div>
-              <p className="text-[10px] text-muted-foreground mt-2">
-                ⓘ Preparado para integração com API climática. Valores atuais são estimativas editáveis.
-              </p>
+              {pluviometria && (
+                <p className="text-[10px] text-primary mt-2">
+                  ✓ Dias de chuva/mês baseados em dados históricos INMET (estação {pluviometria.estacao.nome})
+                </p>
+              )}
+              {!pluviometria && (
+                <p className="text-[10px] text-muted-foreground mt-2">
+                  ⓘ Use "Análise Pluviométrica" acima para preencher automaticamente com dados históricos INMET.
+                </p>
+              )}
             </Section>
 
             {/* Custos */}
@@ -488,12 +803,12 @@ export default function Mobilizacao() {
               <CardContent className="space-y-4">
                 {/* Dias */}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="p-2 rounded-md bg-emerald-500/10 text-center">
-                    <div className="text-lg font-bold text-emerald-600">{resultado.dias_produtivos}</div>
+                  <div className="p-2 rounded-md bg-primary/10 text-center">
+                    <div className="text-lg font-bold text-primary">{resultado.dias_produtivos}</div>
                     <div className="text-[10px] text-muted-foreground">Dias Produtivos</div>
                   </div>
-                  <div className="p-2 rounded-md bg-rose-500/10 text-center">
-                    <div className="text-lg font-bold text-rose-500">{resultado.dias_improdutivos}</div>
+                  <div className="p-2 rounded-md bg-destructive/10 text-center">
+                    <div className="text-lg font-bold text-destructive">{resultado.dias_improdutivos}</div>
                     <div className="text-[10px] text-muted-foreground">Dias Improdutivos</div>
                   </div>
                 </div>
@@ -576,6 +891,21 @@ export default function Mobilizacao() {
                       <div className="text-xs font-medium text-muted-foreground mb-1">Local</div>
                       <div className="text-xs">
                         <Badge variant="outline">{municipio}{estado ? ` - ${estado}` : ""}</Badge>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Municípios na rota */}
+                {municipiosRota.length > 0 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <div className="text-xs font-medium text-muted-foreground mb-1">Municípios na Rota</div>
+                      <div className="flex flex-wrap gap-1">
+                        {municipiosRota.map((m, i) => (
+                          <Badge key={i} variant="outline" className="text-[10px]">{m.nome}</Badge>
+                        ))}
                       </div>
                     </div>
                   </>
