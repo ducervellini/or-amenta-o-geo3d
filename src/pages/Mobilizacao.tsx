@@ -1134,8 +1134,31 @@ export default function Mobilizacao() {
                           </>
                         )}
 
-                        {/* ── OUTROS (pedágios, passagens, diversos) ── */}
-                        {!["veiculo", "hospedagem", "combustivel"].includes(item.categoria) && (
+                        {/* ── PEDÁGIOS / PASSAGENS (livre) ── */}
+                        {(item.categoria === "pedagios" || item.categoria === "passagens") && (
+                          <>
+                            <div>
+                              <Label className="text-[10px]">Descrição</Label>
+                              <Input className="h-8 text-xs" value={item.descricao} onChange={(e) => updateDeslocamento(item._key, "descricao", e.target.value)} placeholder="Descrição do item" />
+                            </div>
+                            <div>
+                              <Label className="text-[10px]">Valor Unitário (R$)</Label>
+                              <Input className="h-8 text-xs" type="number" step="0.01" value={item.valor_unitario || ""} onChange={(e) => updateDeslocamento(item._key, "valor_unitario", Number(e.target.value))} />
+                            </div>
+                            <div>
+                              <Label className="text-[10px]">Quantidade</Label>
+                              <Input className="h-8 text-xs" type="number" value={item.quantidade} onChange={(e) => updateDeslocamento(item._key, "quantidade", Number(e.target.value))} min={1} />
+                            </div>
+                            <div className="flex items-end">
+                              <div className="text-[10px] text-muted-foreground pb-1.5">
+                                Total: <span className="font-bold text-primary">{fmt(custoItem)}</span>
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        {/* ── DIVERSOS ── */}
+                        {item.categoria === "diversos" && (
                           <>
                             <div>
                               <Label className="text-[10px]">Descrição</Label>
