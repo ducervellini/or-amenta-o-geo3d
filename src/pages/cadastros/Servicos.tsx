@@ -4,6 +4,7 @@ import { useSupabaseQuery } from "@/hooks/useSupabaseCrud";
 export default function Servicos() {
   const { data: mercados } = useSupabaseQuery("mercados");
   const { data: areasEmpresa } = useSupabaseQuery("areas_empresa");
+  const { data: modulos } = useSupabaseQuery("modulos");
 
   return (
     <CrudPage
@@ -34,25 +35,15 @@ export default function Servicos() {
             );
           },
         },
-        { key: "unidade_medicao", label: "Unidade" },
         {
-          key: "tipo_geometria",
-          label: "Geometria",
+          key: "modulo_id",
+          label: "Departamento",
           render: (v) => {
-            const labels: Record<string, string> = { area: "Área", ponto: "Ponto", linha: "Linha", hibrido: "Híbrido" };
-            return <span className="capitalize">{labels[String(v)] || String(v)}</span>;
+            const d = modulos?.find((d) => d.id === v);
+            return <span className="text-sm">{d ? String(d.nome) : "-"}</span>;
           },
         },
-        {
-          key: "produtividade_padrao",
-          label: "Produtividade",
-          render: (v, row) => {
-            if (!v) return <span className="text-muted-foreground">-</span>;
-            const tempo = (row as Record<string, unknown>).unidade_tempo_produtividade || "hora";
-            const unidade = (row as Record<string, unknown>).unidade_medicao || "un";
-            return <span>{String(v)} {String(unidade)}/{String(tempo)}</span>;
-          },
-        },
+        { key: "descricao", label: "Descrição", render: (v) => <span className="text-sm text-muted-foreground">{v ? String(v) : "-"}</span> },
       ]}
       formFields={[
         { name: "codigo", label: "Código", type: "text", required: true, placeholder: "SRV-001" },
@@ -73,59 +64,10 @@ export default function Servicos() {
           options: (areasEmpresa || []).map((a) => ({ label: String(a.nome), value: String(a.id) })),
         },
         {
-          name: "unidade_medicao",
-          label: "Unidade de Medição",
+          name: "modulo_id",
+          label: "Departamento",
           type: "select",
-          required: true,
-          options: [
-            { label: "Hectare (ha)", value: "ha" },
-            { label: "Metro (m)", value: "m" },
-            { label: "Quilômetro (km)", value: "km" },
-            { label: "Quilômetro quadrado (km²)", value: "km²" },
-            { label: "Metro quadrado (m²)", value: "m²" },
-            { label: "Unidade (un)", value: "un" },
-            { label: "Ponto (pt)", value: "pt" },
-            { label: "Propriedades", value: "propriedades" },
-            { label: "Unidades", value: "unidades" },
-            { label: "Pontos", value: "pontos" },
-            { label: "Cadastros", value: "cadastros" },
-            { label: "Imóveis", value: "imóveis" },
-            { label: "Amostras", value: "amostras" },
-            { label: "Torres", value: "torres" },
-            { label: "Marcos", value: "marcos" },
-            { label: "Vértices", value: "vértices" },
-            { label: "Bandeiras", value: "bandeiras" },
-            { label: "Plantas", value: "plantas" },
-            { label: "Travessias", value: "travessias" },
-            { label: "Seções", value: "seções" },
-            { label: "Piquetes", value: "piquetes" },
-            { label: "Relatórios", value: "relatórios" },
-            { label: "Laudos", value: "laudos" },
-          ],
-        },
-        {
-          name: "tipo_geometria",
-          label: "Tipo de Geometria",
-          type: "select",
-          required: true,
-          options: [
-            { label: "Área", value: "area" },
-            { label: "Ponto", value: "ponto" },
-            { label: "Linha", value: "linha" },
-            { label: "Híbrido", value: "hibrido" },
-          ],
-        },
-        { name: "produtividade_padrao", label: "Produtividade Padrão", type: "number", step: "0.0001" },
-        {
-          name: "unidade_tempo_produtividade",
-          label: "Unidade de Tempo (Produtividade)",
-          type: "select",
-          options: [
-            { label: "Hora", value: "hora" },
-            { label: "Dia", value: "dia" },
-            { label: "Mês", value: "mes" },
-          ],
-          defaultValue: "hora",
+          options: (modulos || []).map((d) => ({ label: String(d.nome), value: String(d.id) })),
         },
       ]}
     />
