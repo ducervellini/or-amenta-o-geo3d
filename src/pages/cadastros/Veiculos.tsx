@@ -47,7 +47,7 @@ function calcVeic(f: VeiculoForm) {
   const isProprio = f.tipo_propriedade === "proprio";
   const depKm = isProprio && f.vida_util_km > 0 ? (f.valor_aquisicao - f.valor_residual) / f.vida_util_km : 0;
   const retornoCapitalKm = isProprio && f.vida_util_km > 0 ? f.valor_residual / f.vida_util_km : 0;
-  const combKm = f.combustivel_consumo_km * f.combustivel_preco_litro;
+  const combKm = f.media_km_l > 0 ? f.combustivel_preco_litro / f.media_km_l : 0;
   const pneusKm = f.pneus_vida_util_km > 0 ? f.pneus_valor / f.pneus_vida_util_km : 0;
   const oleoKm = f.oleo_troca_km > 0 ? f.oleo_valor / f.oleo_troca_km : 0;
   const custoKm = depKm + combKm + pneusKm + oleoKm;
