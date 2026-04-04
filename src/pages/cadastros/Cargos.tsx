@@ -61,15 +61,15 @@ export default function Cargos() {
 
   // Use first active jornada/regime/horário as defaults
   const jornadaPadrao = useMemo(
-    () => (jornadas || []).find((j: any) => j.ativo !== false) as Jornada | null,
+    () => (jornadas || []).find((j: any) => j.ativo !== false) as unknown as Jornada | null,
     [jornadas]
   );
   const regimePadrao = useMemo(
-    () => (regimes || []).find((r: any) => r.ativo !== false) as Regime | null,
+    () => (regimes || []).find((r: any) => r.ativo !== false) as unknown as Regime | null,
     [regimes]
   );
   const horarioPadrao = useMemo(
-    () => (horarios || []).find((h: any) => h.ativo !== false) as HorarioAlmoco | null,
+    () => (horarios || []).find((h: any) => h.ativo !== false) as unknown as HorarioAlmoco | null,
     [horarios]
   );
 
