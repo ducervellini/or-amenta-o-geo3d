@@ -982,21 +982,18 @@ export default function Mobilizacao() {
                   const CatIcon = ICON_MAP[item.categoria] || CreditCard;
                   const selectedVeiculo = item.veiculo_id ? (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id) : null;
                   const custoItem = calcularCustoDeslocamentoItem(item);
+                  const mediaKmL = selectedVeiculo?.media_km_l || 0;
+                  const precoCombVeic = Number(selectedVeiculo?.combustivel_preco_litro || 0);
+                  const custoKmComb = mediaKmL > 0 ? precoCombVeic / mediaKmL : 0;
+                  const custoKmVeic = Number(selectedVeiculo?.custo_km || 0);
+                  const custoKm = custoKmComb + custoKmVeic;
                   const custoMes = item.categoria === "hospedagem"
                     ? item.valor_unitario * item.quantidade * diasProdutivosMes
                     : item.categoria === "combustivel" && selectedVeiculo
-                    ? (() => {
-                        const mediaKmL = selectedVeiculo?.media_km_l || 0;
-                        const precoComb = item.preco_combustivel || 0;
-                        const custoKm = mediaKmL > 0 ? precoComb / mediaKmL : 0;
-                        return custoKm * (item.km_dia || 0) * diasProdutivosMes * item.quantidade;
-                      })()
+                    ? custoKm * (item.km_dia || 0) * diasProdutivosMes * item.quantidade
                     : item.frequencia === "diario" ? item.valor_unitario * item.quantidade * diasProdutivosMes
                     : item.frequencia === "mensal" ? item.valor_unitario * item.quantidade
                     : item.valor_unitario * item.quantidade / duracaoMeses;
-                  const mediaKmL = selectedVeiculo?.media_km_l || 0;
-                  const precoComb = item.preco_combustivel || 0;
-                  const custoKm = mediaKmL > 0 ? precoComb / mediaKmL : 0;
                   return (
                     <div key={item._key} className="flex items-start gap-2 p-3 rounded-lg border bg-muted/30">
                       <CatIcon className="w-4 h-4 mt-2 text-muted-foreground shrink-0" />
