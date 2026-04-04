@@ -409,7 +409,7 @@ export default function Mobilizacao() {
 
   const resultado = useMemo(
     () => calcularMobilizacao(params, custos, equipes),
-    [diasTrabalho, jornadaDiaria, diasChuvaMes, fatorImprod, distanciaBase, distanciaMedia, custos, equipes]
+    [diasTrabalho, jornadaDiaria, diasChuvaMes, fatorImprod, distanciaBase, distanciaMedia, custos, equipes, duracaoMeses]
   );
 
   const { diasProdutivos: diasProdutivosMes, diasImprodutivos: diasImprodutivosMes } = calcularDiasProdutivos(params);
