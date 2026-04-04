@@ -330,6 +330,9 @@ export default function Mobilizacao() {
     veiculo_id?: string;
     km_dia?: number;
     preco_combustivel?: number;
+    tipo_hospedagem?: string;
+    tipo_veiculo?: string;
+    valor_aluguel_mensal?: number;
   }
   const [deslocamentos, setDeslocamentos] = useState<DeslocamentoItem[]>([]);
   const deslKeyRef = useRef(1);
@@ -337,11 +340,14 @@ export default function Mobilizacao() {
   const addDeslocamento = () => {
     setDeslocamentos(prev => [...prev, {
       _key: deslKeyRef.current++,
-      categoria: "hospedagem",
+      categoria: "veiculo",
       descricao: "",
       valor_unitario: 0,
       quantidade: 1,
       frequencia: "mensal",
+      tipo_hospedagem: "hotel_single",
+      tipo_veiculo: "alugado",
+      valor_aluguel_mensal: 0,
     }]);
   };
   const removeDeslocamento = (key: number) => setDeslocamentos(prev => prev.filter(d => d._key !== key));
