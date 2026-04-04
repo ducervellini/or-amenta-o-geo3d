@@ -119,49 +119,75 @@ export type Database = {
       cargos: {
         Row: {
           ativo: boolean
+          beneficios_selecionados: Json
           created_at: string
           descricao: string | null
+          encargos_selecionados: Json
+          horario_almoco_id: string | null
           id: string
           jornada_id: string | null
           local_trabalho: string
           nome: string
           regime_contratacao: string
+          regime_id: string | null
           salario_base: number
           unidade_salarial: string
           updated_at: string
         }
         Insert: {
           ativo?: boolean
+          beneficios_selecionados?: Json
           created_at?: string
           descricao?: string | null
+          encargos_selecionados?: Json
+          horario_almoco_id?: string | null
           id?: string
           jornada_id?: string | null
           local_trabalho?: string
           nome: string
           regime_contratacao?: string
+          regime_id?: string | null
           salario_base?: number
           unidade_salarial?: string
           updated_at?: string
         }
         Update: {
           ativo?: boolean
+          beneficios_selecionados?: Json
           created_at?: string
           descricao?: string | null
+          encargos_selecionados?: Json
+          horario_almoco_id?: string | null
           id?: string
           jornada_id?: string | null
           local_trabalho?: string
           nome?: string
           regime_contratacao?: string
+          regime_id?: string | null
           salario_base?: number
           unidade_salarial?: string
           updated_at?: string
         }
         Relationships: [
           {
+            foreignKeyName: "cargos_horario_almoco_id_fkey"
+            columns: ["horario_almoco_id"]
+            isOneToOne: false
+            referencedRelation: "horarios_almoco"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "cargos_jornada_id_fkey"
             columns: ["jornada_id"]
             isOneToOne: false
             referencedRelation: "jornadas_trabalho"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cargos_regime_id_fkey"
+            columns: ["regime_id"]
+            isOneToOne: false
+            referencedRelation: "regimes_operacionais"
             referencedColumns: ["id"]
           },
         ]
