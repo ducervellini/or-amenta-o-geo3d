@@ -941,13 +941,27 @@ export default function Mobilizacao() {
             {/* Deslocamentos do Projeto */}
             <Section title="Deslocamentos do Projeto" icon={Truck} badge={deslocamentos.length > 0 ? fmt(custoDeslocamentosTotal) + " total" : undefined}>
               <p className="text-xs text-muted-foreground mb-3">
-                Itens de custo recorrentes do projeto: hospedagem, combustível, pedágios, passagens e diversos.
+                Itens de custo recorrentes do projeto: veículos, hospedagem, combustível, pedágios, passagens e diversos.
               </p>
               <div className="space-y-3">
                 {deslocamentos.map((item) => {
                   const CatIcon = ICON_MAP[item.categoria] || CreditCard;
                   const selectedVeiculo = item.veiculo_id ? (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id) : null;
                   const custoItem = calcularCustoDeslocamentoItem(item);
+                  const custoMes = item.categoria === "veiculo"
+                    ? (item.tipo_veiculo === "alugado" ? (item.valor_aluguel_mensal || item.valor_unitario || 0) * item.quantidade : item.valor_unitario * item.quantidade)
+                    : item.categoria === "hospedagem"
+                    ? item.valor_unitario * item.quantidade * diasProdutivosMes
+                    : item.categoria === "combustivel" && selectedVeiculo
+                    ? (() => {
+                        const mediaKmL = selectedVeiculo?.media_km_l || 0;
+                        const precoComb = item.preco_combustivel || 0;
+                        const custoKm = mediaKmL > 0 ? precoComb / mediaKmL : 0;
+                        return custoKm * (item.km_dia || 0) * diasProdutivosMes * item.quantidade;
+                      })()
+                    : item.frequencia === "diario" ? item.valor_unitario * item.quantidade * diasProdutivosMes
+                    : item.frequencia === "mensal" ? item.valor_unitario * item.quantidade
+                    : item.valor_unitario * item.quantidade / duracaoMeses;
                   const mediaKmL = selectedVeiculo?.media_km_l || 0;
                   const precoComb = item.preco_combustivel || 0;
                   const custoKm = mediaKmL > 0 ? precoComb / mediaKmL : 0;
@@ -966,11 +980,102 @@ export default function Mobilizacao() {
                             </SelectContent>
                           </Select>
                         </div>
-                        <div>
-                          <Label className="text-[10px]">Descrição</Label>
-                          <Input className="h-8 text-xs" value={item.descricao} onChange={(e) => updateDeslocamento(item._key, "descricao", e.target.value)} placeholder="Descrição do item" />
-                        </div>
-                        {item.categoria === "combustivel" ? (
+
+                        {/* ── VEÍCULO ── */}
+                        {item.categoria === "veiculo" && (
+                          <>
+                            <div>
+                              <Label className="text-[10px]">Tipo</Label>
+                              <Select value={item.tipo_veiculo || "alugado"} onValueChange={(v) => updateDeslocamento(item._key, "tipo_veiculo", v)}>
+                                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  {TIPOS_VEICULO_DESL.map((t) => (
+                                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-[10px]">Veículo</Label>
+                              <Select
+                                value={item.veiculo_id || ""}
+                                onValueChange={(v) => {
+                                  const veic = (veiculosCadastrados as any[])?.find((ve: any) => ve.id === v);
+                                  updateDeslocamento(item._key, "veiculo_id", v);
+                                  if (veic) {
+                                    updateDeslocamento(item._key, "descricao", veic.nome);
+                                    if (item.tipo_veiculo === "alugado") {
+                                      updateDeslocamento(item._key, "valor_aluguel_mensal", veic.valor_aluguel_mensal || 0);
+                                    } else {
+                                      updateDeslocamento(item._key, "valor_unitario", veic.custo_hora ? veic.custo_hora * (veic.horas_produtivas_mes || 176) : 0);
+                                    }
+                                  }
+                                }}
+                              >
+                                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                                <SelectContent>
+                                  {(veiculosCadastrados as any[])?.map((v: any) => (
+                                    <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>
+                                  ))}
+                                  {(!veiculosCadastrados || (veiculosCadastrados as any[]).length === 0) && (
+                                    <SelectItem value="_none" disabled>Nenhum veículo cadastrado</SelectItem>
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-[10px]">{item.tipo_veiculo === "alugado" ? "Aluguel Mensal (R$)" : "Custo Mensal (R$)"}</Label>
+                              <Input className="h-8 text-xs" type="number" step="0.01"
+                                value={item.tipo_veiculo === "alugado" ? (item.valor_aluguel_mensal || "") : (item.valor_unitario || "")}
+                                onChange={(e) => updateDeslocamento(item._key, item.tipo_veiculo === "alugado" ? "valor_aluguel_mensal" : "valor_unitario", Number(e.target.value))}
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[10px]">Qtde</Label>
+                              <Input className="h-8 text-xs" type="number" value={item.quantidade} onChange={(e) => updateDeslocamento(item._key, "quantidade", Number(e.target.value))} min={1} />
+                            </div>
+                            <div className="flex items-end col-span-2 md:col-span-5">
+                              <div className="text-[10px] text-muted-foreground pb-1.5 flex gap-4">
+                                <span>Valor/mês: <span className="font-medium text-foreground">{fmt(custoMes)}</span></span>
+                                <span>Total ({duracaoMeses}m): <span className="font-bold text-primary">{fmt(custoItem)}</span></span>
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        {/* ── HOSPEDAGEM ── */}
+                        {item.categoria === "hospedagem" && (
+                          <>
+                            <div>
+                              <Label className="text-[10px]">Tipo</Label>
+                              <Select value={item.tipo_hospedagem || "hotel_single"} onValueChange={(v) => updateDeslocamento(item._key, "tipo_hospedagem", v)}>
+                                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  {TIPOS_HOSPEDAGEM.map((t) => (
+                                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-[10px]">Valor Diária (R$)</Label>
+                              <Input className="h-8 text-xs" type="number" step="0.01" value={item.valor_unitario || ""} onChange={(e) => updateDeslocamento(item._key, "valor_unitario", Number(e.target.value))} />
+                            </div>
+                            <div>
+                              <Label className="text-[10px]">Quantidade</Label>
+                              <Input className="h-8 text-xs" type="number" value={item.quantidade} onChange={(e) => updateDeslocamento(item._key, "quantidade", Number(e.target.value))} min={1} />
+                            </div>
+                            <div className="flex items-end">
+                              <div className="text-[10px] text-muted-foreground pb-1.5 flex gap-3">
+                                <span>Mês: <span className="font-medium text-foreground">{fmt(custoMes)}</span></span>
+                                <span>Total: <span className="font-bold text-primary">{fmt(custoItem)}</span></span>
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        {/* ── COMBUSTÍVEL ── */}
+                        {item.categoria === "combustivel" && (
                           <>
                             <div>
                               <Label className="text-[10px]">Veículo</Label>
@@ -1010,21 +1115,29 @@ export default function Mobilizacao() {
                               <Label className="text-[10px]">Qtde Veículos</Label>
                               <Input className="h-8 text-xs" type="number" value={item.quantidade} onChange={(e) => updateDeslocamento(item._key, "quantidade", Number(e.target.value))} min={1} />
                             </div>
-                            <div className="flex items-end col-span-2 md:col-span-3">
+                            <div className="flex items-end col-span-2 md:col-span-5">
                               <div className="text-[10px] text-muted-foreground pb-1.5 space-y-0.5">
                                 {selectedVeiculo ? (
-                                  <>
-                                    <div>{mediaKmL.toFixed(1)} km/L · {selectedVeiculo.tipo_combustivel || "diesel"} · {fmt(custoKm)}/km</div>
-                                    <div className="font-medium text-foreground">Total: {fmt(custoItem)}</div>
-                                  </>
+                                  <div className="flex gap-4">
+                                    <span>{mediaKmL.toFixed(1)} km/L · {selectedVeiculo.tipo_combustivel || "diesel"} · {fmt(custoKm)}/km</span>
+                                    <span>Mês: <span className="font-medium text-foreground">{fmt(custoMes)}</span></span>
+                                    <span>Total ({duracaoMeses}m): <span className="font-bold text-primary">{fmt(custoItem)}</span></span>
+                                  </div>
                                 ) : (
                                   <span>Selecione um veículo</span>
                                 )}
                               </div>
                             </div>
                           </>
-                        ) : (
+                        )}
+
+                        {/* ── OUTROS (pedágios, passagens, diversos) ── */}
+                        {!["veiculo", "hospedagem", "combustivel"].includes(item.categoria) && (
                           <>
+                            <div>
+                              <Label className="text-[10px]">Descrição</Label>
+                              <Input className="h-8 text-xs" value={item.descricao} onChange={(e) => updateDeslocamento(item._key, "descricao", e.target.value)} placeholder="Descrição do item" />
+                            </div>
                             <div>
                               <Label className="text-[10px]">Valor Unitário (R$)</Label>
                               <Input className="h-8 text-xs" type="number" step="0.01" value={item.valor_unitario || ""} onChange={(e) => updateDeslocamento(item._key, "valor_unitario", Number(e.target.value))} />
@@ -1057,6 +1170,7 @@ export default function Mobilizacao() {
                       </div>
                       <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 mt-1" onClick={() => removeDeslocamento(item._key)}>
                         <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                      </Button>
                       </Button>
                     </div>
                   );
