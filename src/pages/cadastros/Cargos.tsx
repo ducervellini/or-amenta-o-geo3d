@@ -175,7 +175,7 @@ function CargoFormDialog({
 
   const isPJ = regimeContratacao === "pj";
   const isEstagio = regimeContratacao === "estagio";
-  const hideEncargosEBeneficios = isPJ;
+  const hideEncargosEBeneficios = false;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
