@@ -291,6 +291,7 @@ export default function Mobilizacao() {
   const [lng, setLng] = useState<number | null>(null);
   const [geocodificando, setGeocodificando] = useState(false);
   const [arquivoGeo, setArquivoGeo] = useState("");
+  const [arquivoGeoFile, setArquivoGeoFile] = useState<File | null>(null);
   const [geoJsonData, setGeoJsonData] = useState<FeatureCollection | null>(null);
   const [loadingGeo, setLoadingGeo] = useState(false);
   const [loadingMunicipios, setLoadingMunicipios] = useState(false);
