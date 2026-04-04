@@ -34,13 +34,13 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-type TipoInsumo = "mao_de_obra" | "equipamento" | "veiculo" | "material";
+type TipoInsumo = "mao_de_obra" | "equipamento" | "material";
 
 const tipoIcons: Record<string, React.ElementType> = {
-  mao_de_obra: Users, equipamento: Wrench, veiculo: Truck, material: Package, combustivel: Package,
+  mao_de_obra: Users, equipamento: Wrench, material: Package, combustivel: Package,
 };
 const tipoLabels: Record<string, string> = {
-  mao_de_obra: "Mão de Obra", equipamento: "Equipamento", veiculo: "Veículo", material: "Material", combustivel: "Material",
+  mao_de_obra: "Mão de Obra", equipamento: "Equipamento", material: "Material", combustivel: "Material",
 };
 const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 

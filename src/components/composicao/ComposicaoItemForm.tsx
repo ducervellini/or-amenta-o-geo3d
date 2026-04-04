@@ -29,7 +29,6 @@ interface Props {
 const tipoLabels: Record<TipoInsumo, string> = {
   mao_de_obra: "Mão de Obra",
   equipamento: "Equipamento",
-  veiculo: "Veículo",
   material: "Material",
 };
 
