@@ -819,6 +819,18 @@ export default function Mobilizacao() {
         if (errCustos) throw errCustos;
       }
 
+      // Upload geo file to storage
+      if (arquivoGeoFile && mobId) {
+        const filePath = `${mobId}/${arquivoGeoFile.name}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("geo-files")
+          .upload(filePath, arquivoGeoFile, { upsert: true });
+        if (uploadErr) {
+          console.error("Erro ao fazer upload do arquivo geo:", uploadErr);
+          toast.error("Arquivo geográfico não pôde ser salvo no armazenamento");
+        }
+      }
+
       toast.success("ADM Local salvo com sucesso!");
     } catch (err: any) {
       console.error("Erro ao salvar:", err);
