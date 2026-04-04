@@ -196,7 +196,7 @@ export default function ComposicaoDetalhe() {
       try {
         if (tipo === "mao_de_obra") return { ...item, resultado: calcularMaoDeObra({ ...getDefaultParamsMaoDeObra(), ...params } as ParametrosMaoDeObra, qtd, coef) };
         if (tipo === "equipamento") return { ...item, resultado: calcularEquipamento({ ...getDefaultParamsEquipamento(), ...params } as ParametrosEquipamento, qtd, coef) };
-        if (tipo === "veiculo") return { ...item, resultado: calcularVeiculo({ ...getDefaultParamsVeiculo(), ...params } as ParametrosVeiculo, qtd, coef) };
+        if (tipo === "veiculo") return { ...item, resultado: calcularMaterial({ ...getDefaultParamsMaterial(), ...params } as ParametrosMaterial, qtd, coef) };
         return { ...item, resultado: calcularMaterial({ ...getDefaultParamsMaterial(), ...params } as ParametrosMaterial, qtd, coef) };
       } catch {
         return { ...item, resultado: { custo_unitario: Number(item.custo_unitario) || 0, custo_total: Number(item.custo_total) || 0, memoria: [] } };
