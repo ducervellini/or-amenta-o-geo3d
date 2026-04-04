@@ -675,17 +675,17 @@ export default function Mobilizacao() {
         dias_improdutivos: diasImprodutivos,
         custo_total: custoDeslocamentosTotal + custoMobDesmobTotal,
         custo_por_dia: diasProdutivos > 0 ? (custoDeslocamentosTotal + custoMobDesmobTotal) / diasProdutivos : 0,
-        municipios_considerados: municipiosRota,
+        municipios_considerados: municipiosRota as any,
         arquivo_geo: arquivoGeo || null,
-      };
+      } as any;
 
       let mobId = mobilizacaoId;
 
       if (mobId) {
-        const { error } = await supabase.from("mobilizacoes").update(mobilizacaoData).eq("id", mobId);
+        const { error } = await supabase.from("mobilizacoes").update(mobilizacaoData as any).eq("id", mobId);
         if (error) throw error;
       } else {
-        const { data, error } = await supabase.from("mobilizacoes").insert(mobilizacaoData).select("id").single();
+        const { data, error } = await supabase.from("mobilizacoes").insert(mobilizacaoData as any).select("id").single();
         if (error) throw error;
         mobId = data.id;
         setMobilizacaoId(mobId);
