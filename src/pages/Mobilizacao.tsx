@@ -1056,7 +1056,7 @@ export default function Mobilizacao() {
                           <Select value={c.categoria} onValueChange={(v) => updateCusto(c._key, "categoria", v)}>
                             <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              {CATEGORIAS_CUSTO.map((cat) => (
+                              {CATEGORIAS_CUSTO.filter(cat => cat.value !== "hospedagem" && cat.value !== "alimentacao").map((cat) => (
                                 <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
                               ))}
                             </SelectContent>
