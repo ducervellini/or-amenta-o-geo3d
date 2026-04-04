@@ -44,6 +44,7 @@ export default function Servicos() {
           },
         },
         { key: "descricao", label: "Descrição", render: (v) => <span className="text-sm text-muted-foreground">{v ? String(v) : "-"}</span> },
+        { key: "unidade_medicao", label: "Unidade", render: (v) => <span className="text-sm">{v ? String(v) : "-"}</span> },
       ]}
       formFields={[
         { name: "codigo", label: "Código", type: "text", required: true, placeholder: "SRV-001" },
