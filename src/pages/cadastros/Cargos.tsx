@@ -174,6 +174,7 @@ function CargoFormDialog({
                   <SelectContent>
                     <SelectItem value="clt">CLT (com encargos e benefícios)</SelectItem>
                     <SelectItem value="pj">PJ (apenas salário)</SelectItem>
+                    <SelectItem value="estagio">Estágio</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
