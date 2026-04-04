@@ -508,8 +508,9 @@ export default function Mobilizacao() {
       return custoKmTotal * kmMes * item.quantidade * duracaoMeses;
     }
     if (item.categoria === "hospedagem") {
-      // valor_unitario = diária; frequência sempre diário
-      return item.valor_unitario * item.quantidade * diasProdutivos;
+      // valor_unitario = diária; dias corridos (não produtivos)
+      const diasCorridosTotal = diasTrabalho * duracaoMeses;
+      return item.valor_unitario * item.quantidade * diasCorridosTotal;
     }
     switch (item.frequencia) {
       case "diario": return item.valor_unitario * item.quantidade * diasProdutivos;
