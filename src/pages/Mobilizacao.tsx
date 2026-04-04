@@ -1029,7 +1029,7 @@ export default function Mobilizacao() {
                               <Input className="h-8 text-xs" type="number" step="0.01" value={item.valor_unitario || ""} onChange={(e) => updateDeslocamento(item._key, "valor_unitario", Number(e.target.value))} />
                             </div>
                             <div>
-                              <Label className="text-[10px]">Quantidade</Label>
+                              <Label className="text-[10px]">Diárias</Label>
                               <Input className="h-8 text-xs" type="number" value={item.quantidade} onChange={(e) => updateDeslocamento(item._key, "quantidade", Number(e.target.value))} min={1} />
                             </div>
                             <div className="flex items-end">
