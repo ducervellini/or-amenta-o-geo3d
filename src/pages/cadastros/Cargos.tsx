@@ -306,7 +306,7 @@ export default function Cargos() {
                                 {!isPJ && <p>Encargos ({pct(custo.total_encargos_pct)}): {fmt(custo.valor_encargos)}</p>}
                                 {!isPJ && <p>Benefícios: {fmt(custo.valor_beneficios_fixos + custo.valor_beneficios_pct)}</p>}
                                 {custo.fator_regime < 1 && (
-                                  <p>Fator regime: ×{custo.fator_regime.toFixed(4)}</p>
+                                  <p className="text-muted-foreground">Regime: {((1/custo.fator_regime) * 100).toFixed(1)}% do ciclo remunerado (folga paga)</p>
                                 )}
                                 <p className="font-semibold pt-1 border-t border-border">
                                   Total: {fmt(custo.custo_total_mensal)}
