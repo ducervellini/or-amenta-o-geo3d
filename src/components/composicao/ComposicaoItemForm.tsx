@@ -131,12 +131,7 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
     try {
       if (tipo === "mao_de_obra") return calcularMaoDeObra(paramsMO, quantidade, coeficiente);
       if (tipo === "equipamento") return calcularEquipamento(paramsEq, quantidade, coeficiente);
-      if (tipo === "veiculo") return calcularVeiculo(paramsVe, quantidade, coeficiente);
       return calcularMaterial(paramsMa, quantidade, coeficiente);
-    } catch {
-      return { custo_unitario: 0, custo_total: 0, memoria: [] };
-    }
-  }, [tipo, paramsMO, paramsEq, paramsVe, paramsMa, quantidade, coeficiente]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
