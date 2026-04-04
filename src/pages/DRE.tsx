@@ -111,7 +111,7 @@ export default function DRE() {
       margemBruta,
       margemEbit,
     };
-  }, [custoDireto, lucroLiquidoDesejado, tributosReceita, adminCentralPct, adminLocalPct, financiamentoPct, irpjPct, csllPct]);
+  }, [custoDireto, lucroLiquidoPct, tributosReceita, adminCentralPct, adminLocalPct, financiamentoPct, irpjPct, csllPct]);
 
   type DreRow = {
     label: string;
