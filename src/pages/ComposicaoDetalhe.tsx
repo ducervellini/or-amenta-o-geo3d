@@ -390,7 +390,7 @@ export default function ComposicaoDetalhe() {
                 <TabsList>
                   <TabsTrigger value="mao_de_obra" className="gap-1.5"><Users className="w-3.5 h-3.5" />M.O.</TabsTrigger>
                   <TabsTrigger value="equipamento" className="gap-1.5"><Wrench className="w-3.5 h-3.5" />Equip.</TabsTrigger>
-                  <TabsTrigger value="veiculo" className="gap-1.5"><Truck className="w-3.5 h-3.5" />Veíc.</TabsTrigger>
+                  <TabsTrigger value="material" className="gap-1.5"><Package className="w-3.5 h-3.5" />Mat.</TabsTrigger>
                   <TabsTrigger value="material" className="gap-1.5"><Package className="w-3.5 h-3.5" />Mat.</TabsTrigger>
                 </TabsList>
               </div>
