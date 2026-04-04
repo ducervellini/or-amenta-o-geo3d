@@ -75,12 +75,17 @@ const FREQUENCIAS_DESL = [
 ];
 
 const TIPOS_HOSPEDAGEM = [
-  { value: "hotel_single", label: "Hotel (Single)" },
-  { value: "hotel_duplo", label: "Hotel (Duplo)" },
-  { value: "hotel_triplo", label: "Hotel (Triplo)" },
-  { value: "alojamento_mobiliado", label: "Alojamento Mobiliado" },
-  { value: "alojamento_sem_mobilia", label: "Alojamento sem Mobília" },
+  { value: "hotel_single", label: "Hotel (Single)", isHotel: true },
+  { value: "hotel_duplo", label: "Hotel (Duplo)", isHotel: true },
+  { value: "hotel_triplo", label: "Hotel (Triplo)", isHotel: true },
+  { value: "alojamento_mobiliado", label: "Alojamento Mobiliado", isHotel: false },
+  { value: "alojamento_sem_mobilia", label: "Alojamento sem Mobília", isHotel: false },
 ];
+
+const isHotelType = (tipo?: string) => {
+  const found = TIPOS_HOSPEDAGEM.find(t => t.value === tipo);
+  return found ? found.isHotel : true;
+};
 
 const TIPOS_VEICULO_DESL = [
   { value: "alugado", label: "Alugado" },
@@ -332,6 +337,7 @@ export default function Mobilizacao() {
     tipo_hospedagem?: string;
     tipo_veiculo?: string;
     valor_aluguel_mensal?: number;
+    meses_hospedagem?: number;
   }
   const [deslocamentos, setDeslocamentos] = useState<DeslocamentoItem[]>([]);
   const deslKeyRef = useRef(1);
@@ -510,9 +516,14 @@ export default function Mobilizacao() {
       return (custoCombMes + aluguelMes) * duracaoMeses;
     }
     if (item.categoria === "hospedagem") {
-      // valor_unitario = diária; dias corridos (não produtivos)
-      const diasCorridosTotal = diasTrabalho * duracaoMeses;
-      return item.valor_unitario * item.quantidade * diasCorridosTotal;
+      if (isHotelType(item.tipo_hospedagem)) {
+        // Hotel: diária × qtd diárias × dias corridos
+        const diasCorridosTotal = diasTrabalho * duracaoMeses;
+        return item.valor_unitario * item.quantidade * diasCorridosTotal;
+      }
+      // Alojamento: valor mensal × qtd × meses
+      const meses = item.meses_hospedagem ?? duracaoMeses;
+      return item.valor_unitario * item.quantidade * meses;
     }
     switch (item.frequencia) {
       case "diario": return item.valor_unitario * item.quantidade * diasProdutivos;
@@ -541,7 +552,11 @@ export default function Mobilizacao() {
       const selectedVeiculo = item.veiculo_id ? (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id) : null;
       let custoMes = 0;
       if (item.categoria === "hospedagem") {
-        custoMes = item.valor_unitario * item.quantidade * diasTrabalho;
+        if (isHotelType(item.tipo_hospedagem)) {
+          custoMes = item.valor_unitario * item.quantidade * diasTrabalho;
+        } else {
+          custoMes = item.valor_unitario * item.quantidade;
+        }
       } else if (item.categoria === "combustivel" && selectedVeiculo) {
         const mediaKmL = selectedVeiculo?.media_km_l || 0;
         const precoComb = Number(selectedVeiculo?.combustivel_preco_litro || 0);
@@ -993,7 +1008,7 @@ export default function Mobilizacao() {
                   const aluguelMesVeic = Number(selectedVeiculo?.valor_aluguel_mensal || 0);
                   const kmMesProd = (item.km_dia || 0) * diasProdutivosMes;
                   const custoMes = item.categoria === "hospedagem"
-                    ? item.valor_unitario * item.quantidade * diasTrabalho
+                    ? (isHotelType(item.tipo_hospedagem) ? item.valor_unitario * item.quantidade * diasTrabalho : item.valor_unitario * item.quantidade)
                     : item.categoria === "combustivel" && selectedVeiculo
                     ? (custoKmComb * kmMesProd * item.quantidade) + (aluguelMesVeic * item.quantidade)
                     : item.frequencia === "diario" ? item.valor_unitario * item.quantidade * diasProdutivosMes
@@ -1016,35 +1031,44 @@ export default function Mobilizacao() {
                         </div>
 
                         {/* ── HOSPEDAGEM ── */}
-                        {item.categoria === "hospedagem" && (
-                          <>
-                            <div>
-                              <Label className="text-[10px]">Tipo</Label>
-                              <Select value={item.tipo_hospedagem || "hotel_single"} onValueChange={(v) => updateDeslocamento(item._key, "tipo_hospedagem", v)}>
-                                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                  {TIPOS_HOSPEDAGEM.map((t) => (
-                                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <Label className="text-[10px]">Valor Diária (R$)</Label>
-                              <Input className="h-8 text-xs" type="number" step="0.01" value={item.valor_unitario || ""} onChange={(e) => updateDeslocamento(item._key, "valor_unitario", Number(e.target.value))} />
-                            </div>
-                            <div>
-                              <Label className="text-[10px]">Diárias</Label>
-                              <Input className="h-8 text-xs" type="number" value={item.quantidade} onChange={(e) => updateDeslocamento(item._key, "quantidade", Number(e.target.value))} min={1} />
-                            </div>
-                            <div className="flex items-end">
-                              <div className="text-[10px] text-muted-foreground pb-1.5 flex gap-3">
-                                <span>Mês: <span className="font-medium text-foreground">{fmt(custoMes)}</span></span>
-                                <span>Total: <span className="font-bold text-primary">{fmt(custoItem)}</span></span>
+                        {item.categoria === "hospedagem" && (() => {
+                          const isHotel = isHotelType(item.tipo_hospedagem);
+                          return (
+                            <>
+                              <div>
+                                <Label className="text-[10px]">Tipo</Label>
+                                <Select value={item.tipo_hospedagem || "hotel_single"} onValueChange={(v) => updateDeslocamento(item._key, "tipo_hospedagem", v)}>
+                                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    {TIPOS_HOSPEDAGEM.map((t) => (
+                                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
                               </div>
-                            </div>
-                          </>
-                        )}
+                              <div>
+                                <Label className="text-[10px]">{isHotel ? "Valor Diária (R$)" : "Valor Mensal (R$)"}</Label>
+                                <Input className="h-8 text-xs" type="number" step="0.01" value={item.valor_unitario || ""} onChange={(e) => updateDeslocamento(item._key, "valor_unitario", Number(e.target.value))} />
+                              </div>
+                              <div>
+                                <Label className="text-[10px]">{isHotel ? "Diárias" : "Qtde"}</Label>
+                                <Input className="h-8 text-xs" type="number" value={item.quantidade} onChange={(e) => updateDeslocamento(item._key, "quantidade", Number(e.target.value))} min={1} />
+                              </div>
+                              {!isHotel && (
+                                <div>
+                                  <Label className="text-[10px]">Período (meses)</Label>
+                                  <Input className="h-8 text-xs" type="number" value={item.meses_hospedagem ?? duracaoMeses} onChange={(e) => updateDeslocamento(item._key, "meses_hospedagem", Number(e.target.value))} min={1} />
+                                </div>
+                              )}
+                              <div className="flex items-end">
+                                <div className="text-[10px] text-muted-foreground pb-1.5 flex gap-3">
+                                  <span>Mês: <span className="font-medium text-foreground">{fmt(custoMes)}</span></span>
+                                  <span>Total ({isHotel ? `${diasTrabalho * duracaoMeses}d` : `${item.meses_hospedagem ?? duracaoMeses}m`}): <span className="font-bold text-primary">{fmt(custoItem)}</span></span>
+                                </div>
+                              </div>
+                            </>
+                          );
+                        })()}
 
                         {/* ── VEÍCULO + COMBUSTÍVEL ── */}
                         {item.categoria === "combustivel" && (
