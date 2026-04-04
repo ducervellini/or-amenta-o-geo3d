@@ -460,6 +460,48 @@ export default function Mobilizacao() {
     return mobDesmobItens.reduce((acc, item) => acc + calcularMobDesmobItem(item).custoTotal, 0);
   }, [mobDesmobItens, calcularMobDesmobItem]);
 
+  const [mobDesmobLoading, setMobDesmobLoading] = useState<Record<number, boolean>>({});
+  const [mobDesmobRotasUrl, setMobDesmobRotasUrl] = useState<Record<number, string>>({});
+
+  const calcularRotaMobDesmob = async (key: number) => {
+    const item = mobDesmobItens.find((i) => i._key === key);
+    if (!item) return;
+    if (!item.municipio_saida || !item.estado_saida) {
+      toast.error("Preencha o município e estado de saída");
+      return;
+    }
+    if (!municipio && !lat) {
+      toast.error("Defina o local do projeto primeiro");
+      return;
+    }
+
+    setMobDesmobLoading((prev) => ({ ...prev, [key]: true }));
+    try {
+      const { data, error } = await supabase.functions.invoke("calcular-rota", {
+        body: {
+          origem_municipio: item.municipio_saida,
+          origem_estado: item.estado_saida,
+          destino_municipio: municipio || undefined,
+          destino_estado: estado || undefined,
+          destino_lat: lat || undefined,
+          destino_lng: lng || undefined,
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Erro ao calcular rota");
+
+      updateMobDesmob(key, "distancia_km", data.distancia_km);
+      setMobDesmobRotasUrl((prev) => ({ ...prev, [key]: data.rotas_brasil_url }));
+      toast.success(`Rota calculada: ${data.distancia_km} km (~${data.duracao_horas}h)`);
+    } catch (err: any) {
+      console.error("Erro ao calcular rota:", err);
+      toast.error(err.message || "Erro ao calcular rota");
+    } finally {
+      setMobDesmobLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
   const params: MobilizacaoParams = {
     dias_trabalho: diasTrabalho,
     jornada_diaria: jornadaDiaria,
