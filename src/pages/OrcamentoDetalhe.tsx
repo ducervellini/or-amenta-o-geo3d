@@ -374,7 +374,7 @@ export default function OrcamentoDetalhe() {
             size="sm"
             variant="outline"
             className="gap-1"
-            onClick={() => navigate("/mobilizacao")}
+            onClick={() => navigate(`/mobilizacao?oportunidade=${id}`)}
           >
             <ExternalLink className="w-4 h-4" />
             {mobilizacao ? "Editar ADM Local" : "Configurar ADM Local"}
