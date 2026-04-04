@@ -94,16 +94,17 @@ interface PluviometriaResult {
 
 // ── Plain Leaflet Map Component ──
 function LeafletMap({
-  projectLat, projectLng, baseLat, baseLng, municipio, baseEndereco, municipiosRota,
+  projectLat, projectLng, baseLat, baseLng, municipio, baseEndereco, geoJsonData,
 }: {
   projectLat: number; projectLng: number;
   baseLat: number; baseLng: number;
   municipio: string; baseEndereco: string;
-  municipiosRota?: MunicipioRota[];
+  geoJsonData?: FeatureCollection | null;
 }) {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.Layer[]>([]);
+  const geoLayerRef = useRef<L.GeoJSON | null>(null);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
