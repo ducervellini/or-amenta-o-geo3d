@@ -53,12 +53,25 @@ const fmt = (v: number) =>
 
 const ICON_MAP: Record<string, React.ElementType> = {
   hospedagem: Home,
-  alimentacao: Utensils,
   combustivel: Fuel,
-  veiculo: Truck,
-  pedagio: CreditCard,
-  viagem_avulsa: Plane,
+  pedagios: CreditCard,
+  passagens: Plane,
+  diversos: Users,
 };
+
+const CATEGORIAS_DESLOCAMENTO = [
+  { value: "hospedagem", label: "Hospedagem", icon: Home },
+  { value: "combustivel", label: "Combustível", icon: Fuel },
+  { value: "pedagios", label: "Pedágios", icon: CreditCard },
+  { value: "passagens", label: "Passagens", icon: Plane },
+  { value: "diversos", label: "Diversos", icon: Users },
+];
+
+const FREQUENCIAS_DESL = [
+  { value: "diario", label: "Diário" },
+  { value: "mensal", label: "Mensal" },
+  { value: "unico", label: "Único" },
+];
 
 // ── Types ──
 interface MunicipioRota {
