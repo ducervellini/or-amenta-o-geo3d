@@ -379,6 +379,14 @@ export default function Mobilizacao() {
         setDistanciaMedia(Number(mob.distancia_media_diaria) || 0);
         setArquivoGeo(mob.arquivo_geo || "");
         if (mob.duracao_meses) setDuracaoMeses(Number(mob.duracao_meses));
+        if (mob.data_inicio) setDataInicio(mob.data_inicio);
+        if (mob.base_endereco) {
+          // base_endereco is already loaded via baseLat/baseLng above
+        }
+        // Restore pluviometria data
+        if (mob.pluviometria_dados) {
+          setPluviometria(mob.pluviometria_dados as PluviometriaResult);
+        }
         if (mob.municipios_considerados && Array.isArray(mob.municipios_considerados)) {
           setMunicipiosRota(mob.municipios_considerados as MunicipioRota[]);
         }
@@ -769,6 +777,8 @@ export default function Mobilizacao() {
         municipios_considerados: municipiosRota as any,
         arquivo_geo: arquivoGeo || null,
         duracao_meses: duracaoMeses,
+        data_inicio: dataInicio || null,
+        pluviometria_dados: pluviometria ? (pluviometria as any) : null,
         mob_desmob_itens: mobDesmobItens.map(({ _key, ...rest }) => rest) as any,
       } as any;
 
