@@ -990,12 +990,12 @@ export default function Mobilizacao() {
                   const mediaKmL = selectedVeiculo?.media_km_l || 0;
                   const precoCombVeic = Number(selectedVeiculo?.combustivel_preco_litro || 0);
                   const custoKmComb = mediaKmL > 0 ? precoCombVeic / mediaKmL : 0;
-                  const custoKmVeic = Number(selectedVeiculo?.custo_km || 0);
-                  const custoKm = custoKmComb + custoKmVeic;
+                  const aluguelMesVeic = Number(selectedVeiculo?.valor_aluguel_mensal || 0);
+                  const kmMesProd = (item.km_dia || 0) * diasProdutivosMes;
                   const custoMes = item.categoria === "hospedagem"
                     ? item.valor_unitario * item.quantidade * diasTrabalho
                     : item.categoria === "combustivel" && selectedVeiculo
-                    ? custoKm * (item.km_dia || 0) * diasProdutivosMes * item.quantidade
+                    ? (custoKmComb * kmMesProd * item.quantidade) + (aluguelMesVeic * item.quantidade)
                     : item.frequencia === "diario" ? item.valor_unitario * item.quantidade * diasProdutivosMes
                     : item.frequencia === "mensal" ? item.valor_unitario * item.quantidade
                     : item.valor_unitario * item.quantidade / duracaoMeses;
