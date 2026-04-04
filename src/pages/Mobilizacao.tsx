@@ -1071,6 +1071,12 @@ export default function Mobilizacao() {
               <div className="space-y-3">
                 {custos.map((c) => {
                   const CatIcon = ICON_MAP[c.categoria] || CreditCard;
+                  const selectedVeiculo = c.veiculo_id ? (veiculosCadastrados as any[])?.find((v: any) => v.id === c.veiculo_id) : null;
+                  const custoKmCalc = selectedVeiculo && (selectedVeiculo.media_km_l > 0)
+                    ? (selectedVeiculo.combustivel_preco_litro / selectedVeiculo.media_km_l)
+                    : 0;
+                  const custoDiaCalc = custoKmCalc * (c.km_dia || 0);
+                  const custoTotalCalc = custoDiaCalc * diasProdutivos * c.quantidade;
                   return (
                     <div key={c._key} className="flex items-start gap-2 p-3 rounded-lg border bg-muted/30">
                       <CatIcon className="w-4 h-4 mt-2 text-muted-foreground shrink-0" />
@@ -1087,40 +1093,53 @@ export default function Mobilizacao() {
                           </Select>
                         </div>
                         <div>
-                          <Label className="text-[10px]">Descrição</Label>
-                          <Input className="h-8 text-xs" value={c.descricao || ""} onChange={(e) => updateCusto(c._key, "descricao", e.target.value)} />
-                        </div>
-                        <div>
-                          <Label className="text-[10px]">Valor Unit. (R$)</Label>
-                          <Input className="h-8 text-xs" type="number" value={c.valor_unitario} onChange={(e) => updateCusto(c._key, "valor_unitario", Number(e.target.value))} />
-                        </div>
-                        <div>
-                          <Label className="text-[10px]">Qtde</Label>
-                          <Input className="h-8 text-xs" type="number" value={c.quantidade} onChange={(e) => updateCusto(c._key, "quantidade", Number(e.target.value))} />
-                        </div>
-                        <div>
-                          <Label className="text-[10px]">Frequência</Label>
-                          <Select value={c.frequencia} onValueChange={(v) => updateCusto(c._key, "frequencia", v)}>
-                            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                          <Label className="text-[10px]">Veículo</Label>
+                          <Select
+                            value={c.veiculo_id || ""}
+                            onValueChange={(v) => {
+                              const veic = (veiculosCadastrados as any[])?.find((ve: any) => ve.id === v);
+                              updateCusto(c._key, "veiculo_id", v);
+                              if (veic) {
+                                updateCusto(c._key, "descricao", veic.nome);
+                                updateCusto(c._key, "consumo_km", veic.media_km_l > 0 ? 1 / veic.media_km_l : 0);
+                                updateCusto(c._key, "preco_litro", veic.combustivel_preco_litro);
+                                updateCusto(c._key, "valor_unitario", veic.custo_km || 0);
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                             <SelectContent>
-                              {FREQUENCIAS.map((f) => (
-                                <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                              {(veiculosCadastrados as any[])?.map((v: any) => (
+                                <SelectItem key={v.id} value={v.id}>
+                                  {v.nome} ({Number(v.media_km_l || 0).toFixed(1)} km/L)
+                                </SelectItem>
                               ))}
+                              {(!veiculosCadastrados || (veiculosCadastrados as any[]).length === 0) && (
+                                <SelectItem value="_none" disabled>Nenhum veículo cadastrado</SelectItem>
+                              )}
                             </SelectContent>
                           </Select>
                         </div>
-                        {c.categoria === "combustivel" && (
-                          <>
-                            <div>
-                              <Label className="text-[10px]">Consumo (km/L)</Label>
-                              <Input className="h-8 text-xs" type="number" value={c.consumo_km || ""} onChange={(e) => updateCusto(c._key, "consumo_km", Number(e.target.value))} />
-                            </div>
-                            <div>
-                              <Label className="text-[10px]">Preço/Litro</Label>
-                              <Input className="h-8 text-xs" type="number" value={c.preco_litro || ""} onChange={(e) => updateCusto(c._key, "preco_litro", Number(e.target.value))} />
-                            </div>
-                          </>
-                        )}
+                        <div>
+                          <Label className="text-[10px]">Km/dia</Label>
+                          <Input className="h-8 text-xs" type="number" value={c.km_dia || ""} onChange={(e) => updateCusto(c._key, "km_dia", Number(e.target.value))} />
+                        </div>
+                        <div>
+                          <Label className="text-[10px]">Qtde Veículos</Label>
+                          <Input className="h-8 text-xs" type="number" value={c.quantidade} onChange={(e) => updateCusto(c._key, "quantidade", Number(e.target.value))} min={1} />
+                        </div>
+                        <div className="flex items-end">
+                          <div className="text-[10px] text-muted-foreground pb-1.5 space-y-0.5">
+                            {selectedVeiculo && (
+                              <>
+                                <div>{fmt(custoKmCalc)}/km · {selectedVeiculo.tipo_combustivel || "diesel"}</div>
+                                <div>{fmt(custoDiaCalc)}/dia</div>
+                                <div className="font-medium text-foreground">{fmt(custoTotalCalc)} total ({diasProdutivos}d)</div>
+                              </>
+                            )}
+                            {!selectedVeiculo && <span>Selecione um veículo</span>}
+                          </div>
+                        </div>
                         {c.categoria === "veiculo" && (
                           <>
                             <div>
@@ -1149,7 +1168,7 @@ export default function Mobilizacao() {
                   );
                 })}
                 <Button variant="outline" size="sm" className="gap-1" onClick={addCusto}>
-                  <Plus className="w-3 h-3" /> Adicionar Custo
+                  <Plus className="w-3 h-3" /> Adicionar Veículo
                 </Button>
               </div>
             </Section>
