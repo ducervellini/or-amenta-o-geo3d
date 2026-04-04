@@ -643,6 +643,87 @@ export default function Mobilizacao() {
   };
   const removeMunicipioRota = (idx: number) => setMunicipiosRota((prev) => prev.filter((_, i) => i !== idx));
 
+  // ── Validação ──
+  const formValido = useMemo(() => {
+    return !!(oportunidadeId && municipio && estado && lat && lng && diasTrabalho > 0 && duracaoMeses > 0);
+  }, [oportunidadeId, municipio, estado, lat, lng, diasTrabalho, duracaoMeses]);
+
+  // ── Salvar ──
+  const handleSalvar = async () => {
+    if (!formValido) {
+      toast.error("Preencha todos os campos obrigatórios: oportunidade, local do projeto, parâmetros operacionais");
+      return;
+    }
+    setSaving(true);
+    try {
+      const mobilizacaoData = {
+        nome: oportunidadeSelecionada?.descricao || nome,
+        oportunidade_id: oportunidadeId,
+        municipio,
+        estado,
+        latitude: lat,
+        longitude: lng,
+        base_latitude: baseLat,
+        base_longitude: baseLng,
+        dias_trabalho: diasTrabalho,
+        jornada_diaria: jornadaDiaria,
+        dias_chuva_mes: diasChuvaMes,
+        fator_improdutividade: fatorImprod,
+        distancia_base_projeto: distanciaBase,
+        distancia_media_diaria: distanciaMedia,
+        dias_produtivos: diasProdutivos,
+        dias_improdutivos: diasImprodutivos,
+        custo_total: custoDeslocamentosTotal + custoMobDesmobTotal,
+        custo_por_dia: diasProdutivos > 0 ? (custoDeslocamentosTotal + custoMobDesmobTotal) / diasProdutivos : 0,
+        municipios_considerados: municipiosRota,
+        arquivo_geo: arquivoGeo || null,
+      };
+
+      let mobId = mobilizacaoId;
+
+      if (mobId) {
+        const { error } = await supabase.from("mobilizacoes").update(mobilizacaoData).eq("id", mobId);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase.from("mobilizacoes").insert(mobilizacaoData).select("id").single();
+        if (error) throw error;
+        mobId = data.id;
+        setMobilizacaoId(mobId);
+      }
+
+      // Salvar custos de deslocamento
+      await supabase.from("mobilizacao_custos").delete().eq("mobilizacao_id", mobId!);
+      if (deslocamentos.length > 0) {
+        const custosInsert = deslocamentos.map((d) => ({
+          mobilizacao_id: mobId!,
+          categoria: d.categoria,
+          descricao: d.descricao || d.categoria,
+          valor_unitario: d.valor_unitario,
+          quantidade: d.quantidade,
+          frequencia: d.frequencia,
+          custo_total: calcularCustoDeslocamentoItem(d),
+          observacoes: JSON.stringify({
+            tipo_hospedagem: d.tipo_hospedagem,
+            tipo_veiculo: d.tipo_veiculo,
+            veiculo_id: d.veiculo_id,
+            km_dia: d.km_dia,
+            valor_aluguel_mensal: d.valor_aluguel_mensal,
+            meses_hospedagem: d.meses_hospedagem,
+          }),
+        }));
+        const { error: errCustos } = await supabase.from("mobilizacao_custos").insert(custosInsert);
+        if (errCustos) throw errCustos;
+      }
+
+      toast.success("ADM Local salvo com sucesso!");
+    } catch (err: any) {
+      console.error("Erro ao salvar:", err);
+      toast.error("Erro ao salvar: " + (err.message || "tente novamente"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Max bar for chart
   const maxPrecip = pluviometria ? Math.max(...pluviometria.mensal.map((m) => m.precipitacao_max), 1) : 1;
 
