@@ -929,7 +929,18 @@ export default function Mobilizacao() {
             </Section>
 
             {/* Hospedagem */}
-            <Section title="Hospedagem" icon={Home} badge={fmt(custoHospedagemMensal) + "/mês"}>
+            <Section title="Hospedagem" icon={Home} badge={fmt(custoHospedagemTotal) + " total"}>
+              {/* Duração da hospedagem */}
+              <div className="flex items-end gap-3 mb-3 p-2 rounded-lg bg-muted/20 border">
+                <div className="w-32">
+                  <Label className="text-[10px]">Duração (meses)</Label>
+                  <Input className="h-8 text-xs" type="number" value={duracaoHospedagemMeses} onChange={(e) => handleDuracaoHospedagem(Number(e.target.value))} min={1} />
+                </div>
+                <div className="text-[10px] text-muted-foreground pb-1.5 space-y-0.5">
+                  <div>Mensal: <span className="font-medium text-foreground">{fmt(custoHospedagemMensal)}</span></div>
+                  <div>Total ({duracaoHospedagemMeses}m): <span className="font-bold text-primary">{fmt(custoHospedagemTotal)}</span></div>
+                </div>
+              </div>
               <div className="space-y-3">
                 <div className="grid grid-cols-3 gap-2">
                   {([
