@@ -1621,6 +1621,24 @@ export default function Mobilizacao() {
             </Card>
           </div>
         </div>
+
+        {/* Botão Salvar no rodapé */}
+        <div className="mt-6 flex items-center justify-between border-t pt-6">
+          <div className="text-sm text-muted-foreground">
+            {!formValido && (
+              <span className="text-destructive">
+                Preencha: {!oportunidadeId && "Oportunidade, "}{!municipio && "Município, "}{!estado && "Estado, "}{!lat && "Localização"}{diasTrabalho <= 0 ? ", Dias de trabalho" : ""}{duracaoMeses <= 0 ? ", Duração" : ""}
+              </span>
+            )}
+            {formValido && oportunidadeSelecionada && (
+              <span>Oportunidade: <strong>{oportunidadeSelecionada.codigo} — {oportunidadeSelecionada.descricao}</strong></span>
+            )}
+          </div>
+          <Button size="lg" className="gap-2 px-8" disabled={!formValido || saving} onClick={handleSalvar}>
+            {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+            {saving ? "Salvando..." : "Salvar ADM Local"}
+          </Button>
+        </div>
       </div>
     </TooltipProvider>
   );
