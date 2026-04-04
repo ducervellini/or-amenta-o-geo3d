@@ -3,7 +3,7 @@ import {
   MapPin, Plus, Trash2, Save, Loader2, Cloud, Sun,
   Truck, Home, Utensils, Fuel, CreditCard, Plane,
   Users, Calculator, ChevronDown, ChevronUp, Info, Upload,
-  FileUp, Navigation, CloudRain, BarChart3, Calendar, Route
+  FileUp, Navigation, CloudRain, BarChart3, Calendar, Route, ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
