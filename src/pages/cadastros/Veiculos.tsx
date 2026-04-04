@@ -19,6 +19,7 @@ const R = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits
 interface VeiculoForm {
   codigo: string; nome: string; unidade: string;
   tipo_propriedade: string;
+  media_km_l: number; tipo_combustivel: string;
   valor_aquisicao: number; valor_residual: number; vida_util_km: number;
   valor_aluguel_mensal: number; km_mensal_estimado: number;
   combustivel_consumo_km: number; combustivel_preco_litro: number;
