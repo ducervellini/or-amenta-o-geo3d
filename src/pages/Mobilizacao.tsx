@@ -1219,43 +1219,20 @@ export default function Mobilizacao() {
                 <div>
                   <div className="text-xs font-medium text-muted-foreground mb-2">Custos por Categoria</div>
                   <div className="space-y-1.5">
-                    {/* Hospedagem (separada) */}
-                    {custoHospedagemTotal > 0 && (
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="flex items-center gap-1.5">
-                          <Home className="w-3 h-3 text-muted-foreground" />
-                          Hospedagem ({duracaoHospedagemMeses}m)
-                        </span>
-                        <span className="font-medium">{fmt(custoHospedagemTotal)}</span>
-                      </div>
-                    )}
-                    {/* Combustível (km rodado) */}
-                    {custoCombustivelTotal > 0 && (
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="flex items-center gap-1.5">
-                          <Fuel className="w-3 h-3 text-muted-foreground" />
-                          Combustível ({duracaoMeses}m)
-                        </span>
-                        <span className="font-medium">{fmt(custoCombustivelTotal)}</span>
-                      </div>
-                    )}
-                    {Object.entries(resultado.custos_por_categoria)
-                      .filter(([cat, v]) => v > 0 && cat !== "hospedagem" && cat !== "alimentacao")
-                      .sort(([, a], [, b]) => b - a)
-                      .map(([cat, valor]) => {
-                        const catInfo = CATEGORIAS_CUSTO.find((c) => c.value === cat);
-                        const CatIcon = ICON_MAP[cat] || Users;
-                        const valorTotal = valor * duracaoMeses;
-                        return (
-                          <div key={cat} className="flex items-center justify-between text-xs">
-                            <span className="flex items-center gap-1.5">
-                              <CatIcon className="w-3 h-3 text-muted-foreground" />
-                              {catInfo?.label || cat}
-                            </span>
-                            <span className="font-medium">{fmt(valorTotal)}</span>
-                          </div>
-                        );
-                      })}
+                    {CATEGORIAS_DESLOCAMENTO.map((cat) => {
+                      const valor = custosDeslocamentoPorCategoria[cat.value] || 0;
+                      if (valor <= 0) return null;
+                      const CatIcon = ICON_MAP[cat.value] || Users;
+                      return (
+                        <div key={cat.value} className="flex items-center justify-between text-xs">
+                          <span className="flex items-center gap-1.5">
+                            <CatIcon className="w-3 h-3 text-muted-foreground" />
+                            {cat.label}
+                          </span>
+                          <span className="font-medium">{fmt(valor)}</span>
+                        </div>
+                      );
+                    })}
                     {/* Mob/Desmob */}
                     {custoMobDesmobTotal > 0 && (
                       <div className="flex items-center justify-between text-xs">
@@ -1275,13 +1252,12 @@ export default function Mobilizacao() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm font-bold text-primary">
                     <span>Custo Total</span>
-                    <span>{fmt((resultado.custo_total * duracaoMeses) + custoHospedagemTotal + custoCombustivelTotal + custoMobDesmobTotal)}</span>
+                    <span>{fmt(custoDeslocamentosTotal + custoMobDesmobTotal)}</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span>Custo/Dia</span>
-                    <span className="font-medium">{fmt(diasProdutivos > 0 ? ((resultado.custo_total * duracaoMeses) + custoHospedagemTotal + custoCombustivelTotal + custoMobDesmobTotal) / diasProdutivos : 0)}</span>
+                    <span className="font-medium">{fmt(diasProdutivos > 0 ? (custoDeslocamentosTotal + custoMobDesmobTotal) / diasProdutivos : 0)}</span>
                   </div>
-                
                 </div>
 
                 {/* Município */}
