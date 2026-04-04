@@ -183,6 +183,7 @@ export default function Veiculos() {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">{Number(row.media_km_l || 0).toFixed(1)}</TableCell>
+                <TableCell className="text-right">{R(Number(row.combustivel_preco_litro || 0))}</TableCell>
                 <TableCell>
                   <Badge variant="outline" className="capitalize">{row.tipo_combustivel || "diesel"}</Badge>
                 </TableCell>
