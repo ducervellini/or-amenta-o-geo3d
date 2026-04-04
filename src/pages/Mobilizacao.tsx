@@ -517,9 +517,8 @@ export default function Mobilizacao() {
     }
     if (item.categoria === "hospedagem") {
       if (isHotelType(item.tipo_hospedagem)) {
-        // Hotel: diária × qtd diárias × dias corridos
-        const diasCorridosTotal = diasTrabalho * duracaoMeses;
-        return item.valor_unitario * item.quantidade * diasCorridosTotal;
+        // Hotel: diária × qtd diárias (campo livre)
+        return item.valor_unitario * item.quantidade;
       }
       // Alojamento: valor mensal × qtd × meses
       const meses = item.meses_hospedagem ?? duracaoMeses;
@@ -553,7 +552,7 @@ export default function Mobilizacao() {
       let custoMes = 0;
       if (item.categoria === "hospedagem") {
         if (isHotelType(item.tipo_hospedagem)) {
-          custoMes = item.valor_unitario * item.quantidade * diasTrabalho;
+          custoMes = duracaoMeses > 0 ? (item.valor_unitario * item.quantidade) / duracaoMeses : 0;
         } else {
           custoMes = item.valor_unitario * item.quantidade;
         }
@@ -1008,7 +1007,7 @@ export default function Mobilizacao() {
                   const aluguelMesVeic = Number(selectedVeiculo?.valor_aluguel_mensal || 0);
                   const kmMesProd = (item.km_dia || 0) * diasProdutivosMes;
                   const custoMes = item.categoria === "hospedagem"
-                    ? (isHotelType(item.tipo_hospedagem) ? item.valor_unitario * item.quantidade * diasTrabalho : item.valor_unitario * item.quantidade)
+                    ? (isHotelType(item.tipo_hospedagem) ? (duracaoMeses > 0 ? (item.valor_unitario * item.quantidade) / duracaoMeses : 0) : item.valor_unitario * item.quantidade)
                     : item.categoria === "combustivel" && selectedVeiculo
                     ? (custoKmComb * kmMesProd * item.quantidade) + (aluguelMesVeic * item.quantidade)
                     : item.frequencia === "diario" ? item.valor_unitario * item.quantidade * diasProdutivosMes
@@ -1062,8 +1061,8 @@ export default function Mobilizacao() {
                               )}
                               <div className="flex items-end">
                                 <div className="text-[10px] text-muted-foreground pb-1.5 flex gap-3">
-                                  <span>Mês: <span className="font-medium text-foreground">{fmt(custoMes)}</span></span>
-                                  <span>Total ({isHotel ? `${diasTrabalho * duracaoMeses}d` : `${item.meses_hospedagem ?? duracaoMeses}m`}): <span className="font-bold text-primary">{fmt(custoItem)}</span></span>
+                                  {!isHotel && <span>Mês: <span className="font-medium text-foreground">{fmt(custoMes)}</span></span>}
+                                  <span>Total{!isHotel ? ` (${item.meses_hospedagem ?? duracaoMeses}m)` : ` (${item.quantidade} diária${item.quantidade > 1 ? "s" : ""})`}: <span className="font-bold text-primary">{fmt(custoItem)}</span></span>
                                 </div>
                               </div>
                             </>
