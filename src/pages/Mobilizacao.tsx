@@ -240,6 +240,10 @@ export default function Mobilizacao() {
   const [lng, setLng] = useState(-47.93);
   const [baseEndereco, setBaseEndereco] = useState("");
   const [arquivoGeo, setArquivoGeo] = useState("");
+  const [geoJsonData, setGeoJsonData] = useState<FeatureCollection | null>(null);
+  const [loadingGeo, setLoadingGeo] = useState(false);
+  const [loadingMunicipios, setLoadingMunicipios] = useState(false);
+  const [geoProgress, setGeoProgress] = useState("");
   const [baseLat, setBaseLat] = useState(-15.78);
   const [baseLng, setBaseLng] = useState(-47.93);
   const [diasTrabalho, setDiasTrabalho] = useState(30);
