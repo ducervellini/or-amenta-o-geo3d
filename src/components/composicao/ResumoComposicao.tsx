@@ -35,7 +35,7 @@ export function ResumoComposicao({ resumo }: Props) {
         <span className="font-mono font-bold text-lg text-primary">R$ {fmt(resumo.custo_direto)}</span>
       </div>
       {resumo.custo_direto > 0 && (
-        <div className="grid grid-cols-4 gap-2 pt-2">
+        <div className="grid grid-cols-3 gap-2 pt-2">
           {itens.map((item) => {
             const pct = resumo.custo_direto > 0 ? (item.valor / resumo.custo_direto) * 100 : 0;
             return (
