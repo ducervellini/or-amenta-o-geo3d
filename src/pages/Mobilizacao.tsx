@@ -517,9 +517,8 @@ export default function Mobilizacao() {
     }
     if (item.categoria === "hospedagem") {
       if (isHotelType(item.tipo_hospedagem)) {
-        // Hotel: diária × qtd diárias × dias corridos
-        const diasCorridosTotal = diasTrabalho * duracaoMeses;
-        return item.valor_unitario * item.quantidade * diasCorridosTotal;
+        // Hotel: diária × qtd diárias (campo livre)
+        return item.valor_unitario * item.quantidade;
       }
       // Alojamento: valor mensal × qtd × meses
       const meses = item.meses_hospedagem ?? duracaoMeses;
