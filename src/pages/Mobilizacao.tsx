@@ -405,16 +405,19 @@ export default function Mobilizacao() {
     const veic = (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id);
     const mediaKmL = veic?.media_km_l || 0;
     const precoComb = veic?.combustivel_preco_litro || 0;
-    const custoKm = mediaKmL > 0 ? precoComb / mediaKmL : 0;
+    // Use custo_km from vehicle if available, otherwise calculate from fuel
+    const custoKm = veic?.custo_km > 0 ? Number(veic.custo_km) : (mediaKmL > 0 ? precoComb / mediaKmL : 0);
     const distancia = item.distancia_km;
     const diasViagem = item.km_max_dia > 0 ? Math.ceil(distancia / item.km_max_dia) : 1;
     const pernoites = Math.max(0, diasViagem - 1);
     const custoCombustivelIda = custoKm * distancia * item.quantidade_veiculos;
     const custoPernoiteIda = pernoites * item.hospedagem_pernoite * item.quantidade_pessoas;
-    const custoIda = custoCombustivelIda + custoPernoiteIda + item.pedagios_ida;
+    // Custo de horas das pessoas: dias de viagem × jornada diária × custo/hora × pessoas
+    const custoHorasPessoasIda = diasViagem * jornadaDiaria * item.custo_hora_pessoa * item.quantidade_pessoas;
+    const custoIda = custoCombustivelIda + custoPernoiteIda + item.pedagios_ida + custoHorasPessoasIda;
     const custoTotal = custoIda * 2;
-    return { veic, mediaKmL, custoKm, diasViagem, pernoites, custoCombustivelIda, custoPernoiteIda, custoIda, custoTotal };
-  }, [veiculosCadastrados]);
+    return { veic, mediaKmL, custoKm, diasViagem, pernoites, custoCombustivelIda, custoPernoiteIda, custoHorasPessoasIda, custoIda, custoTotal };
+  }, [veiculosCadastrados, jornadaDiaria]);
 
   const custoMobDesmobTotal = useMemo(() => {
     return mobDesmobItens.reduce((acc, item) => acc + calcularMobDesmobItem(item).custoTotal, 0);
