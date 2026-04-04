@@ -320,6 +320,19 @@ export default function Mobilizacao() {
   const [loadingPluv, setLoadingPluv] = useState(false);
 
 
+  // Oportunidade selecionada
+  const [oportunidadeId, setOportunidadeId] = useState<string>("");
+  const { data: oportunidades } = useSupabaseQuery("oportunidades");
+  const { data: clientes } = useSupabaseQuery("clientes");
+  const oportunidadeSelecionada = useMemo(() => {
+    if (!oportunidadeId || !oportunidades) return null;
+    return (oportunidades as any[]).find((o: any) => o.id === oportunidadeId) || null;
+  }, [oportunidadeId, oportunidades]);
+  const clienteOportunidade = useMemo(() => {
+    if (!oportunidadeSelecionada?.cliente_id || !clientes) return null;
+    return (clientes as any[]).find((c: any) => c.id === oportunidadeSelecionada.cliente_id) || null;
+  }, [oportunidadeSelecionada, clientes]);
+
   // Veículos cadastrados
   const { data: veiculosCadastrados } = useSupabaseQuery("veiculos");
 
