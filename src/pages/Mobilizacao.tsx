@@ -502,10 +502,12 @@ export default function Mobilizacao() {
       const mediaKmL = veic?.media_km_l || 0;
       const precoComb = veic?.combustivel_preco_litro || 0;
       const custoKmComb = mediaKmL > 0 ? precoComb / mediaKmL : 0;
-      const custoKmVeic = Number(veic?.custo_km || 0);
-      const custoKmTotal = custoKmComb + custoKmVeic;
-      const kmMes = (item.km_dia || 0) * diasProdutivosMes;
-      return custoKmTotal * kmMes * item.quantidade * duracaoMeses;
+      // Combustível: só dias produtivos (roda)
+      const kmMesProd = (item.km_dia || 0) * diasProdutivosMes;
+      const custoCombMes = custoKmComb * kmMesProd * item.quantidade;
+      // Veículo: aluguel fixo mensal (paga mesmo parado)
+      const aluguelMes = Number(veic?.valor_aluguel_mensal || 0) * item.quantidade;
+      return (custoCombMes + aluguelMes) * duracaoMeses;
     }
     if (item.categoria === "hospedagem") {
       // valor_unitario = diária; dias corridos (não produtivos)
