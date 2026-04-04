@@ -62,7 +62,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
 
 const CATEGORIAS_DESLOCAMENTO = [
   { value: "hospedagem", label: "Hospedagem", icon: Home },
-  { value: "combustivel", label: "Combustível", icon: Fuel },
+  { value: "combustivel", label: "Veículo + Combustível", icon: Fuel },
   { value: "pedagios", label: "Pedágios", icon: CreditCard },
   { value: "passagens", label: "Passagens", icon: Plane },
   { value: "diversos", label: "Diversos", icon: Users },
