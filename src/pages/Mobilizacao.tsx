@@ -149,8 +149,55 @@ function LeafletMap({
       markersRef.current.push(line);
     }
 
-    mapRef.current.setView([projectLat, projectLng], 8);
+    // Fit to GeoJSON if present, otherwise center on project
+    if (geoJsonData && geoJsonData.features.length > 0) {
+      // handled in geoJsonData effect
+      mapRef.current.setView([projectLat, projectLng], 8);
+    } else {
+      mapRef.current.setView([projectLat, projectLng], 8);
+    }
   }, [projectLat, projectLng, baseLat, baseLng, municipio, baseEndereco]);
+
+  // GeoJSON layer effect
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    // Remove old layer
+    if (geoLayerRef.current) {
+      mapRef.current.removeLayer(geoLayerRef.current);
+      geoLayerRef.current = null;
+    }
+
+    if (geoJsonData && geoJsonData.features.length > 0) {
+      geoLayerRef.current = L.geoJSON(geoJsonData as any, {
+        style: {
+          color: "#3b82f6",
+          weight: 3,
+          opacity: 0.8,
+          fillColor: "#3b82f6",
+          fillOpacity: 0.15,
+        },
+        pointToLayer: (_, latlng) => L.circleMarker(latlng, {
+          radius: 6,
+          fillColor: "#3b82f6",
+          color: "#1e40af",
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.7,
+        }),
+        onEachFeature: (feature, layer) => {
+          const name = feature.properties?.name || feature.properties?.Name || feature.properties?.nome || "";
+          if (name) layer.bindPopup(name);
+        },
+      }).addTo(mapRef.current);
+
+      // Fit map to GeoJSON bounds
+      const bounds = geoLayerRef.current.getBounds();
+      if (bounds.isValid()) {
+        mapRef.current.fitBounds(bounds, { padding: [30, 30] });
+      }
+    }
+  }, [geoJsonData]);
 
   return <div ref={containerRef} className="h-full w-full" />;
 }
