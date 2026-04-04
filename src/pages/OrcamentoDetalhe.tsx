@@ -1,10 +1,10 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { ArrowLeft, Plus, Trash2, Save, ExternalLink, Loader2 } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import {
   Select,
@@ -14,7 +14,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 
 interface OrcamentoServico {
   composicao_id: string;
@@ -24,7 +23,10 @@ interface OrcamentoServico {
 export default function OrcamentoDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [servicos, setServicos] = useState<OrcamentoServico[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [orcamentoId, setOrcamentoId] = useState<string | null>(null);
 
   // Oportunidade
   const { data: oportunidade } = useQuery({
@@ -82,9 +84,34 @@ export default function OrcamentoDetalhe() {
     },
   });
 
+  // Existing orcamento for this oportunidade
+  const { data: existingOrcamento } = useQuery({
+    queryKey: ["orcamento-existing", id],
+    queryFn: async () => {
+      const { data, error } = await (supabase.from as any)("orcamentos")
+        .select("*, orcamento_itens_servico(*)")
+        .eq("oportunidade_id", id)
+        .limit(1);
+      if (error) throw error;
+      return (data as any[])?.[0] || null;
+    },
+    enabled: !!id,
+  });
+
+  // Load existing data
+  useEffect(() => {
+    if (existingOrcamento) {
+      setOrcamentoId(existingOrcamento.id);
+      const itens = (existingOrcamento.orcamento_itens_servico || []).map((i: any) => ({
+        composicao_id: i.composicao_id,
+        quantidade: Number(i.quantidade),
+      }));
+      if (itens.length > 0) setServicos(itens);
+    }
+  }, [existingOrcamento]);
+
   const bdiPercentual = bdiData?.bdi_calculado || 0;
 
-  // Cálculos
   const custoServicos = useMemo(() => {
     return servicos.reduce((total, s) => {
       const comp = (composicoes || []).find((c: any) => c.id === s.composicao_id);
@@ -96,6 +123,12 @@ export default function OrcamentoDetalhe() {
   const custoTotal = custoServicos + custoAdmLocal;
   const valorBdi = custoTotal * (bdiPercentual / 100);
   const precoTotal = custoTotal + valorBdi;
+
+  // Validation: at least one service with valid composicao_id and quantidade > 0
+  const servicosValidos = servicos.filter(
+    (s) => s.composicao_id && s.quantidade > 0
+  );
+  const podesSalvar = servicosValidos.length > 0;
 
   const addServico = () => {
     setServicos([...servicos, { composicao_id: "", quantidade: 1 }]);
@@ -109,6 +142,73 @@ export default function OrcamentoDetalhe() {
     const updated = [...servicos];
     updated[idx] = { ...updated[idx], [field]: value };
     setServicos(updated);
+  };
+
+  const handleSalvar = async () => {
+    if (!podesSalvar) {
+      return toast.error("Adicione ao menos uma composição com quantidade válida");
+    }
+    setSaving(true);
+    try {
+      const orcData = {
+        oportunidade_id: id,
+        mobilizacao_id: mobilizacao?.id || null,
+        bdi_id: bdiData?.id || null,
+        custo_servicos: custoServicos,
+        custo_adm_local: custoAdmLocal,
+        custo_total: custoTotal,
+        bdi_percentual: bdiPercentual,
+        preco_total: precoTotal,
+        status: "em_andamento",
+      };
+
+      let savedId = orcamentoId;
+
+      if (orcamentoId) {
+        const { error } = await (supabase.from as any)("orcamentos")
+          .update(orcData)
+          .eq("id", orcamentoId);
+        if (error) throw error;
+      } else {
+        const { data, error } = await (supabase.from as any)("orcamentos")
+          .insert(orcData)
+          .select("id")
+          .single();
+        if (error) throw error;
+        savedId = data.id;
+        setOrcamentoId(savedId);
+      }
+
+      // Sync service items: delete old, insert new
+      await (supabase.from as any)("orcamento_itens_servico")
+        .delete()
+        .eq("orcamento_id", savedId);
+
+      const itensToInsert = servicosValidos.map((s) => {
+        const comp = (composicoes || []).find((c: any) => c.id === s.composicao_id);
+        return {
+          orcamento_id: savedId,
+          composicao_id: s.composicao_id,
+          quantidade: s.quantidade,
+          custo_unitario: comp?.custo_unitario_total || 0,
+          custo_total: (comp?.custo_unitario_total || 0) * s.quantidade,
+        };
+      });
+
+      if (itensToInsert.length > 0) {
+        const { error: iErr } = await (supabase.from as any)("orcamento_itens_servico")
+          .insert(itensToInsert);
+        if (iErr) throw iErr;
+      }
+
+      toast.success("Orçamento salvo com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["orcamento-existing", id] });
+      queryClient.invalidateQueries({ queryKey: ["orcamentos-oportunidades"] });
+    } catch (e: any) {
+      toast.error("Erro ao salvar: " + e.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const fmt = (v: number) =>
@@ -125,16 +225,26 @@ export default function OrcamentoDetalhe() {
   return (
     <div className="page-container animate-fade-in space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/orcamentos")}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <div>
-          <h1 className="page-title">
-            Orçamento — {oportunidade.codigo}
-          </h1>
-          <p className="page-subtitle">{oportunidade.descricao}</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/orcamentos")}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div>
+            <h1 className="page-title">
+              Orçamento — {oportunidade.codigo}
+            </h1>
+            <p className="page-subtitle">{oportunidade.descricao}</p>
+          </div>
         </div>
+        <Button
+          className="gap-2"
+          onClick={handleSalvar}
+          disabled={!podesSalvar || saving}
+        >
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          Salvar Orçamento
+        </Button>
       </div>
 
       {/* Oportunidade Info */}
@@ -178,9 +288,14 @@ export default function OrcamentoDetalhe() {
         </CardHeader>
         <CardContent>
           {servicos.length === 0 ? (
-            <p className="text-muted-foreground text-sm py-4 text-center">
-              Nenhum serviço adicionado. Clique em "Adicionar Serviço" para começar.
-            </p>
+            <div className="text-center py-6">
+              <p className="text-muted-foreground text-sm mb-2">
+                Nenhum serviço adicionado.
+              </p>
+              <p className="text-xs text-destructive">
+                É necessário adicionar ao menos uma composição para salvar o orçamento.
+              </p>
+            </div>
           ) : (
             <div className="space-y-3">
               <div className="grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground px-1">
@@ -255,15 +370,15 @@ export default function OrcamentoDetalhe() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base">ADM Local</CardTitle>
-          {!mobilizacao && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => navigate("/mobilizacao")}
-            >
-              Configurar ADM Local
-            </Button>
-          )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1"
+            onClick={() => navigate("/mobilizacao")}
+          >
+            <ExternalLink className="w-4 h-4" />
+            {mobilizacao ? "Editar ADM Local" : "Configurar ADM Local"}
+          </Button>
         </CardHeader>
         <CardContent>
           {mobilizacao ? (
@@ -295,8 +410,16 @@ export default function OrcamentoDetalhe() {
 
       {/* Resumo */}
       <Card className="border-accent/30">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base">Resumo do Orçamento</CardTitle>
+          <Button
+            className="gap-2"
+            onClick={handleSalvar}
+            disabled={!podesSalvar || saving}
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Salvar Orçamento
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -321,6 +444,11 @@ export default function OrcamentoDetalhe() {
               <span className="font-bold text-accent">{fmt(precoTotal)}</span>
             </div>
           </div>
+          {!podesSalvar && (
+            <p className="text-xs text-destructive mt-4 text-center">
+              Adicione ao menos uma composição válida para habilitar o salvamento.
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>
