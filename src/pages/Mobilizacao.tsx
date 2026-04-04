@@ -291,6 +291,7 @@ export default function Mobilizacao() {
   const [lng, setLng] = useState<number | null>(null);
   const [geocodificando, setGeocodificando] = useState(false);
   const [arquivoGeo, setArquivoGeo] = useState("");
+  const [arquivoGeoFile, setArquivoGeoFile] = useState<File | null>(null);
   const [geoJsonData, setGeoJsonData] = useState<FeatureCollection | null>(null);
   const [loadingGeo, setLoadingGeo] = useState(false);
   const [loadingMunicipios, setLoadingMunicipios] = useState(false);
@@ -428,6 +429,24 @@ export default function Mobilizacao() {
           });
           setDeslocamentos(loadedDeslocamentos);
           deslKeyRef.current = keyCounter;
+        }
+
+        // Download and parse geo file from storage
+        if (mob.arquivo_geo && mob.id) {
+          try {
+            const filePath = `${mob.id}/${mob.arquivo_geo}`;
+            const { data: fileData, error: dlErr } = await supabase.storage
+              .from("geo-files")
+              .download(filePath);
+            if (!dlErr && fileData) {
+              const file = new File([fileData], mob.arquivo_geo, { type: fileData.type });
+              const geojson = await parseGeoFile(file);
+              setGeoJsonData(geojson);
+              setModoLocalizacao("arquivo");
+            }
+          } catch (geoErr) {
+            console.error("Erro ao carregar arquivo geo:", geoErr);
+          }
         }
       } catch (err) {
         console.error("Erro ao carregar mobilização:", err);
@@ -818,6 +837,18 @@ export default function Mobilizacao() {
         if (errCustos) throw errCustos;
       }
 
+      // Upload geo file to storage
+      if (arquivoGeoFile && mobId) {
+        const filePath = `${mobId}/${arquivoGeoFile.name}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("geo-files")
+          .upload(filePath, arquivoGeoFile, { upsert: true });
+        if (uploadErr) {
+          console.error("Erro ao fazer upload do arquivo geo:", uploadErr);
+          toast.error("Arquivo geográfico não pôde ser salvo no armazenamento");
+        }
+      }
+
       toast.success("ADM Local salvo com sucesso!");
     } catch (err: any) {
       console.error("Erro ao salvar:", err);
@@ -956,6 +987,7 @@ export default function Mobilizacao() {
                         const file = e.target.files?.[0];
                         if (file) {
                           setArquivoGeo(file.name);
+                          setArquivoGeoFile(file);
                           setLoadingGeo(true);
                           setGeoProgress("Lendo arquivo...");
                           try {
