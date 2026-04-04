@@ -320,6 +320,19 @@ export default function Mobilizacao() {
   const [loadingPluv, setLoadingPluv] = useState(false);
 
 
+  // Oportunidade selecionada
+  const [oportunidadeId, setOportunidadeId] = useState<string>("");
+  const { data: oportunidades } = useSupabaseQuery("oportunidades");
+  const { data: clientes } = useSupabaseQuery("clientes");
+  const oportunidadeSelecionada = useMemo(() => {
+    if (!oportunidadeId || !oportunidades) return null;
+    return (oportunidades as any[]).find((o: any) => o.id === oportunidadeId) || null;
+  }, [oportunidadeId, oportunidades]);
+  const clienteOportunidade = useMemo(() => {
+    if (!oportunidadeSelecionada?.cliente_id || !clientes) return null;
+    return (clientes as any[]).find((c: any) => c.id === oportunidadeSelecionada.cliente_id) || null;
+  }, [oportunidadeSelecionada, clientes]);
+
   // Veículos cadastrados
   const { data: veiculosCadastrados } = useSupabaseQuery("veiculos");
 
@@ -650,6 +663,50 @@ export default function Mobilizacao() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* ── Coluna Esquerda: Entradas ── */}
           <div className="lg:col-span-2 space-y-4">
+            {/* Oportunidade */}
+            <Card>
+              <CardHeader className="py-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-primary" />
+                  Oportunidade
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <Select value={oportunidadeId} onValueChange={setOportunidadeId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma oportunidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(oportunidades as any[] || []).filter((o: any) => o.ativo !== false).map((o: any) => (
+                      <SelectItem key={o.id} value={o.id}>
+                        {o.codigo} — {o.descricao}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {oportunidadeSelecionada && (
+                  <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                    <div>
+                      <span className="text-muted-foreground">Código:</span>
+                      <p className="font-medium">{oportunidadeSelecionada.codigo}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Cliente:</span>
+                      <p className="font-medium">{clienteOportunidade?.nome || "—"}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Cidade:</span>
+                      <p className="font-medium">{oportunidadeSelecionada.cidade || "—"}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Estado:</span>
+                      <p className="font-medium">{oportunidadeSelecionada.estado || "—"}</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Mapa */}
             <Card>
               <CardContent className="p-0">
