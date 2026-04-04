@@ -44,6 +44,7 @@ export default function Servicos() {
           },
         },
         { key: "descricao", label: "Descrição", render: (v) => <span className="text-sm text-muted-foreground">{v ? String(v) : "-"}</span> },
+        { key: "unidade_medicao", label: "Unidade", render: (v) => <span className="text-sm">{v ? String(v) : "-"}</span> },
       ]}
       formFields={[
         { name: "codigo", label: "Código", type: "text", required: true, placeholder: "SRV-001" },
@@ -68,6 +69,23 @@ export default function Servicos() {
           label: "Departamento",
           type: "select",
           options: (modulos || []).map((d) => ({ label: String(d.nome), value: String(d.id) })),
+        },
+        {
+          name: "unidade_medicao",
+          label: "Unidade",
+          type: "select",
+          options: [
+            { label: "Unidade (un)", value: "un" },
+            { label: "Metro (m)", value: "m" },
+            { label: "Metro² (m²)", value: "m2" },
+            { label: "Metro³ (m³)", value: "m3" },
+            { label: "Quilômetro (km)", value: "km" },
+            { label: "Hectare (ha)", value: "ha" },
+            { label: "Hora (h)", value: "h" },
+            { label: "Dia (dia)", value: "dia" },
+            { label: "Mês (mês)", value: "mes" },
+          ],
+          defaultValue: "un",
         },
       ]}
     />
