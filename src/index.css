@@ -133,3 +133,55 @@
     @apply bg-muted/50;
   }
 }
+
+@media print {
+  /* Hide non-essential UI */
+  nav, header, aside,
+  [data-sidebar],
+  .print\:hidden,
+  button,
+  [role="dialog"] {
+    display: none !important;
+  }
+
+  /* Show print-only elements */
+  .print\:block {
+    display: block !important;
+  }
+
+  /* Reset layout */
+  body, html {
+    background: white !important;
+    color: black !important;
+    font-size: 11px !important;
+  }
+
+  .page-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Cards without shadows */
+  [class*="card"], [class*="Card"] {
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  /* Force expand all sections */
+  [data-state="closed"] {
+    display: block !important;
+  }
+
+  /* Page breaks */
+  .print-break-before {
+    break-before: page;
+  }
+
+  /* Ensure colors print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
