@@ -339,7 +339,7 @@ export default function Mobilizacao() {
   const addDeslocamento = () => {
     setDeslocamentos(prev => [...prev, {
       _key: deslKeyRef.current++,
-      categoria: "veiculo",
+      categoria: "hospedagem",
       descricao: "",
       valor_unitario: 0,
       quantidade: 1,
