@@ -631,8 +631,10 @@ export default function Mobilizacao() {
     [diasTrabalho, jornadaDiaria, diasChuvaMes, fatorImprod, distanciaBase, distanciaMedia, duracaoMeses]
   );
 
-  const { diasProdutivos: diasProdutivosMes, diasImprodutivos: diasImprodutivosMes } = calcularDiasProdutivos(params);
+  // Dias produtivos calculados pelo usuário (não pelo fator automático)
+  const diasProdutivosMes = Math.max(0, diasTrabalho - diasImprodutivosUsuario);
   const diasProdutivos = diasProdutivosMes * duracaoMeses;
+  const diasImprodutivosMes = diasImprodutivosUsuario;
   const diasImprodutivos = diasImprodutivosMes * duracaoMeses;
 
   // Calculate deslocamento costs
