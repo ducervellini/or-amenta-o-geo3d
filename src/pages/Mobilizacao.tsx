@@ -406,7 +406,7 @@ export default function Mobilizacao() {
                     baseLng={baseLng}
                     municipio={municipio}
                     baseEndereco={baseEndereco}
-                    municipiosRota={municipiosRota}
+                    geoJsonData={geoJsonData}
                   />
                 </div>
               </CardContent>
