@@ -537,10 +537,7 @@ export default function Mobilizacao() {
     for (const item of deslocamentos) {
       const selectedVeiculo = item.veiculo_id ? (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id) : null;
       let custoMes = 0;
-      if (item.categoria === "veiculo") {
-        custoMes = item.tipo_veiculo === "alugado"
-          ? (item.valor_aluguel_mensal || item.valor_unitario || 0) * item.quantidade
-          : item.valor_unitario * item.quantidade;
+      if (item.categoria === "hospedagem") {
       } else if (item.categoria === "hospedagem") {
         custoMes = item.valor_unitario * item.quantidade * diasProdutivosMes;
       } else if (item.categoria === "combustivel" && selectedVeiculo) {
