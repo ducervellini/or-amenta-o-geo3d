@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Plus, Search, Edit, Trash2, Loader2, Info, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -125,6 +125,28 @@ function CargoFormDialog({
     }
   }, [open, editItem, jornadas, regimes, horarios, encargos, beneficios]);
 
+  // Auto-select encargos/benefícios when switching to estágio
+  const prevRegime = useRef(regimeContratacao);
+  useEffect(() => {
+    if (prevRegime.current !== regimeContratacao && regimeContratacao === "estagio") {
+      const estagioEncargos = encargos
+        .filter((e: any) => e.ativo && /f[ée]rias|13[oº°]|d[ée]cimo/i.test(e.nome))
+        .map((e: any) => e.id);
+      setEncargosSel(estagioEncargos);
+      const estagioBeneficios = beneficios
+        .filter((b: any) => b.ativo && /seguro.*vida|starbem/i.test(b.nome))
+        .map((b: any) => b.id);
+      setBeneficiosSel(estagioBeneficios);
+    } else if (prevRegime.current !== regimeContratacao && regimeContratacao === "pj") {
+      setEncargosSel([]);
+      setBeneficiosSel([]);
+    } else if (prevRegime.current !== regimeContratacao && regimeContratacao === "clt") {
+      setEncargosSel(encargos.filter((e: any) => e.ativo).map((e: any) => e.id));
+      setBeneficiosSel(beneficios.filter((b: any) => b.ativo).map((b: any) => b.id));
+    }
+    prevRegime.current = regimeContratacao;
+  }, [regimeContratacao, encargos, beneficios]);
+
   const toggleEncargo = (id: string) => {
     setEncargosSel((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   };
@@ -149,6 +171,8 @@ function CargoFormDialog({
   };
 
   const isPJ = regimeContratacao === "pj";
+  const isEstagio = regimeContratacao === "estagio";
+  const hideEncargosEBeneficios = isPJ;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -253,7 +277,7 @@ function CargoFormDialog({
           </div>
 
           {/* ── Encargos Sociais ── */}
-          {!isPJ && (
+          {!hideEncargosEBeneficios && (
             <div>
               <div className="flex items-center justify-between mb-3 border-b pb-1">
                 <h3 className="text-sm font-semibold text-foreground">Encargos Sociais</h3>
@@ -280,7 +304,7 @@ function CargoFormDialog({
           )}
 
           {/* ── Benefícios ── */}
-          {!isPJ && (
+          {!hideEncargosEBeneficios && (
             <div>
               <div className="flex items-center justify-between mb-3 border-b pb-1">
                 <h3 className="text-sm font-semibold text-foreground">Benefícios</h3>
@@ -485,7 +509,7 @@ export default function Cargos() {
                 <tbody>
                   {sorted.map((row: any) => {
                     const custo = row._custo;
-                    const isPJ = row.regime_contratacao === "pj" || row.regime_contratacao === "estagio";
+                    const isPJ = row.regime_contratacao === "pj";
                     const regimeLabel = row.regime_contratacao === "estagio" ? "Estágio" : String(row.regime_contratacao || "clt").toUpperCase();
                     const totalBen = custo.valor_beneficios_fixos + custo.valor_beneficios_pct;
 
