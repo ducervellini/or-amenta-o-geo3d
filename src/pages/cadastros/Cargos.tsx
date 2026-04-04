@@ -574,6 +574,11 @@ export default function Cargos() {
                           </Tooltip>
                         </td>
                         <td>
+                          <Badge variant="outline" className="text-xs">
+                            {row._regime ? `${row._regime.dias_trabalho}/${row._regime.dias_folga} (${(custo.fator_regime * 100).toFixed(1)}%)` : "—"}
+                          </Badge>
+                        </td>
+                        <td>
                           <span className="font-medium">{fmt(row.valor_hh)}</span>
                         </td>
                         <td className="text-center">
