@@ -86,6 +86,7 @@ export type Database = {
           created_at: string
           descricao: string | null
           id: string
+          local_trabalho: string
           nome: string
           tipo: string
           updated_at: string
@@ -96,6 +97,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          local_trabalho?: string
           nome: string
           tipo?: string
           updated_at?: string
@@ -106,6 +108,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          local_trabalho?: string
           nome?: string
           tipo?: string
           updated_at?: string
@@ -119,6 +122,7 @@ export type Database = {
           created_at: string
           descricao: string | null
           id: string
+          local_trabalho: string
           nome: string
           regime_contratacao: string
           salario_base: number
@@ -130,6 +134,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          local_trabalho?: string
           nome: string
           regime_contratacao?: string
           salario_base?: number
@@ -141,6 +146,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          local_trabalho?: string
           nome?: string
           regime_contratacao?: string
           salario_base?: number

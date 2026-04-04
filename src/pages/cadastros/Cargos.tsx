@@ -145,6 +145,16 @@ export default function Cargos() {
       ],
       defaultValue: "mensal",
     },
+    {
+      name: "local_trabalho",
+      label: "Local de Trabalho",
+      type: "select" as const,
+      options: [
+        { label: "Campo", value: "campo" },
+        { label: "Escritório", value: "escritorio" },
+      ],
+      defaultValue: "campo",
+    },
     { name: "descricao", label: "Descrição", type: "textarea" as const },
   ];
 
@@ -223,6 +233,7 @@ export default function Cargos() {
                     <SortableHeader label="Regime" sortKey="regime_contratacao" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
                     <SortableHeader label="Salário Base" sortKey="salario_base" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
                     <SortableHeader label="Tipo" sortKey="unidade_salarial" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+                    <SortableHeader label="Local" sortKey="local_trabalho" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
                     <SortableHeader label="Encargos" sortKey="_custo.valor_encargos" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
                     <SortableHeader label="Benefícios" sortKey="_custo.valor_beneficios_fixos" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
                     <SortableHeader label="Custo Total/Mês" sortKey="custo_total" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
@@ -250,6 +261,11 @@ export default function Cargos() {
                         <td>{fmt(row.salario_base)}</td>
                         <td>
                           <span className="capitalize">{labels[row.unidade_salarial] || row.unidade_salarial}</span>
+                        </td>
+                        <td>
+                          <Badge variant="outline" className="text-xs">
+                            {row.local_trabalho === "escritorio" ? "Escritório" : "Campo"}
+                          </Badge>
                         </td>
                         <td>
                           {isPJ ? (
