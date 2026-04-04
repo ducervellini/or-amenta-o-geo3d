@@ -52,6 +52,7 @@ const fmt = (v: number) =>
   `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const ICON_MAP: Record<string, React.ElementType> = {
+  veiculo: Car,
   hospedagem: Home,
   combustivel: Fuel,
   pedagios: CreditCard,
@@ -60,6 +61,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
 };
 
 const CATEGORIAS_DESLOCAMENTO = [
+  { value: "veiculo", label: "Veículo", icon: Car },
   { value: "hospedagem", label: "Hospedagem", icon: Home },
   { value: "combustivel", label: "Combustível", icon: Fuel },
   { value: "pedagios", label: "Pedágios", icon: CreditCard },
@@ -71,6 +73,19 @@ const FREQUENCIAS_DESL = [
   { value: "diario", label: "Diário" },
   { value: "mensal", label: "Mensal" },
   { value: "unico", label: "Único" },
+];
+
+const TIPOS_HOSPEDAGEM = [
+  { value: "hotel_single", label: "Hotel (Single)" },
+  { value: "hotel_duplo", label: "Hotel (Duplo)" },
+  { value: "hotel_triplo", label: "Hotel (Triplo)" },
+  { value: "alojamento_mobiliado", label: "Alojamento Mobiliado" },
+  { value: "alojamento_sem_mobilia", label: "Alojamento sem Mobília" },
+];
+
+const TIPOS_VEICULO_DESL = [
+  { value: "alugado", label: "Alugado" },
+  { value: "proprio", label: "Próprio" },
 ];
 
 // ── Types ──
