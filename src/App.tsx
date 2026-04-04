@@ -33,6 +33,7 @@ import Composicoes from "./pages/Composicoes";
 import Mobilizacao from "./pages/Mobilizacao";
 import ComposicaoDetalhe from "./pages/ComposicaoDetalhe";
 import Orcamentos from "./pages/Orcamentos";
+import Oportunidades from "./pages/Oportunidades";
 import ParametrosAdminLocal from "./pages/parametros/AdminLocal";
 import ParametrosAdminCentral from "./pages/parametros/AdminCentral";
 import ParametrosFinanciamento from "./pages/parametros/Financiamento";
