@@ -1,0 +1,2 @@
+ALTER TABLE public.mobilizacoes ADD COLUMN IF NOT EXISTS duracao_meses integer NOT NULL DEFAULT 3;
+ALTER TABLE public.mobilizacoes ADD COLUMN IF NOT EXISTS mob_desmob_itens jsonb NOT NULL DEFAULT '[]'::jsonb;
