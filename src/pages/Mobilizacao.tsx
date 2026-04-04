@@ -419,6 +419,7 @@ export default function Mobilizacao() {
             };
           });
           setDeslocamentos(loadedDeslocamentos);
+          deslKeyRef.current = keyCounter;
         }
       } catch (err) {
         console.error("Erro ao carregar mobilização:", err);
