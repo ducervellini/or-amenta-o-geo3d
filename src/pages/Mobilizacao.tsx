@@ -278,6 +278,8 @@ function Section({
 }
 
 export default function Mobilizacao() {
+  const [searchParams] = useSearchParams();
+  const loadedRef = useRef(false);
   // ── State ──
   const [nome, setNome] = useState("Nova Mobilização");
   const [saving, setSaving] = useState(false);
