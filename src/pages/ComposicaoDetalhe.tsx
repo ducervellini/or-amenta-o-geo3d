@@ -322,10 +322,46 @@ export default function ComposicaoDetalhe() {
           {/* Info card */}
           <div className="bg-card rounded-lg border shadow-sm p-5 space-y-4">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Dados da Composição</h3>
+
+            {/* 1. Service selection (primary) */}
+            <div className="space-y-1.5">
+              <Label>Serviço *</Label>
+              <Select value={servicoId} onValueChange={setServicoId}>
+                <SelectTrigger><SelectValue placeholder="Selecione um serviço" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none_">Avulsa (sem serviço)</SelectItem>
+                  {(servicos || []).map((s) => (
+                    <SelectItem key={String(s.id)} value={String(s.id)}>
+                      {String(s.codigo)} - {String(s.nome)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 2. Auto-filled: Mercado, Área, Departamento */}
+            {servicoId !== "_none_" && (
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-muted-foreground">Mercado</Label>
+                  <Input value={mercadoNome || "—"} disabled className="bg-muted" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-muted-foreground">Área da Empresa</Label>
+                  <Input value={areaNome || "—"} disabled className="bg-muted" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-muted-foreground">Departamento</Label>
+                  <Input value={departamentoNome || "—"} disabled className="bg-muted" />
+                </div>
+              </div>
+            )}
+
+            {/* 3. Code (semi-auto) and Unit */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Código</Label>
-                <Input value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="COMP-001" />
+                <Input value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="COMP-MER-ARE-DEP-001" />
               </div>
               <div className="space-y-1.5">
                 <Label>Unidade</Label>
@@ -339,22 +375,50 @@ export default function ComposicaoDetalhe() {
                 </Select>
               </div>
             </div>
+
+            {/* 4. Name */}
             <div className="space-y-1.5">
               <Label>Nome</Label>
               <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome da composição" />
             </div>
+
+            {/* 5. Productivity */}
             <div className="space-y-1.5">
-              <Label>Serviço (opcional)</Label>
-              <Select value={servicoId} onValueChange={setServicoId}>
-                <SelectTrigger><SelectValue placeholder="Avulsa (sem serviço)" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_none_">Avulsa (sem serviço)</SelectItem>
-                  {(servicos || []).map((s) => (
-                    <SelectItem key={String(s.id)} value={String(s.id)}>{String(s.nome)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Produtividade</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  value={produtividadeValor || ""}
+                  onChange={(e) => setProdutividadeValor(Number(e.target.value))}
+                  placeholder="Ex: 5"
+                  className="w-24"
+                  step="0.01"
+                />
+                <Select value={produtividadeUnidade} onValueChange={setProdutividadeUnidade}>
+                  <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["ha","m","km","km²","m²","un","pt","propriedades","unidades","pontos","cadastros","imóveis","amostras","torres","marcos","vértices","bandeiras","plantas","travessias","seções","piquetes","relatórios","laudos"].map((u) => (
+                      <SelectItem key={u} value={u}>{u}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span className="text-muted-foreground">/</span>
+                <Select value={produtividadeTempo} onValueChange={setProdutividadeTempo}>
+                  <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="hora">Hora</SelectItem>
+                    <SelectItem value="dia">Dia</SelectItem>
+                    <SelectItem value="mes">Mês</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {produtividadeValor > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {produtividadeValor} {produtividadeUnidade}/{produtividadeTempo}
+                </p>
+              )}
             </div>
+
             <Button onClick={handleSaveHeader} className="gap-2" disabled={insertComposicao.isPending || updateComposicao.isPending}>
               <Save className="w-4 h-4" />
               {isNew ? "Criar Composição" : "Salvar"}
