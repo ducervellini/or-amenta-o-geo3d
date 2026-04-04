@@ -1031,35 +1031,44 @@ export default function Mobilizacao() {
                         </div>
 
                         {/* ── HOSPEDAGEM ── */}
-                        {item.categoria === "hospedagem" && (
-                          <>
-                            <div>
-                              <Label className="text-[10px]">Tipo</Label>
-                              <Select value={item.tipo_hospedagem || "hotel_single"} onValueChange={(v) => updateDeslocamento(item._key, "tipo_hospedagem", v)}>
-                                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                  {TIPOS_HOSPEDAGEM.map((t) => (
-                                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <Label className="text-[10px]">Valor Diária (R$)</Label>
-                              <Input className="h-8 text-xs" type="number" step="0.01" value={item.valor_unitario || ""} onChange={(e) => updateDeslocamento(item._key, "valor_unitario", Number(e.target.value))} />
-                            </div>
-                            <div>
-                              <Label className="text-[10px]">Diárias</Label>
-                              <Input className="h-8 text-xs" type="number" value={item.quantidade} onChange={(e) => updateDeslocamento(item._key, "quantidade", Number(e.target.value))} min={1} />
-                            </div>
-                            <div className="flex items-end">
-                              <div className="text-[10px] text-muted-foreground pb-1.5 flex gap-3">
-                                <span>Mês: <span className="font-medium text-foreground">{fmt(custoMes)}</span></span>
-                                <span>Total: <span className="font-bold text-primary">{fmt(custoItem)}</span></span>
+                        {item.categoria === "hospedagem" && (() => {
+                          const isHotel = isHotelType(item.tipo_hospedagem);
+                          return (
+                            <>
+                              <div>
+                                <Label className="text-[10px]">Tipo</Label>
+                                <Select value={item.tipo_hospedagem || "hotel_single"} onValueChange={(v) => updateDeslocamento(item._key, "tipo_hospedagem", v)}>
+                                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    {TIPOS_HOSPEDAGEM.map((t) => (
+                                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
                               </div>
-                            </div>
-                          </>
-                        )}
+                              <div>
+                                <Label className="text-[10px]">{isHotel ? "Valor Diária (R$)" : "Valor Mensal (R$)"}</Label>
+                                <Input className="h-8 text-xs" type="number" step="0.01" value={item.valor_unitario || ""} onChange={(e) => updateDeslocamento(item._key, "valor_unitario", Number(e.target.value))} />
+                              </div>
+                              <div>
+                                <Label className="text-[10px]">{isHotel ? "Diárias" : "Qtde"}</Label>
+                                <Input className="h-8 text-xs" type="number" value={item.quantidade} onChange={(e) => updateDeslocamento(item._key, "quantidade", Number(e.target.value))} min={1} />
+                              </div>
+                              {!isHotel && (
+                                <div>
+                                  <Label className="text-[10px]">Período (meses)</Label>
+                                  <Input className="h-8 text-xs" type="number" value={item.meses_hospedagem ?? duracaoMeses} onChange={(e) => updateDeslocamento(item._key, "meses_hospedagem", Number(e.target.value))} min={1} />
+                                </div>
+                              )}
+                              <div className="flex items-end">
+                                <div className="text-[10px] text-muted-foreground pb-1.5 flex gap-3">
+                                  <span>Mês: <span className="font-medium text-foreground">{fmt(custoMes)}</span></span>
+                                  <span>Total ({isHotel ? `${diasTrabalho * duracaoMeses}d` : `${item.meses_hospedagem ?? duracaoMeses}m`}): <span className="font-bold text-primary">{fmt(custoItem)}</span></span>
+                                </div>
+                              </div>
+                            </>
+                          );
+                        })()}
 
                         {/* ── VEÍCULO + COMBUSTÍVEL ── */}
                         {item.categoria === "combustivel" && (
