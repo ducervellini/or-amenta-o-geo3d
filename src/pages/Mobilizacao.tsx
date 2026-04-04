@@ -62,7 +62,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
 
 const CATEGORIAS_DESLOCAMENTO = [
   { value: "hospedagem", label: "Hospedagem", icon: Home },
-  { value: "combustivel", label: "Combustível", icon: Fuel },
+  { value: "combustivel", label: "Veículo + Combustível", icon: Fuel },
   { value: "pedagios", label: "Pedágios", icon: CreditCard },
   { value: "passagens", label: "Passagens", icon: Plane },
   { value: "diversos", label: "Diversos", icon: Users },
@@ -500,12 +500,12 @@ export default function Mobilizacao() {
     if (item.categoria === "combustivel" && item.veiculo_id) {
       const veic = (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id);
       const mediaKmL = veic?.media_km_l || 0;
-      const precoComb = item.preco_combustivel || 0;
-      const custoKm = mediaKmL > 0 ? precoComb / mediaKmL : 0;
-      const custoDia = custoKm * (item.km_dia || 0);
-      if (item.frequencia === "diario") return custoDia * diasProdutivos * item.quantidade;
-      if (item.frequencia === "mensal") return custoDia * diasProdutivosMes * item.quantidade * duracaoMeses;
-      return custoDia * item.quantidade;
+      const precoComb = veic?.combustivel_preco_litro || 0;
+      const custoKmComb = mediaKmL > 0 ? precoComb / mediaKmL : 0;
+      const custoKmVeic = Number(veic?.custo_km || 0);
+      const custoKmTotal = custoKmComb + custoKmVeic;
+      const kmMes = (item.km_dia || 0) * diasProdutivosMes;
+      return custoKmTotal * kmMes * item.quantidade * duracaoMeses;
     }
     if (item.categoria === "hospedagem") {
       // valor_unitario = diária; frequência sempre diário
@@ -538,13 +538,13 @@ export default function Mobilizacao() {
       const selectedVeiculo = item.veiculo_id ? (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id) : null;
       let custoMes = 0;
       if (item.categoria === "hospedagem") {
-      } else if (item.categoria === "hospedagem") {
         custoMes = item.valor_unitario * item.quantidade * diasProdutivosMes;
       } else if (item.categoria === "combustivel" && selectedVeiculo) {
         const mediaKmL = selectedVeiculo?.media_km_l || 0;
-        const precoComb = item.preco_combustivel || 0;
-        const custoKm = mediaKmL > 0 ? precoComb / mediaKmL : 0;
-        custoMes = custoKm * (item.km_dia || 0) * diasProdutivosMes * item.quantidade;
+        const precoComb = Number(selectedVeiculo?.combustivel_preco_litro || 0);
+        const custoKmComb = mediaKmL > 0 ? precoComb / mediaKmL : 0;
+        const custoKmVeic = Number(selectedVeiculo?.custo_km || 0);
+        custoMes = (custoKmComb + custoKmVeic) * (item.km_dia || 0) * diasProdutivosMes * item.quantidade;
       } else if (item.frequencia === "diario") {
         custoMes = item.valor_unitario * item.quantidade * diasProdutivosMes;
       } else if (item.frequencia === "mensal") {
@@ -982,21 +982,18 @@ export default function Mobilizacao() {
                   const CatIcon = ICON_MAP[item.categoria] || CreditCard;
                   const selectedVeiculo = item.veiculo_id ? (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id) : null;
                   const custoItem = calcularCustoDeslocamentoItem(item);
+                  const mediaKmL = selectedVeiculo?.media_km_l || 0;
+                  const precoCombVeic = Number(selectedVeiculo?.combustivel_preco_litro || 0);
+                  const custoKmComb = mediaKmL > 0 ? precoCombVeic / mediaKmL : 0;
+                  const custoKmVeic = Number(selectedVeiculo?.custo_km || 0);
+                  const custoKm = custoKmComb + custoKmVeic;
                   const custoMes = item.categoria === "hospedagem"
                     ? item.valor_unitario * item.quantidade * diasProdutivosMes
                     : item.categoria === "combustivel" && selectedVeiculo
-                    ? (() => {
-                        const mediaKmL = selectedVeiculo?.media_km_l || 0;
-                        const precoComb = item.preco_combustivel || 0;
-                        const custoKm = mediaKmL > 0 ? precoComb / mediaKmL : 0;
-                        return custoKm * (item.km_dia || 0) * diasProdutivosMes * item.quantidade;
-                      })()
+                    ? custoKm * (item.km_dia || 0) * diasProdutivosMes * item.quantidade
                     : item.frequencia === "diario" ? item.valor_unitario * item.quantidade * diasProdutivosMes
                     : item.frequencia === "mensal" ? item.valor_unitario * item.quantidade
                     : item.valor_unitario * item.quantidade / duracaoMeses;
-                  const mediaKmL = selectedVeiculo?.media_km_l || 0;
-                  const precoComb = item.preco_combustivel || 0;
-                  const custoKm = mediaKmL > 0 ? precoComb / mediaKmL : 0;
                   return (
                     <div key={item._key} className="flex items-start gap-2 p-3 rounded-lg border bg-muted/30">
                       <CatIcon className="w-4 h-4 mt-2 text-muted-foreground shrink-0" />
@@ -1044,7 +1041,7 @@ export default function Mobilizacao() {
                           </>
                         )}
 
-                        {/* ── COMBUSTÍVEL ── */}
+                        {/* ── VEÍCULO + COMBUSTÍVEL ── */}
                         {item.categoria === "combustivel" && (
                           <>
                             <div>
@@ -1078,19 +1075,17 @@ export default function Mobilizacao() {
                               <Input className="h-8 text-xs" type="number" value={item.km_dia || ""} onChange={(e) => updateDeslocamento(item._key, "km_dia", Number(e.target.value))} />
                             </div>
                             <div>
-                              <Label className="text-[10px]">Combustível (R$/L)</Label>
-                              <Input className="h-8 text-xs" type="number" step="0.01" value={item.preco_combustivel || ""} onChange={(e) => updateDeslocamento(item._key, "preco_combustivel", Number(e.target.value))} />
-                            </div>
-                            <div>
                               <Label className="text-[10px]">Qtde Veículos</Label>
                               <Input className="h-8 text-xs" type="number" value={item.quantidade} onChange={(e) => updateDeslocamento(item._key, "quantidade", Number(e.target.value))} min={1} />
                             </div>
                             <div className="flex items-end col-span-2 md:col-span-5">
                               <div className="text-[10px] text-muted-foreground pb-1.5 space-y-0.5">
                                 {selectedVeiculo ? (
-                                  <div className="flex gap-4">
-                                    <span>{mediaKmL.toFixed(1)} km/L · {selectedVeiculo.tipo_combustivel || "diesel"} · {fmt(custoKm)}/km</span>
-                                    <span>Mês: <span className="font-medium text-foreground">{fmt(custoMes)}</span></span>
+                                  <div className="flex gap-4 flex-wrap">
+                                    <span>{mediaKmL.toFixed(1)} km/L · {selectedVeiculo.tipo_combustivel || "diesel"} · R$ {Number(selectedVeiculo.combustivel_preco_litro || 0).toFixed(2)}/L</span>
+                                    <span>{fmt(custoKm)}/km · {Number(item.km_dia || 0) * diasProdutivosMes} km/mês</span>
+                                    <span>Custo veículo/mês: <span className="font-medium text-foreground">{fmt(Number(selectedVeiculo.custo_km || 0) * Number(item.km_dia || 0) * diasProdutivosMes)}</span></span>
+                                    <span>Comb/mês: <span className="font-medium text-foreground">{fmt(custoMes)}</span></span>
                                     <span>Total ({duracaoMeses}m): <span className="font-bold text-primary">{fmt(custoItem)}</span></span>
                                   </div>
                                 ) : (
