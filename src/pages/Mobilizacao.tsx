@@ -1190,14 +1190,7 @@ export default function Mobilizacao() {
                     <span>Custo/Dia</span>
                     <span className="font-medium">{fmt(diasProdutivos > 0 ? ((resultado.custo_total * duracaoMeses) + custoHospedagemTotal + custoCombustivelTotal) / diasProdutivos : 0)}</span>
                   </div>
-                  <div className="flex justify-between text-xs">
-                    <span>Custo/Pessoa</span>
-                    <span className="font-medium">{fmt(resultado.total_equipes > 0 ? ((resultado.custo_total * duracaoMeses) + custoHospedagemTotal + custoCombustivelTotal) / resultado.total_equipes : 0)}</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span>Total equipe</span>
-                    <span className="font-medium">{resultado.total_equipes} pessoas</span>
-                  </div>
+                
                 </div>
 
                 {/* Município */}
