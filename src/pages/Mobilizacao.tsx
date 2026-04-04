@@ -507,14 +507,6 @@ export default function Mobilizacao() {
       if (item.frequencia === "mensal") return custoDia * diasProdutivosMes * item.quantidade * duracaoMeses;
       return custoDia * item.quantidade;
     }
-    if (item.categoria === "veiculo") {
-      if (item.tipo_veiculo === "alugado") {
-        const valorMensal = item.valor_aluguel_mensal || item.valor_unitario || 0;
-        return valorMensal * item.quantidade * duracaoMeses;
-      }
-      // Próprio: valor mensal de custo
-      return item.valor_unitario * item.quantidade * duracaoMeses;
-    }
     if (item.categoria === "hospedagem") {
       // valor_unitario = diária; frequência sempre diário
       return item.valor_unitario * item.quantidade * diasProdutivos;
