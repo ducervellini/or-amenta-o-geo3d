@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { DollarSign, ArrowUp, TrendingUp, Link2 } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { DollarSign, ArrowUp, TrendingUp, Link2, Briefcase } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +32,7 @@ export default function DRE() {
   const [irpjPct, setIrpjPct] = useState(4.80);
   const [csllPct, setCsllPct] = useState(2.88);
   const [selectedBdiId, setSelectedBdiId] = useState<string>("");
+  const [selectedOportunidadeId, setSelectedOportunidadeId] = useState<string>("");
 
   // Carregar BDIs salvos
   const { data: savedBdis } = useQuery({
@@ -45,6 +46,50 @@ export default function DRE() {
       return data as any[];
     },
   });
+
+  // Carregar oportunidades
+  const { data: oportunidades } = useQuery({
+    queryKey: ["oportunidades_dre"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("oportunidades")
+        .select("*, clientes(nome)")
+        .eq("ativo", true)
+        .order("codigo", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Carregar orçamento da oportunidade selecionada
+  const { data: orcamentoOportunidade } = useQuery({
+    queryKey: ["orcamento_oportunidade", selectedOportunidadeId],
+    queryFn: async () => {
+      if (!selectedOportunidadeId) return null;
+      const { data, error } = await supabase
+        .from("orcamentos")
+        .select("*")
+        .eq("oportunidade_id", selectedOportunidadeId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedOportunidadeId,
+  });
+
+  // Atualizar custo direto e BDI quando oportunidade muda
+  const selectedOportunidade = oportunidades?.find((o) => o.id === selectedOportunidadeId);
+
+  useEffect(() => {
+    if (orcamentoOportunidade) {
+      setCustoDireto(Number(orcamentoOportunidade.custo_total) || 0);
+      if (orcamentoOportunidade.bdi_id) {
+        setSelectedBdiId(orcamentoOportunidade.bdi_id);
+      }
+    }
+  }, [orcamentoOportunidade]);
 
   // Componentes do BDI selecionado
   const bdiComponentes = useMemo((): BDIComp[] => {
@@ -273,6 +318,56 @@ export default function DRE() {
                 <p className="text-xs text-muted-foreground italic">
                   Selecione um BDI salvo para vincular os componentes à DRE
                 </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Seleção da Oportunidade */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Briefcase className="w-4 h-4" />
+                Oportunidade
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <Label className="text-xs">Selecione a Oportunidade</Label>
+                <Select value={selectedOportunidadeId} onValueChange={setSelectedOportunidadeId}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Vincular oportunidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(oportunidades || []).map((op) => (
+                      <SelectItem key={op.id} value={op.id}>
+                        {op.codigo} — {op.descricao}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {selectedOportunidade && (
+                <div className="bg-muted/50 rounded-md p-3 space-y-1">
+                  <div className="text-xs font-medium">{selectedOportunidade.codigo} — {selectedOportunidade.descricao}</div>
+                  <div className="text-xs text-muted-foreground">
+                    Cliente: {(selectedOportunidade as any).clientes?.nome || "—"}
+                  </div>
+                  {selectedOportunidade.cidade && (
+                    <div className="text-xs text-muted-foreground">
+                      Local: {selectedOportunidade.cidade}{selectedOportunidade.estado ? ` / ${selectedOportunidade.estado}` : ""}
+                    </div>
+                  )}
+                  {orcamentoOportunidade && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Custo Total Orçamento: {fmt(Number(orcamentoOportunidade.custo_total))}
+                    </div>
+                  )}
+                  {!orcamentoOportunidade && (
+                    <div className="text-xs text-destructive mt-1">
+                      Nenhum orçamento encontrado para esta oportunidade
+                    </div>
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>
