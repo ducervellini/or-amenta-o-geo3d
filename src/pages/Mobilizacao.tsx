@@ -302,6 +302,7 @@ export default function Mobilizacao() {
   const [diasTrabalho, setDiasTrabalho] = useState(24);
   const [jornadaDiaria, setJornadaDiaria] = useState(8);
   const [diasChuvaMes, setDiasChuvaMes] = useState(5);
+  const [diasImprodutivosUsuario, setDiasImprodutivosUsuario] = useState(5);
   const [fatorImprod, setFatorImprod] = useState(0.15);
   const [distanciaBase, setDistanciaBase] = useState(50);
   const [distanciaMedia, setDistanciaMedia] = useState(30);
@@ -376,6 +377,12 @@ export default function Mobilizacao() {
         setJornadaDiaria(Number(mob.jornada_diaria) || 8);
         setDiasChuvaMes(Number(mob.dias_chuva_mes) || 5);
         setFatorImprod(Number(mob.fator_improdutividade) || 0.15);
+        // Restore user-chosen improdutivos: use dias_improdutivos/duracaoMeses if available, else diasChuvaMes
+        const savedDuracaoMeses = Number(mob.duracao_meses) || 3;
+        const savedDiasImprodMes = mob.dias_improdutivos && savedDuracaoMeses > 0
+          ? Math.round(Number(mob.dias_improdutivos) / savedDuracaoMeses)
+          : Number(mob.dias_chuva_mes) || 5;
+        setDiasImprodutivosUsuario(savedDiasImprodMes);
         setDistanciaBase(Number(mob.distancia_base_projeto) || 0);
         setDistanciaMedia(Number(mob.distancia_media_diaria) || 0);
         setArquivoGeo(mob.arquivo_geo || "");
@@ -630,8 +637,10 @@ export default function Mobilizacao() {
     [diasTrabalho, jornadaDiaria, diasChuvaMes, fatorImprod, distanciaBase, distanciaMedia, duracaoMeses]
   );
 
-  const { diasProdutivos: diasProdutivosMes, diasImprodutivos: diasImprodutivosMes } = calcularDiasProdutivos(params);
+  // Dias produtivos calculados pelo usuário (não pelo fator automático)
+  const diasProdutivosMes = Math.max(0, diasTrabalho - diasImprodutivosUsuario);
   const diasProdutivos = diasProdutivosMes * duracaoMeses;
+  const diasImprodutivosMes = diasImprodutivosUsuario;
   const diasImprodutivos = diasImprodutivosMes * duracaoMeses;
 
   // Calculate deslocamento costs
@@ -735,10 +744,12 @@ export default function Mobilizacao() {
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || "Erro desconhecido");
       setPluviometria(data);
-      // Auto-fill dias de chuva/mês
+      // Auto-fill dias de chuva/mês e dias improdutivos
       if (data.resumo?.media_dias_chuva_mes) {
-        setDiasChuvaMes(Math.round(data.resumo.media_dias_chuva_mes));
-        toast.success(`Dias de chuva/mês atualizado: ${Math.round(data.resumo.media_dias_chuva_mes)} dias`);
+        const diasChuva = Math.round(data.resumo.media_dias_chuva_mes);
+        setDiasChuvaMes(diasChuva);
+        setDiasImprodutivosUsuario(diasChuva);
+        toast.success(`Dias de chuva/mês atualizado: ${diasChuva} dias`);
       }
     } catch (err: any) {
       console.error("Erro pluviometria:", err);
@@ -1090,15 +1101,76 @@ export default function Mobilizacao() {
                 <div className="flex items-end">
                   <div className="text-xs text-muted-foreground pb-2 space-y-0.5">
                     <div>Fim previsto: {new Date(dataFim).toLocaleDateString("pt-BR")}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dias de chuva e improdutivos */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 p-3 rounded-lg border bg-muted/30">
+                <div>
+                  <Label className="text-xs flex items-center gap-1">
+                    <CloudRain className="w-3 h-3 text-blue-500" /> Dias c/ Chuva/Mês
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      value={diasChuvaMes}
+                      className="bg-muted cursor-not-allowed"
+                      readOnly
+                      tabIndex={-1}
+                    />
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Info className="w-3.5 h-3.5 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs max-w-48">Valor obtido da análise pluviométrica (NASA POWER). Use a seção de pluviometria para atualizar.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs flex items-center gap-1">
+                    <Cloud className="w-3 h-3 text-destructive" /> Dias Improdutivos/Mês
+                  </Label>
+                  <Input
+                    type="number"
+                    value={diasImprodutivosUsuario}
+                    onChange={(e) => {
+                      const v = Math.max(0, Math.min(Number(e.target.value), diasTrabalho));
+                      setDiasImprodutivosUsuario(v);
+                    }}
+                    min={0}
+                    max={diasTrabalho}
+                  />
+                  {diasImprodutivosUsuario < diasChuvaMes && (
+                    <p className="text-[10px] text-amber-600 mt-0.5">
+                      ⚠ Menor que dias de chuva ({diasChuvaMes}d)
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label className="text-xs flex items-center gap-1">
+                    <Sun className="w-3 h-3 text-primary" /> Dias Produtivos/Mês
+                  </Label>
+                  <div className="h-10 flex items-center px-3 rounded-md border bg-muted text-sm font-bold text-primary">
+                    {diasProdutivosMes}
+                  </div>
+                </div>
+                <div className="flex items-end">
+                  <div className="text-xs text-muted-foreground pb-2 space-y-0.5">
                     <div className="inline-flex items-center gap-1">
-                      <Sun className="w-3 h-3 text-primary" /> {diasProdutivos} produtivos ({diasProdutivosMes}/mês)
+                      <Sun className="w-3 h-3 text-primary" /> Total: <span className="font-bold text-primary">{diasProdutivos}</span> produtivos
                     </div>
                     <div className="inline-flex items-center gap-1">
-                      <Cloud className="w-3 h-3 text-muted-foreground" /> {diasImprodutivos} improdutivos ({diasImprodutivosMes}/mês)
+                      <Cloud className="w-3 h-3 text-destructive" /> Total: <span className="font-bold text-destructive">{diasImprodutivos}</span> improdutivos
                     </div>
                   </div>
                 </div>
               </div>
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div>
                   <Label className="text-xs">Jornada Diária (h)</Label>
@@ -1634,14 +1706,21 @@ export default function Mobilizacao() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Dias */}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <div className="p-2 rounded-md bg-primary/10 text-center">
                     <div className="text-lg font-bold text-primary">{diasProdutivos}</div>
                     <div className="text-[10px] text-muted-foreground">Dias Produtivos</div>
+                    <div className="text-[9px] text-muted-foreground">{diasProdutivosMes}/mês</div>
                   </div>
                   <div className="p-2 rounded-md bg-destructive/10 text-center">
                     <div className="text-lg font-bold text-destructive">{diasImprodutivos}</div>
                     <div className="text-[10px] text-muted-foreground">Dias Improdutivos</div>
+                    <div className="text-[9px] text-muted-foreground">{diasImprodutivosMes}/mês</div>
+                  </div>
+                  <div className="p-2 rounded-md bg-blue-500/10 text-center">
+                    <div className="text-lg font-bold text-blue-600">{diasChuvaMes * duracaoMeses}</div>
+                    <div className="text-[10px] text-muted-foreground">Dias c/ Chuva</div>
+                    <div className="text-[9px] text-muted-foreground">{diasChuvaMes}/mês</div>
                   </div>
                 </div>
 
