@@ -538,13 +538,13 @@ export default function Mobilizacao() {
       const selectedVeiculo = item.veiculo_id ? (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id) : null;
       let custoMes = 0;
       if (item.categoria === "hospedagem") {
-      } else if (item.categoria === "hospedagem") {
         custoMes = item.valor_unitario * item.quantidade * diasProdutivosMes;
       } else if (item.categoria === "combustivel" && selectedVeiculo) {
         const mediaKmL = selectedVeiculo?.media_km_l || 0;
-        const precoComb = item.preco_combustivel || 0;
-        const custoKm = mediaKmL > 0 ? precoComb / mediaKmL : 0;
-        custoMes = custoKm * (item.km_dia || 0) * diasProdutivosMes * item.quantidade;
+        const precoComb = Number(selectedVeiculo?.combustivel_preco_litro || 0);
+        const custoKmComb = mediaKmL > 0 ? precoComb / mediaKmL : 0;
+        const custoKmVeic = Number(selectedVeiculo?.custo_km || 0);
+        custoMes = (custoKmComb + custoKmVeic) * (item.km_dia || 0) * diasProdutivosMes * item.quantidade;
       } else if (item.frequencia === "diario") {
         custoMes = item.valor_unitario * item.quantidade * diasProdutivosMes;
       } else if (item.frequencia === "mensal") {
