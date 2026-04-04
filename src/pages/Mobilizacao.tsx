@@ -291,125 +291,39 @@ export default function Mobilizacao() {
     return precoCombustivel / consumoMedioKmL;
   }, [precoCombustivel, consumoMedioKmL]);
 
-  const custoCombustivelDiario = useMemo(() => {
-    return custoKmRodado * kmMedioDiario;
-  }, [custoKmRodado, kmMedioDiario]);
-
-  // custoCombustivelMensal calculated after diasProdutivos is available
-
-  // Datas do projeto (data início = hoje)
-  const [dataInicio, setDataInicio] = useState(() => {
-    return new Date().toISOString().split("T")[0];
-  });
-  const [duracaoMeses, setDuracaoMeses] = useState(3);
-  const dataFim = useMemo(() => {
-    const d = new Date(dataInicio);
-    d.setMonth(d.getMonth() + duracaoMeses);
-    return d.toISOString().split("T")[0];
-  }, [dataInicio, duracaoMeses]);
-
-  // Auto-geocode município/estado
-  const geocodeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (!municipio || !estado || modoLocalizacao !== "manual") return;
-    if (geocodeTimeout.current) clearTimeout(geocodeTimeout.current);
-    geocodeTimeout.current = setTimeout(async () => {
-      setGeocodificando(true);
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(municipio + ", " + estado + ", Brasil")}&format=json&limit=1`,
-          { headers: { "User-Agent": "MobilizacaoApp/1.0" } }
-        );
-        const data = await res.json();
-        if (data?.[0]) {
-          setLat(parseFloat(data[0].lat));
-          setLng(parseFloat(data[0].lon));
-        }
-      } catch (e) {
-        console.error("Geocode error:", e);
-      } finally {
-        setGeocodificando(false);
-      }
-    }, 1000);
-    return () => { if (geocodeTimeout.current) clearTimeout(geocodeTimeout.current); };
-  }, [municipio, estado, modoLocalizacao]);
-
-  // Municípios na rota
-  const [municipiosRota, setMunicipiosRota] = useState<MunicipioRota[]>([]);
-  const [novoMunicipioNome, setNovoMunicipioNome] = useState("");
-  const [novoMunicipioUF, setNovoMunicipioUF] = useState("");
-  const [novoMunicipioDist, setNovoMunicipioDist] = useState(0);
-
-  // Pluviometria
-  const [pluviometria, setPluviometria] = useState<PluviometriaResult | null>(null);
-  const [loadingPluv, setLoadingPluv] = useState(false);
-
-  // Hospedagem
-  const [tipoHospedagem, setTipoHospedagem] = useState<"hotel" | "alojamento_mobiliado" | "alojamento_mobiliar">("hotel");
-  // Hotel
-  interface QuartoHotel { _key: number; tipo: "single" | "duplo" | "triplo"; diaria: number; quantidade: number }
-  const [quartosHotel, setQuartosHotel] = useState<QuartoHotel[]>([
-    { _key: 1, tipo: "single", diaria: 180, quantidade: 2 },
-  ]);
-  let quartoKeyRef = useRef(2);
-  const addQuarto = () => {
-    setQuartosHotel(prev => [...prev, { _key: quartoKeyRef.current++, tipo: "single", diaria: 0, quantidade: 1 }]);
-  };
-  const removeQuarto = (key: number) => setQuartosHotel(prev => prev.filter(q => q._key !== key));
-  const updateQuarto = (key: number, field: string, value: any) => {
-    setQuartosHotel(prev => prev.map(q => q._key === key ? { ...q, [field]: value } : q));
-  };
-  // Duração hospedagem (pré-configurada com duração do projeto)
-  const [duracaoHospedagemMeses, setDuracaoHospedagemMeses] = useState(duracaoMeses);
-  // Sync default when duracaoMeses changes (only if user hasn't customized)
-  const duracaoHospedagemSynced = useRef(true);
-  useEffect(() => {
-    if (duracaoHospedagemSynced.current) setDuracaoHospedagemMeses(duracaoMeses);
-  }, [duracaoMeses]);
-  const handleDuracaoHospedagem = (v: number) => {
-    duracaoHospedagemSynced.current = false;
-    setDuracaoHospedagemMeses(v);
-  };
-
-  // Alojamento mobiliado
-  const [alojamentoMobiliadoValor, setAlojamentoMobiliadoValor] = useState(3000);
-  const [alojamentoMobiliadoQtd, setAlojamentoMobiliadoQtd] = useState(1);
-  // Alojamento a mobiliar
-  const [alojamentoMobiliarAluguel, setAlojamentoMobiliarAluguel] = useState(2000);
-  const [alojamentoMobiliarQtd, setAlojamentoMobiliarQtd] = useState(1);
-  const [alojamentoMobiliarMobilia, setAlojamentoMobiliarMobilia] = useState(5000);
-  const [alojamentoMobiliarRevenda, setAlojamentoMobiliarRevenda] = useState(50);
-
-  const custoHospedagemMensal = useMemo(() => {
-    if (tipoHospedagem === "hotel") {
-      return quartosHotel.reduce((acc, q) => acc + q.diaria * q.quantidade * diasTrabalho, 0);
-    }
-    if (tipoHospedagem === "alojamento_mobiliado") {
-      return alojamentoMobiliadoValor * alojamentoMobiliadoQtd;
-    }
-    const aluguelTotal = alojamentoMobiliarAluguel * alojamentoMobiliarQtd;
-    const mobiliaTotal = alojamentoMobiliarMobilia * alojamentoMobiliarQtd;
-    const revendaTotal = mobiliaTotal * (alojamentoMobiliarRevenda / 100);
-    const custoLiquidoMobilia = mobiliaTotal - revendaTotal;
-    const amortizacaoMensal = duracaoHospedagemMeses > 0 ? custoLiquidoMobilia / duracaoHospedagemMeses : custoLiquidoMobilia;
-    return aluguelTotal + amortizacaoMensal;
-  }, [tipoHospedagem, quartosHotel, diasTrabalho, alojamentoMobiliadoValor, alojamentoMobiliadoQtd,
-    alojamentoMobiliarAluguel, alojamentoMobiliarQtd, alojamentoMobiliarMobilia, alojamentoMobiliarRevenda, duracaoHospedagemMeses]);
-
-  const custoHospedagemTotal = useMemo(() => custoHospedagemMensal * duracaoHospedagemMeses, [custoHospedagemMensal, duracaoHospedagemMeses]);
-
   // Veículos cadastrados
   const { data: veiculosCadastrados } = useSupabaseQuery("veiculos");
 
-  // Custos (sem hospedagem, que agora é separada)
-  const [custos, setCustos] = useState<(CustoItem & { _key: number; veiculo_id?: string; km_dia?: number; preco_combustivel?: number })[]>([]);
-  let custoKeyRef = 4;
+  // ── Deslocamentos do Projeto (unified: hospedagem, combustível, pedágios, passagens, diversos) ──
+  interface DeslocamentoItem {
+    _key: number;
+    categoria: string;
+    descricao: string;
+    valor_unitario: number;
+    quantidade: number;
+    frequencia: string;
+    veiculo_id?: string;
+    km_dia?: number;
+    preco_combustivel?: number;
+  }
+  const [deslocamentos, setDeslocamentos] = useState<DeslocamentoItem[]>([]);
+  const deslKeyRef = useRef(1);
 
-  // Equipes
-  const [equipes, setEquipes] = useState<(EquipeItem & { _key: number })[]>([
-    { _key: 1, nome: "Equipe Campo", quantidade_pessoas: 4, custo_deslocamento: 0, custo_hospedagem: 150, custo_alimentacao: 0 },
-  ]);
-  let equipeKeyRef = 2;
+  const addDeslocamento = () => {
+    setDeslocamentos(prev => [...prev, {
+      _key: deslKeyRef.current++,
+      categoria: "hospedagem",
+      descricao: "",
+      valor_unitario: 0,
+      quantidade: 1,
+      frequencia: "mensal",
+    }]);
+  };
+  const removeDeslocamento = (key: number) => setDeslocamentos(prev => prev.filter(d => d._key !== key));
+  const updateDeslocamento = (key: number, field: string, value: any) => {
+    setDeslocamentos(prev => prev.map(d => d._key === key ? { ...d, [field]: value } : d));
+  };
+
 
   // ── Mobilização / Desmobilização ──
   const [mobDesmobItens, setMobDesmobItens] = useState<{
