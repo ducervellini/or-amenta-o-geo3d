@@ -378,8 +378,18 @@ export default function Mobilizacao() {
         setDistanciaBase(Number(mob.distancia_base_projeto) || 0);
         setDistanciaMedia(Number(mob.distancia_media_diaria) || 0);
         setArquivoGeo(mob.arquivo_geo || "");
+        if (mob.duracao_meses) setDuracaoMeses(Number(mob.duracao_meses));
         if (mob.municipios_considerados && Array.isArray(mob.municipios_considerados)) {
           setMunicipiosRota(mob.municipios_considerados as MunicipioRota[]);
+        }
+        // Load mob/desmob itens from JSON
+        if (mob.mob_desmob_itens && Array.isArray(mob.mob_desmob_itens) && mob.mob_desmob_itens.length > 0) {
+          let mdKey = 1;
+          setMobDesmobItens(mob.mob_desmob_itens.map((item: any) => ({
+            ...item,
+            _key: mdKey++,
+          })));
+          mobDesmobKeyRef.current = mdKey;
         }
 
         // Load custos (deslocamentos)
