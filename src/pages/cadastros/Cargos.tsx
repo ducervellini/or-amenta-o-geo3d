@@ -126,7 +126,7 @@ function CargoFormDialog({
   }, [open, editItem, jornadas, regimes, horarios, encargos, beneficios]);
 
   // Auto-select encargos/benefícios when switching to estágio
-  const prevRegime = React.useRef(regimeContratacao);
+  const prevRegime = useRef(regimeContratacao);
   useEffect(() => {
     if (prevRegime.current !== regimeContratacao && regimeContratacao === "estagio") {
       const estagioEncargos = encargos
