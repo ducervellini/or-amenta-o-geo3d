@@ -67,20 +67,55 @@ Deno.serve(async (req) => {
     }
 
     // 3. Calculate route via OSRM
-    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${origemLng},${origemLat};${destLng},${destLat}?overview=false`;
-    const osrmRes = await fetch(osrmUrl);
-    const osrmData = await osrmRes.json();
+    let distanciaKm: number;
+    let duracaoHoras: number;
 
-    if (osrmData.code !== 'Ok' || !osrmData.routes?.[0]) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Não foi possível calcular a rota' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    try {
+      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${origemLng},${origemLat};${destLng},${destLat}?overview=false`;
+      const osrmRes = await fetch(osrmUrl);
+      const osrmText = await osrmRes.text();
+      
+      let osrmData;
+      try {
+        osrmData = JSON.parse(osrmText);
+      } catch {
+        console.error('OSRM returned non-JSON:', osrmText.substring(0, 200));
+        // Fallback: calculate straight-line distance using Haversine
+        osrmData = null;
+      }
+
+      if (osrmData?.code === 'Ok' && osrmData.routes?.[0]) {
+        const route = osrmData.routes[0];
+        distanciaKm = Math.round(route.distance / 1000);
+        duracaoHoras = Math.round(route.duration / 3600 * 10) / 10;
+      } else {
+        // Fallback: Haversine with 1.3x road factor
+        const R = 6371;
+        const dLat = (destLat - origemLat) * Math.PI / 180;
+        const dLon = (destLng - origemLng) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(origemLat * Math.PI / 180) * Math.cos(destLat * Math.PI / 180) *
+          Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const straightLine = R * c;
+        distanciaKm = Math.round(straightLine * 1.3);
+        duracaoHoras = Math.round(distanciaKm / 80 * 10) / 10;
+        console.log(`Fallback Haversine: ${straightLine.toFixed(0)}km straight → ${distanciaKm}km estimated`);
+      }
+    } catch (routeErr) {
+      console.error('Route calculation error:', routeErr);
+      // Haversine fallback
+      const R = 6371;
+      const dLat = (destLat - origemLat) * Math.PI / 180;
+      const dLon = (destLng - origemLng) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(origemLat * Math.PI / 180) * Math.cos(destLat * Math.PI / 180) *
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const straightLine = R * c;
+      distanciaKm = Math.round(straightLine * 1.3);
+      duracaoHoras = Math.round(distanciaKm / 80 * 10) / 10;
     }
-
-    const route = osrmData.routes[0];
-    const distanciaKm = Math.round(route.distance / 1000);
-    const duracaoHoras = Math.round(route.duration / 3600 * 10) / 10;
 
     // 4. Generate rotasbrasil URL for toll lookup
     const rotasBrasilUrl = `https://rotasbrasil.com.br/mapa/?de=${encodeURIComponent(origem_municipio + ', ' + origem_estado)}&ate=${encodeURIComponent((destino_municipio || 'Projeto') + ', ' + (destino_estado || ''))}`;
