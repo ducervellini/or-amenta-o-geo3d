@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft, Plus, Trash2, Save, ExternalLink, Loader2,
   Users, Wrench, Package, Truck, Route, Calculator, TrendingUp,
-  ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp, Printer,
 } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
