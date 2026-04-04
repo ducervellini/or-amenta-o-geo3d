@@ -76,6 +76,7 @@ interface PluviometriaResult {
     distancia_km: number;
   };
   periodo: { inicio: string; fim: string };
+  anos_analisados: number[];
   resumo: {
     precipitacao_total_mm: number;
     dias_com_chuva: number;
@@ -85,10 +86,23 @@ interface PluviometriaResult {
   };
   mensal: {
     mes: string;
-    precipitacao_total: number;
-    dias_chuva: number;
-    dias_registro: number;
-    precipitacao_media_diaria: number;
+    mes_numero: number;
+    precipitacao_media: number;
+    precipitacao_min: number;
+    precipitacao_max: number;
+    dias_chuva_media: number;
+    dias_registro_media: number;
+    anos_dados: number;
+  }[];
+  historico_anual: {
+    ano: number;
+    mensal: {
+      mes: string;
+      mes_numero: number;
+      precipitacao_total: number;
+      dias_chuva: number;
+      dias_registro: number;
+    }[];
   }[];
 }
 
