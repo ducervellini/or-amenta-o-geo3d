@@ -516,9 +516,14 @@ export default function Mobilizacao() {
       return (custoCombMes + aluguelMes) * duracaoMeses;
     }
     if (item.categoria === "hospedagem") {
-      // valor_unitario = diária; dias corridos (não produtivos)
-      const diasCorridosTotal = diasTrabalho * duracaoMeses;
-      return item.valor_unitario * item.quantidade * diasCorridosTotal;
+      if (isHotelType(item.tipo_hospedagem)) {
+        // Hotel: diária × qtd diárias × dias corridos
+        const diasCorridosTotal = diasTrabalho * duracaoMeses;
+        return item.valor_unitario * item.quantidade * diasCorridosTotal;
+      }
+      // Alojamento: valor mensal × qtd × meses
+      const meses = item.meses_hospedagem ?? duracaoMeses;
+      return item.valor_unitario * item.quantidade * meses;
     }
     switch (item.frequencia) {
       case "diario": return item.valor_unitario * item.quantidade * diasProdutivos;
