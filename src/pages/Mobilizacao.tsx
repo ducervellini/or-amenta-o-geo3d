@@ -352,7 +352,7 @@ export default function Mobilizacao() {
   // ── Pluviometria INMET ──
   const buscarPluviometria = async () => {
     if (!lat || !lng) {
-      toast.error("Informe latitude e longitude do projeto");
+      toast.error("Informe o município/estado ou importe um arquivo geográfico");
       return;
     }
     setLoadingPluv(true);
