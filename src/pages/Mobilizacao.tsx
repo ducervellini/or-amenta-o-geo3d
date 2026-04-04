@@ -330,10 +330,51 @@ export default function Mobilizacao() {
   const [pluviometria, setPluviometria] = useState<PluviometriaResult | null>(null);
   const [loadingPluv, setLoadingPluv] = useState(false);
 
-  // Custos
+  // Hospedagem
+  const [tipoHospedagem, setTipoHospedagem] = useState<"hotel" | "alojamento_mobiliado" | "alojamento_mobiliar">("hotel");
+  // Hotel
+  interface QuartoHotel { _key: number; tipo: "single" | "duplo" | "triplo"; diaria: number; quantidade: number }
+  const [quartosHotel, setQuartosHotel] = useState<QuartoHotel[]>([
+    { _key: 1, tipo: "single", diaria: 180, quantidade: 2 },
+  ]);
+  let quartoKeyRef = useRef(2);
+  const addQuarto = () => {
+    setQuartosHotel(prev => [...prev, { _key: quartoKeyRef.current++, tipo: "single", diaria: 0, quantidade: 1 }]);
+  };
+  const removeQuarto = (key: number) => setQuartosHotel(prev => prev.filter(q => q._key !== key));
+  const updateQuarto = (key: number, field: string, value: any) => {
+    setQuartosHotel(prev => prev.map(q => q._key === key ? { ...q, [field]: value } : q));
+  };
+  // Alojamento mobiliado
+  const [alojamentoMobiliadoValor, setAlojamentoMobiliadoValor] = useState(3000);
+  const [alojamentoMobiliadoQtd, setAlojamentoMobiliadoQtd] = useState(1);
+  // Alojamento a mobiliar
+  const [alojamentoMobiliarAluguel, setAlojamentoMobiliarAluguel] = useState(2000);
+  const [alojamentoMobiliarQtd, setAlojamentoMobiliarQtd] = useState(1);
+  const [alojamentoMobiliarMobilia, setAlojamentoMobiliarMobilia] = useState(5000);
+  const [alojamentoMobiliarRevenda, setAlojamentoMobiliarRevenda] = useState(50); // % de revenda
+
+  const custoHospedagemMensal = useMemo(() => {
+    if (tipoHospedagem === "hotel") {
+      return quartosHotel.reduce((acc, q) => acc + q.diaria * q.quantidade * diasTrabalho, 0);
+    }
+    if (tipoHospedagem === "alojamento_mobiliado") {
+      return alojamentoMobiliadoValor * alojamentoMobiliadoQtd;
+    }
+    // alojamento_mobiliar: aluguel + mobília amortizada - revenda
+    const aluguelTotal = alojamentoMobiliarAluguel * alojamentoMobiliarQtd;
+    const mobiliaTotal = alojamentoMobiliarMobilia * alojamentoMobiliarQtd;
+    const revendaTotal = mobiliaTotal * (alojamentoMobiliarRevenda / 100);
+    const custoLiquidoMobilia = mobiliaTotal - revendaTotal;
+    // Amortizar mobília sobre a duração do projeto
+    const amortizacaoMensal = duracaoMeses > 0 ? custoLiquidoMobilia / duracaoMeses : custoLiquidoMobilia;
+    return aluguelTotal + amortizacaoMensal;
+  }, [tipoHospedagem, quartosHotel, diasTrabalho, alojamentoMobiliadoValor, alojamentoMobiliadoQtd,
+    alojamentoMobiliarAluguel, alojamentoMobiliarQtd, alojamentoMobiliarMobilia, alojamentoMobiliarRevenda, duracaoMeses]);
+
+  // Custos (sem hospedagem, que agora é separada)
   const [custos, setCustos] = useState<(CustoItem & { _key: number })[]>([
-    { _key: 1, categoria: "hospedagem", descricao: "Diária hotel", valor_unitario: 150, quantidade: 1, frequencia: "diario" },
-    { _key: 2, categoria: "veiculo", descricao: "Caminhonete", valor_unitario: 200, quantidade: 1, frequencia: "diario" },
+    { _key: 1, categoria: "veiculo", descricao: "Caminhonete", valor_unitario: 200, quantidade: 1, frequencia: "diario" },
   ]);
   let custoKeyRef = 4;
 
@@ -875,7 +916,133 @@ export default function Mobilizacao() {
               )}
             </Section>
 
-            {/* Custos */}
+            {/* Hospedagem */}
+            <Section title="Hospedagem" icon={Home} badge={fmt(custoHospedagemMensal) + "/mês"}>
+              <div className="space-y-3">
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { value: "hotel" as const, label: "Hotel (Diárias)", desc: "Quartos single, duplo ou triplo com valor por diária" },
+                    { value: "alojamento_mobiliado" as const, label: "Alojamento Mobiliado", desc: "Imóvel já mobiliado com aluguel mensal fixo" },
+                    { value: "alojamento_mobiliar" as const, label: "Alojamento a Mobiliar", desc: "Imóvel sem mobília: aluguel + custo de mobília com revenda" },
+                  ]).map((opt) => (
+                    <div
+                      key={opt.value}
+                      className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${tipoHospedagem === opt.value ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}
+                      onClick={() => setTipoHospedagem(opt.value)}
+                    >
+                      <div className="text-xs font-medium">{opt.label}</div>
+                      <p className="text-[10px] text-muted-foreground mt-1">{opt.desc}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {tipoHospedagem === "hotel" && (
+                  <div className="space-y-2">
+                    {quartosHotel.map((q) => (
+                      <div key={q._key} className="flex items-end gap-2 p-2 rounded-lg border bg-muted/30">
+                        <div className="w-28">
+                          <Label className="text-[10px]">Tipo</Label>
+                          <Select value={q.tipo} onValueChange={(v) => updateQuarto(q._key, "tipo", v)}>
+                            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="single">Single</SelectItem>
+                              <SelectItem value="duplo">Duplo</SelectItem>
+                              <SelectItem value="triplo">Triplo</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="w-28">
+                          <Label className="text-[10px]">Diária (R$)</Label>
+                          <Input className="h-8 text-xs" type="number" value={q.diaria} onChange={(e) => updateQuarto(q._key, "diaria", Number(e.target.value))} step="0.01" />
+                        </div>
+                        <div className="w-20">
+                          <Label className="text-[10px]">Quartos</Label>
+                          <Input className="h-8 text-xs" type="number" value={q.quantidade} onChange={(e) => updateQuarto(q._key, "quantidade", Number(e.target.value))} min={1} />
+                        </div>
+                        <div className="flex-1 text-[10px] text-muted-foreground pb-1.5">
+                          {fmt(q.diaria * q.quantidade * diasTrabalho)}/mês ({diasTrabalho}d)
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => removeQuarto(q._key)}>
+                          <Trash2 className="w-3 h-3 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button variant="outline" size="sm" className="gap-1" onClick={addQuarto}>
+                      <Plus className="w-3 h-3" /> Adicionar Quarto
+                    </Button>
+                  </div>
+                )}
+
+                {tipoHospedagem === "alojamento_mobiliado" && (
+                  <div className="grid grid-cols-3 gap-3 p-3 rounded-lg bg-muted/30 border">
+                    <div>
+                      <Label className="text-[10px]">Valor Mensal (R$)</Label>
+                      <Input className="h-8 text-xs" type="number" value={alojamentoMobiliadoValor} onChange={(e) => setAlojamentoMobiliadoValor(Number(e.target.value))} step="0.01" />
+                    </div>
+                    <div>
+                      <Label className="text-[10px]">Quantidade</Label>
+                      <Input className="h-8 text-xs" type="number" value={alojamentoMobiliadoQtd} onChange={(e) => setAlojamentoMobiliadoQtd(Number(e.target.value))} min={1} />
+                    </div>
+                    <div className="flex items-end">
+                      <div className="text-[10px] text-muted-foreground pb-1.5">
+                        Total: <span className="font-medium text-foreground">{fmt(alojamentoMobiliadoValor * alojamentoMobiliadoQtd)}</span>/mês
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {tipoHospedagem === "alojamento_mobiliar" && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 rounded-lg bg-muted/30 border">
+                      <div>
+                        <Label className="text-[10px]">Aluguel Mensal (R$)</Label>
+                        <Input className="h-8 text-xs" type="number" value={alojamentoMobiliarAluguel} onChange={(e) => setAlojamentoMobiliarAluguel(Number(e.target.value))} step="0.01" />
+                      </div>
+                      <div>
+                        <Label className="text-[10px]">Quantidade</Label>
+                        <Input className="h-8 text-xs" type="number" value={alojamentoMobiliarQtd} onChange={(e) => setAlojamentoMobiliarQtd(Number(e.target.value))} min={1} />
+                      </div>
+                      <div>
+                        <Label className="text-[10px]">Custo Mobília (R$)</Label>
+                        <Input className="h-8 text-xs" type="number" value={alojamentoMobiliarMobilia} onChange={(e) => setAlojamentoMobiliarMobilia(Number(e.target.value))} step="0.01" />
+                      </div>
+                      <div>
+                        <Label className="text-[10px]">Revenda (%)</Label>
+                        <Input className="h-8 text-xs" type="number" value={alojamentoMobiliarRevenda} onChange={(e) => setAlojamentoMobiliarRevenda(Number(e.target.value))} min={0} max={100} />
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-muted/20 border text-[10px] space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Aluguel/mês:</span>
+                        <span className="font-medium">{fmt(alojamentoMobiliarAluguel * alojamentoMobiliarQtd)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Mobília total:</span>
+                        <span className="font-medium">{fmt(alojamentoMobiliarMobilia * alojamentoMobiliarQtd)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Revenda ({alojamentoMobiliarRevenda}%):</span>
+                        <span className="font-medium text-primary">- {fmt(alojamentoMobiliarMobilia * alojamentoMobiliarQtd * alojamentoMobiliarRevenda / 100)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Custo líquido mobília:</span>
+                        <span className="font-medium">{fmt(alojamentoMobiliarMobilia * alojamentoMobiliarQtd * (1 - alojamentoMobiliarRevenda / 100))}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Amortização/mês ({duracaoMeses}m):</span>
+                        <span className="font-medium">{fmt(duracaoMeses > 0 ? (alojamentoMobiliarMobilia * alojamentoMobiliarQtd * (1 - alojamentoMobiliarRevenda / 100)) / duracaoMeses : 0)}</span>
+                      </div>
+                      <Separator className="my-1" />
+                      <div className="flex justify-between text-xs font-bold">
+                        <span>Total/mês:</span>
+                        <span className="text-primary">{fmt(custoHospedagemMensal)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Section>
+
             <Section title="Itens de Custo" icon={CreditCard} badge={`${custos.length} itens`}>
               <div className="space-y-3">
                 {custos.map((c) => {
@@ -889,7 +1056,7 @@ export default function Mobilizacao() {
                           <Select value={c.categoria} onValueChange={(v) => updateCusto(c._key, "categoria", v)}>
                             <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              {CATEGORIAS_CUSTO.map((cat) => (
+                              {CATEGORIAS_CUSTO.filter(cat => cat.value !== "hospedagem" && cat.value !== "alimentacao").map((cat) => (
                                 <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
                               ))}
                             </SelectContent>
@@ -1050,8 +1217,28 @@ export default function Mobilizacao() {
                 <div>
                   <div className="text-xs font-medium text-muted-foreground mb-2">Custos por Categoria</div>
                   <div className="space-y-1.5">
+                    {/* Hospedagem (separada) */}
+                    {custoHospedagemMensal > 0 && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-1.5">
+                          <Home className="w-3 h-3 text-muted-foreground" />
+                          Hospedagem
+                        </span>
+                        <span className="font-medium">{fmt(custoHospedagemMensal)}</span>
+                      </div>
+                    )}
+                    {/* Combustível (km rodado) */}
+                    {custoCombustivelMensal > 0 && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-1.5">
+                          <Fuel className="w-3 h-3 text-muted-foreground" />
+                          Combustível (km)
+                        </span>
+                        <span className="font-medium">{fmt(custoCombustivelMensal)}</span>
+                      </div>
+                    )}
                     {Object.entries(resultado.custos_por_categoria)
-                      .filter(([, v]) => v > 0)
+                      .filter(([cat, v]) => v > 0 && cat !== "hospedagem" && cat !== "alimentacao")
                       .sort(([, a], [, b]) => b - a)
                       .map(([cat, valor]) => {
                         const catInfo = CATEGORIAS_CUSTO.find((c) => c.value === cat);
@@ -1075,7 +1262,7 @@ export default function Mobilizacao() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm font-bold text-primary">
                     <span>Custo Total</span>
-                    <span>{fmt(resultado.custo_total)}</span>
+                    <span>{fmt(resultado.custo_total + custoHospedagemMensal + custoCombustivelMensal)}</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span>Custo/Dia</span>
