@@ -437,87 +437,84 @@ export default function ComposicaoDetalhe() {
           </div>
 
 
-          {/* Items by group */}
+          {/* Items */}
           {!isNew && (
-            <Tabs defaultValue="mao_de_obra" className="w-full">
-              <div className="flex items-center justify-between mb-3">
-                <TabsList>
-                  <TabsTrigger value="mao_de_obra" className="gap-1.5"><Users className="w-3.5 h-3.5" />M.O.</TabsTrigger>
-                  <TabsTrigger value="equipamento" className="gap-1.5"><Wrench className="w-3.5 h-3.5" />Equip.</TabsTrigger>
-                  <TabsTrigger value="material" className="gap-1.5"><Package className="w-3.5 h-3.5" />Mat.</TabsTrigger>
-                  <TabsTrigger value="material" className="gap-1.5"><Package className="w-3.5 h-3.5" />Mat.</TabsTrigger>
-                </TabsList>
+            <div className="bg-card rounded-lg border shadow-sm">
+              <div className="flex items-center justify-between p-4 border-b">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Itens da Composição</h3>
+                <div className="flex items-center gap-2">
+                  <Select value="" onValueChange={(tipo) => { setTipoNovo(tipo as TipoInsumo); setEditingItem(null); setShowItemForm(true); }}>
+                    <SelectTrigger className="w-auto gap-2">
+                      <Plus className="w-4 h-4" />
+                      <span>Adicionar Item</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="mao_de_obra"><div className="flex items-center gap-2"><Users className="w-4 h-4" />Mão de Obra</div></SelectItem>
+                      <SelectItem value="equipamento"><div className="flex items-center gap-2"><Wrench className="w-4 h-4" />Equipamento</div></SelectItem>
+                      <SelectItem value="material"><div className="flex items-center gap-2"><Package className="w-4 h-4" />Material</div></SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              {(["mao_de_obra", "equipamento", "material"] as const).map((tipo) => (
-                <TabsContent key={tipo} value={tipo} className="space-y-3">
-                  <div className="flex justify-end">
-                    <Button size="sm" className="gap-1.5" onClick={() => { setTipoNovo(tipo); setEditingItem(null); setShowItemForm(true); }}>
-                      <Plus className="w-3.5 h-3.5" />
-                      Adicionar {tipoLabels[tipo]}
-                    </Button>
-                  </div>
-
-                  {groupedItems[tipo].length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground text-sm">
-                      Nenhum item de {tipoLabels[tipo].toLowerCase()} adicionado
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {groupedItems[tipo].map((item) => {
-                        const isExpanded = expandedItem === String(item.id);
+              {itensComCalculo.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground text-sm">
+                  Nenhum item adicionado. Use o botão acima para adicionar mão de obra, equipamentos ou materiais.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Tipo</th>
+                        <th>Descrição</th>
+                        <th>Qtd</th>
+                        <th>Coeficiente</th>
+                        <th>Custo Unit.</th>
+                        <th>Custo Total</th>
+                        <th className="text-center">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {itensComCalculo.map((item) => {
                         const Icon = tipoIcons[String(item.tipo_insumo)] || Package;
                         return (
-                          <div key={String(item.id)} className="bg-card rounded-lg border shadow-sm overflow-hidden">
-                            <div
-                              className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                              onClick={() => setExpandedItem(isExpanded ? null : String(item.id))}
-                            >
-                              <div className="flex items-center gap-3">
-                                <Icon className="w-4 h-4 text-muted-foreground" />
-                                <div>
-                                  <div className="font-medium text-sm">{String(item.descricao) || "Sem descrição"}</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    Qtd: {fmt(Number(item.quantidade))} × Coef: {fmt(Number(item.coeficiente))}
-                                  </div>
-                                </div>
+                          <tr key={String(item.id)} className="hover:bg-muted/50">
+                            <td>
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
+                                <Icon className="w-3 h-3" />
+                                {tipoLabels[String(item.tipo_insumo)] || String(item.tipo_insumo)}
+                              </span>
+                            </td>
+                            <td className="font-medium text-sm">{String(item.descricao) || "Sem descrição"}</td>
+                            <td className="font-mono text-sm">{fmt(Number(item.quantidade))}</td>
+                            <td className="font-mono text-sm">{fmt(Number(item.coeficiente))}</td>
+                            <td className="font-mono text-sm">R$ {fmt(item.resultado.custo_unitario)}</td>
+                            <td className="font-mono font-semibold text-sm">R$ {fmt(item.resultado.custo_total)}</td>
+                            <td className="text-center">
+                              <div className="flex items-center justify-center gap-1">
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingItem(item); setTipoNovo(String(item.tipo_insumo) as TipoInsumo); setShowItemForm(true); }}>
+                                  <Edit className="w-3.5 h-3.5" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeletingItemId(String(item.id))}>
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
                               </div>
-                              <div className="flex items-center gap-3">
-                                <div className="text-right">
-                                  <div className="text-xs text-muted-foreground">Custo Total</div>
-                                  <div className="font-mono font-semibold text-sm">R$ {fmt(item.resultado.custo_total)}</div>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setEditingItem(item); setTipoNovo(String(item.tipo_insumo) as TipoInsumo); setShowItemForm(true); }}>
-                                    <Edit className="w-3.5 h-3.5" />
-                                  </Button>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); setDeletingItemId(String(item.id)); }}>
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </Button>
-                                  {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                                </div>
-                              </div>
-                            </div>
-                            {isExpanded && (
-                              <div className="px-4 pb-4 border-t">
-                                <div className="pt-3">
-                                  <MemoriaCalculo memoria={item.resultado.memoria} />
-                                  {item.observacoes && (
-                                    <div className="mt-2 text-xs text-muted-foreground bg-muted/30 rounded p-2">
-                                      <span className="font-semibold">Obs:</span> {String(item.observacoes)}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
+                            </td>
+                          </tr>
                         );
                       })}
-                    </div>
-                  )}
-                </TabsContent>
-              ))}
-            </Tabs>
+                      {/* Totals row */}
+                      <tr className="border-t-2 font-semibold bg-muted/30">
+                        <td colSpan={5} className="text-right text-sm">Total da Composição</td>
+                        <td className="font-mono text-sm">R$ {fmt(resumo.custo_direto)}</td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
