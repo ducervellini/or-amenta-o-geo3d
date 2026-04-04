@@ -13,7 +13,7 @@ export function useSupabaseQuery(
   }
 ) {
   return useQuery({
-    queryKey: [table, options?.filter],
+    queryKey: [table, options?.filter, options?.filters],
     enabled: options?.enabled !== false,
     queryFn: async () => {
       let query = (supabase.from as any)(table)
