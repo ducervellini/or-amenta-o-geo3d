@@ -50,6 +50,10 @@ export default function ComposicaoDetalhe() {
   const isNew = id === "novo";
 
   const { data: servicos } = useSupabaseQuery("servicos");
+  const { data: mercados } = useSupabaseQuery("mercados");
+  const { data: areasEmpresa } = useSupabaseQuery("areas_empresa");
+  const { data: departamentos } = useSupabaseQuery("modulos");
+  const { data: composicoesExistentes } = useSupabaseQuery("composicoes");
 
   // Composition header
   const [codigo, setCodigo] = useState("");
@@ -59,6 +63,16 @@ export default function ComposicaoDetalhe() {
   const [servicoId, setServicoId] = useState("_none_");
   const [status, setStatus] = useState("rascunho");
   const [travado, setTravado] = useState(false);
+
+  // Auto-filled from service
+  const [mercadoNome, setMercadoNome] = useState("");
+  const [areaNome, setAreaNome] = useState("");
+  const [departamentoNome, setDepartamentoNome] = useState("");
+
+  // Productivity
+  const [produtividadeValor, setProdutividadeValor] = useState<number>(0);
+  const [produtividadeUnidade, setProdutividadeUnidade] = useState("un");
+  const [produtividadeTempo, setProdutividadeTempo] = useState("dia");
 
   // Service metrics
   const [tipoGeometria, setTipoGeometria] = useState("");
