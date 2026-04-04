@@ -47,7 +47,7 @@ function calcVeic(f: VeiculoForm) {
   const isProprio = f.tipo_propriedade === "proprio";
   const depKm = isProprio && f.vida_util_km > 0 ? (f.valor_aquisicao - f.valor_residual) / f.vida_util_km : 0;
   const retornoCapitalKm = isProprio && f.vida_util_km > 0 ? f.valor_residual / f.vida_util_km : 0;
-  const combKm = f.combustivel_consumo_km * f.combustivel_preco_litro;
+  const combKm = f.media_km_l > 0 ? f.combustivel_preco_litro / f.media_km_l : 0;
   const pneusKm = f.pneus_vida_util_km > 0 ? f.pneus_valor / f.pneus_vida_util_km : 0;
   const oleoKm = f.oleo_troca_km > 0 ? f.oleo_valor / f.oleo_troca_km : 0;
   const custoKm = depKm + combKm + pneusKm + oleoKm;
@@ -130,6 +130,7 @@ export default function Veiculos() {
     const c = calcVeic(form);
     const payload = {
       ...form,
+      combustivel_consumo_km: form.media_km_l > 0 ? 1 / form.media_km_l : 0,
       custo_km: c.custoKmTotal,
       custo_hora: c.custoHora,
       manutencao_hora: c.manutKm * (form.km_mensal_estimado / (form.horas_produtivas_mes || 1)),
@@ -212,13 +213,9 @@ export default function Veiculos() {
           </DialogHeader>
           <div className="grid gap-6">
             {/* Identificação */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div><Label>Código *</Label><Input value={form.codigo} onChange={e => setField("codigo", e.target.value)} placeholder="VE-001" /></div>
               <div><Label>Nome *</Label><Input value={form.nome} onChange={e => setField("nome", e.target.value)} /></div>
-              <div>
-                <Label>Média (km/L)</Label>
-                <Input type="number" step="0.1" value={form.media_km_l || ""} onChange={e => setNum("media_km_l", e.target.value)} placeholder="Ex: 8.5" />
-              </div>
               <div>
                 <Label>Tipo Combustível</Label>
                 <Select value={form.tipo_combustivel} onValueChange={v => setField("tipo_combustivel", v)}>
@@ -269,7 +266,7 @@ export default function Veiculos() {
 
               <TabsContent value="operacional" className="space-y-4 mt-4">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div><Label>Consumo combustível (L/km)</Label><Input type="number" step="0.01" value={form.combustivel_consumo_km || ""} onChange={e => setNum("combustivel_consumo_km", e.target.value)} /></div>
+                  <div><Label>Consumo combustível (km/L)</Label><Input type="number" step="0.1" value={form.media_km_l || ""} onChange={e => setNum("media_km_l", e.target.value)} placeholder="Ex: 8.5" /></div>
                   <div><Label>Preço combustível (R$/L)</Label><Input type="number" value={form.combustivel_preco_litro || ""} onChange={e => setNum("combustivel_preco_litro", e.target.value)} /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
