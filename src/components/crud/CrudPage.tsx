@@ -57,7 +57,7 @@ export function CrudPage<T extends TableName>({
   const [editItem, setEditItem] = useState<Record<string, unknown> | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { data, isLoading } = useSupabaseQuery(table, { filter });
+  const { data, isLoading } = useSupabaseQuery(table, { filter, filters: defaultFilters });
   const insertMutation = useSupabaseInsert(table);
   const updateMutation = useSupabaseUpdate(table);
   const deleteMutation = useSupabaseDelete(table);
