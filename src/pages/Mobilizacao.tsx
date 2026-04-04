@@ -631,8 +631,8 @@ export default function Mobilizacao() {
                 <div className="flex items-end gap-3">
                   <div className="flex-1">
                     <p className="text-xs text-muted-foreground mb-2">
-                      Consulta dados históricos de precipitação do INMET para a estação mais próxima do local do projeto,
-                      no período definido. O resultado atualiza automaticamente os dias de chuva/mês.
+                      Consulta dados históricos de precipitação do INMET (últimos 5 anos) para estimar o regime de chuvas
+                      mês a mês durante a duração do projeto. O resultado atualiza automaticamente os dias de chuva/mês.
                     </p>
                   </div>
                   <Button
