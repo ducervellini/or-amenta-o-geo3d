@@ -136,6 +136,7 @@ export default function Mobilizacao() {
   const [lat, setLat] = useState(-15.78);
   const [lng, setLng] = useState(-47.93);
   const [baseEndereco, setBaseEndereco] = useState("");
+  const [arquivoGeo, setArquivoGeo] = useState("");
   const [baseLat, setBaseLat] = useState(-15.78);
   const [baseLng, setBaseLng] = useState(-47.93);
   const [diasTrabalho, setDiasTrabalho] = useState(30);
