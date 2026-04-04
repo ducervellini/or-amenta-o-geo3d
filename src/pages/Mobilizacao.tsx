@@ -384,10 +384,11 @@ export default function Mobilizacao() {
 
   const custoHospedagemTotal = useMemo(() => custoHospedagemMensal * duracaoHospedagemMeses, [custoHospedagemMensal, duracaoHospedagemMeses]);
 
+  // Veículos cadastrados
+  const { data: veiculosCadastrados } = useSupabaseQuery("veiculos");
+
   // Custos (sem hospedagem, que agora é separada)
-  const [custos, setCustos] = useState<(CustoItem & { _key: number })[]>([
-    { _key: 1, categoria: "veiculo", descricao: "Caminhonete", valor_unitario: 200, quantidade: 1, frequencia: "diario" },
-  ]);
+  const [custos, setCustos] = useState<(CustoItem & { _key: number; veiculo_id?: string; km_dia?: number })[]>([]);
   let custoKeyRef = 4;
 
   // Equipes
