@@ -194,6 +194,30 @@ export default function Veiculos() {
                 <TableCell className="text-right font-medium">{R(row._totalMes)}</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button size="icon" variant="ghost"><Calculator className="h-4 w-4 text-primary" /></Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-72 text-xs space-y-2" side="left">
+                        <p className="font-semibold text-sm mb-2">Memória de Cálculo — {row.nome}</p>
+                        {row._calc.isProprio && (
+                          <div className="flex justify-between"><span className="text-muted-foreground">Depreciação/km</span><span className="font-medium">{R(row._calc.depKm)}</span></div>
+                        )}
+                        <div className="flex justify-between"><span className="text-muted-foreground">Combustível/km</span><span className="font-medium">{R(row._calc.combKm)}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Pneus/km</span><span className="font-medium">{R(row._calc.pneusKm)}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Óleo/km</span><span className="font-medium">{R(row._calc.oleoKm)}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Seguro/km</span><span className="font-medium">{R(row._calc.seguroKm)}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Manutenção/km</span><span className="font-medium">{R(row._calc.manutKm)}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Lavagem/km</span><span className="font-medium">{R(row._calc.lavagemKm)}</span></div>
+                        {!row._calc.isProprio && (
+                          <div className="flex justify-between"><span className="text-muted-foreground">Aluguel/km</span><span className="font-medium">{R(row._calc.aluguelKm)}</span></div>
+                        )}
+                        <Separator />
+                        <div className="flex justify-between font-semibold text-primary"><span>Custo/km total</span><span>{R(row._calc.custoKmTotal)}</span></div>
+                        <div className="flex justify-between font-semibold text-primary"><span>Custo/hora</span><span>{R(row._calc.custoHora)}</span></div>
+                        <div className="flex justify-between font-semibold text-primary"><span>Custo/mês</span><span>{R(row._calc.totalMes)}</span></div>
+                      </PopoverContent>
+                    </Popover>
                     <Button size="icon" variant="ghost" onClick={() => openEdit(row)}><Pencil className="h-4 w-4" /></Button>
                     <Button size="icon" variant="ghost" onClick={() => remove(row.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                   </div>
