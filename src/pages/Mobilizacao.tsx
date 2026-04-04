@@ -463,7 +463,7 @@ export default function Mobilizacao() {
   const addCusto = () => {
     setCustos((prev) => [
       ...prev,
-      { _key: custoKeyRef++, categoria: "hospedagem", valor_unitario: 0, quantidade: 1, frequencia: "diario" },
+      { _key: custoKeyRef++, categoria: "veiculo", valor_unitario: 0, quantidade: 1, frequencia: "diario", km_dia: kmMedioDiario },
     ]);
   };
   const removeCusto = (key: number) => setCustos((prev) => prev.filter((c) => c._key !== key));
