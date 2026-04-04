@@ -582,19 +582,6 @@ export default function Mobilizacao() {
                 </TabsContent>
               </Tabs>
 
-              {/* Ponto de Partida (sempre visível) */}
-              <Separator className="my-3" />
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="col-span-2">
-                  <Label className="text-xs">Endereço da Base (ponto de partida)</Label>
-                  <Input value={baseEndereco} onChange={(e) => setBaseEndereco(e.target.value)} placeholder="Endereço ou cidade de origem" />
-                </div>
-                <div>
-                  <Label className="text-xs">Dist. Base→Projeto (km)</Label>
-                  <Input type="number" value={distanciaBase} onChange={(e) => setDistanciaBase(Number(e.target.value))} />
-                </div>
-              </div>
-
               {/* Datas do Projeto */}
               <Separator className="my-3" />
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -605,16 +592,23 @@ export default function Mobilizacao() {
                   <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
                 </div>
                 <div>
-                  <Label className="text-xs flex items-center gap-1">
-                    <Calendar className="w-3 h-3" /> Data Fim
-                  </Label>
-                  <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+                  <Label className="text-xs">Duração (meses)</Label>
+                  <Input type="number" value={duracaoMeses} onChange={(e) => setDuracaoMeses(Number(e.target.value))} min={1} max={120} />
                 </div>
                 <div className="flex items-end">
                   <div className="text-xs text-muted-foreground pb-2">
+                    Fim previsto: {new Date(dataFim).toLocaleDateString("pt-BR")}
+                    <br />
                     Duração: {Math.round((new Date(dataFim).getTime() - new Date(dataInicio).getTime()) / (1000 * 60 * 60 * 24))} dias
                   </div>
                 </div>
+                {geocodificando && (
+                  <div className="flex items-end pb-2">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Loader2 className="w-3 h-3 animate-spin" /> Geocodificando...
+                    </span>
+                  </div>
+                )}
               </div>
             </Section>
 
