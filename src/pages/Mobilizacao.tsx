@@ -643,7 +643,7 @@ export default function Mobilizacao() {
                     disabled={loadingPluv}
                   >
                     {loadingPluv ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CloudRain className="w-3.5 h-3.5" />}
-                    {loadingPluv ? "Consultando..." : "Consultar INMET"}
+                    {loadingPluv ? "Consultando..." : "Consultar NASA POWER"}
                   </Button>
                 </div>
 
