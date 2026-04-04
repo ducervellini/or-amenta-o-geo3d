@@ -569,6 +569,8 @@ export default function Mobilizacao() {
         const custoCombMes = custoKmComb * kmMesProd * item.quantidade;
         const aluguelMes = Number(selectedVeiculo?.valor_aluguel_mensal || 0) * item.quantidade;
         custoMes = custoCombMes + aluguelMes;
+      } else if (item.categoria === "pedagios" || item.categoria === "passagens") {
+        custoMes = duracaoMeses > 0 ? (item.valor_unitario * item.quantidade) / duracaoMeses : 0;
       } else if (item.frequencia === "diario") {
         custoMes = item.valor_unitario * item.quantidade * diasProdutivosMes;
       } else if (item.frequencia === "mensal") {
