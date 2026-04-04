@@ -42,66 +42,12 @@ export interface CrudPageProps<T extends TableName> {
   hiddenDefaults?: Record<string, unknown>;
 }
 
-export function CrudPage<T extends TableName>({
-  table,
-  title,
-  subtitle,
-  columns,
-  formFields,
-  searchField,
-  filter,
-  defaultFilters,
-  hiddenDefaults,
-}: CrudPageProps<T>) {
-  const [search, setSearch] = useState("");
-  const [formOpen, setFormOpen] = useState(false);
-  const [editItem, setEditItem] = useState<Record<string, unknown> | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-
-  const { data, isLoading } = useSupabaseQuery(table, { filter, filters: defaultFilters });
-  const insertMutation = useSupabaseInsert(table);
-  const updateMutation = useSupabaseUpdate(table);
-  const deleteMutation = useSupabaseDelete(table);
-
-  const filtered = (data || []).filter((row: any) => {
-    if (!search || !searchField) return true;
-    return String(row[searchField] || "")
-      .toLowerCase()
-      .includes(search.toLowerCase());
-  });
-
-  const handleSubmit = (values: Record<string, unknown>) => {
-    const mergedValues = { ...hiddenDefaults, ...values };
-    if (editItem) {
-      updateMutation.mutate(
-        { id: editItem.id as string, values: mergedValues as any },
-        { onSuccess: () => { setFormOpen(false); setEditItem(null); } }
-      );
-    } else {
-      insertMutation.mutate(mergedValues as any, {
-        onSuccess: () => setFormOpen(false),
-      });
-    }
-  };
-
-  const handleEdit = (item: Record<string, unknown>) => {
-    setEditItem(item);
-    setFormOpen(true);
-  };
-
-  const handleDelete = () => {
-    if (deleteId) {
-      deleteMutation.mutate(deleteId, {
-        onSuccess: () => setDeleteId(null),
-      });
-    }
-  };
-
-  return (
-    <div className="page-container animate-fade-in">
-
-{/* Sortable table sub-component */}
-function SortableTable({ data, columns, onEdit, onDelete }: { data: Record<string, unknown>[]; columns: ColumnConfig[]; onEdit: (item: Record<string, unknown>) => void; onDelete: (id: string) => void }) {
+function SortableTable({ data, columns, onEdit, onDelete }: {
+  data: Record<string, unknown>[];
+  columns: ColumnConfig[];
+  onEdit: (item: Record<string, unknown>) => void;
+  onDelete: (id: string) => void;
+}) {
   const { sorted, sortKey, sortDirection, handleSort } = useTableSort(data);
   return (
     <div className="overflow-x-auto">
@@ -140,6 +86,44 @@ function SortableTable({ data, columns, onEdit, onDelete }: { data: Record<strin
   );
 }
 
+export function CrudPage<T extends TableName>({
+  table, title, subtitle, columns, formFields, searchField, filter, defaultFilters, hiddenDefaults,
+}: CrudPageProps<T>) {
+  const [search, setSearch] = useState("");
+  const [formOpen, setFormOpen] = useState(false);
+  const [editItem, setEditItem] = useState<Record<string, unknown> | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const { data, isLoading } = useSupabaseQuery(table, { filter, filters: defaultFilters });
+  const insertMutation = useSupabaseInsert(table);
+  const updateMutation = useSupabaseUpdate(table);
+  const deleteMutation = useSupabaseDelete(table);
+
+  const filtered = (data || []).filter((row: any) => {
+    if (!search || !searchField) return true;
+    return String(row[searchField] || "").toLowerCase().includes(search.toLowerCase());
+  });
+
+  const handleSubmit = (values: Record<string, unknown>) => {
+    const mergedValues = { ...hiddenDefaults, ...values };
+    if (editItem) {
+      updateMutation.mutate(
+        { id: editItem.id as string, values: mergedValues as any },
+        { onSuccess: () => { setFormOpen(false); setEditItem(null); } }
+      );
+    } else {
+      insertMutation.mutate(mergedValues as any, { onSuccess: () => setFormOpen(false) });
+    }
+  };
+
+  const handleEdit = (item: Record<string, unknown>) => { setEditItem(item); setFormOpen(true); };
+
+  const handleDelete = () => {
+    if (deleteId) {
+      deleteMutation.mutate(deleteId, { onSuccess: () => setDeleteId(null) });
+    }
+  };
+
   return (
     <div className="page-container animate-fade-in">
       <div className="flex items-center justify-between mb-6">
@@ -147,13 +131,7 @@ function SortableTable({ data, columns, onEdit, onDelete }: { data: Record<strin
           <h1 className="page-title">{title}</h1>
           <p className="page-subtitle">{subtitle}</p>
         </div>
-        <Button
-          className="gap-2"
-          onClick={() => {
-            setEditItem(null);
-            setFormOpen(true);
-          }}
-        >
+        <Button className="gap-2" onClick={() => { setEditItem(null); setFormOpen(true); }}>
           <Plus className="w-4 h-4" />
           Novo
         </Button>
@@ -190,10 +168,7 @@ function SortableTable({ data, columns, onEdit, onDelete }: { data: Record<strin
 
       <CrudFormDialog
         open={formOpen}
-        onOpenChange={(open) => {
-          setFormOpen(open);
-          if (!open) setEditItem(null);
-        }}
+        onOpenChange={(open) => { setFormOpen(open); if (!open) setEditItem(null); }}
         title={editItem ? `Editar ${title}` : `Novo ${title}`}
         fields={formFields}
         initialValues={editItem || undefined}
@@ -205,9 +180,7 @@ function SortableTable({ data, columns, onEdit, onDelete }: { data: Record<strin
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
+            <AlertDialogDescription>Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
