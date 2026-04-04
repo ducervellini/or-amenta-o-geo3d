@@ -1307,18 +1307,22 @@ export default function Mobilizacao() {
                         </Button>
                       </div>
                       {calc.veic && item.distancia_km > 0 && (
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-2 border-t border-border/50">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 pt-2 border-t border-border/50">
                           <div className="text-[10px] text-muted-foreground">
                             <span className="block font-medium text-foreground">{calc.diasViagem} dia(s) de viagem</span>
                             {calc.pernoites} pernoite(s)
                           </div>
                           <div className="text-[10px] text-muted-foreground">
                             <span className="block">Combustível (ida): <span className="font-medium text-foreground">{fmt(calc.custoCombustivelIda)}</span></span>
-                            <span>{calc.mediaKmL.toFixed(1)} km/L · {fmt(calc.custoKm)}/km</span>
+                            <span>{calc.mediaKmL > 0 ? `${calc.mediaKmL.toFixed(1)} km/L · ` : ""}{fmt(calc.custoKm)}/km</span>
                           </div>
                           <div className="text-[10px] text-muted-foreground">
                             <span className="block">Pernoite (ida): <span className="font-medium text-foreground">{fmt(calc.custoPernoiteIda)}</span></span>
                             <span>Pedágios (ida): {fmt(item.pedagios_ida)}</span>
+                          </div>
+                          <div className="text-[10px] text-muted-foreground">
+                            <span className="block">Horas Pessoal (ida): <span className="font-medium text-foreground">{fmt(calc.custoHorasPessoasIda)}</span></span>
+                            <span>{calc.diasViagem}d × {jornadaDiaria}h × {item.quantidade_pessoas} pessoa(s)</span>
                           </div>
                           <div className="text-[10px]">
                             <span className="block text-muted-foreground">Ida: {fmt(calc.custoIda)}</span>
