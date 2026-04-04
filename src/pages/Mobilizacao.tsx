@@ -865,7 +865,7 @@ export default function Mobilizacao() {
               </div>
               {pluviometria && (
                 <p className="text-[10px] text-primary mt-2">
-                  ✓ Dias de chuva/mês baseados em dados históricos INMET (estação {pluviometria.estacao.nome})
+                  ✓ Dias de chuva/mês baseados em dados históricos NASA POWER ({pluviometria.estacao.nome})
                 </p>
               )}
               {!pluviometria && (
