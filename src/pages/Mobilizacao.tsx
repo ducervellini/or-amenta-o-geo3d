@@ -416,6 +416,7 @@ export default function Mobilizacao() {
   const diasProdutivos = diasProdutivosMes * duracaoMeses;
   const diasImprodutivos = diasImprodutivosMes * duracaoMeses;
   const custoCombustivelMensal = custoCombustivelDiario * diasProdutivosMes;
+  const custoCombustivelTotal = custoCombustivelMensal * duracaoMeses;
 
   // ── Pluviometria INMET ──
   const buscarPluviometria = async () => {
@@ -1216,13 +1217,13 @@ export default function Mobilizacao() {
                       </div>
                     )}
                     {/* Combustível (km rodado) */}
-                    {custoCombustivelMensal > 0 && (
+                    {custoCombustivelTotal > 0 && (
                       <div className="flex items-center justify-between text-xs">
                         <span className="flex items-center gap-1.5">
                           <Fuel className="w-3 h-3 text-muted-foreground" />
-                          Combustível (km)
+                          Combustível ({duracaoMeses}m)
                         </span>
-                        <span className="font-medium">{fmt(custoCombustivelMensal)}</span>
+                        <span className="font-medium">{fmt(custoCombustivelTotal)}</span>
                       </div>
                     )}
                     {Object.entries(resultado.custos_por_categoria)
@@ -1250,7 +1251,7 @@ export default function Mobilizacao() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm font-bold text-primary">
                     <span>Custo Total</span>
-                    <span>{fmt(resultado.custo_total + custoHospedagemTotal + custoCombustivelMensal)}</span>
+                    <span>{fmt(resultado.custo_total + custoHospedagemTotal + custoCombustivelTotal)}</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span>Custo/Dia</span>
