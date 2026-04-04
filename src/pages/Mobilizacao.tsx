@@ -368,6 +368,7 @@ export default function Mobilizacao() {
     pedagios_ida: number;
     quantidade_pessoas: number;
     quantidade_veiculos: number;
+    custo_hora_pessoa: number;
   }[]>([]);
   const mobDesmobKeyRef = useRef(1);
 
@@ -385,6 +386,7 @@ export default function Mobilizacao() {
         pedagios_ida: 0,
         quantidade_pessoas: 1,
         quantidade_veiculos: 1,
+        custo_hora_pessoa: 0,
       },
     ]);
   };
@@ -403,16 +405,19 @@ export default function Mobilizacao() {
     const veic = (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id);
     const mediaKmL = veic?.media_km_l || 0;
     const precoComb = veic?.combustivel_preco_litro || 0;
-    const custoKm = mediaKmL > 0 ? precoComb / mediaKmL : 0;
+    // Use custo_km from vehicle if available, otherwise calculate from fuel
+    const custoKm = veic?.custo_km > 0 ? Number(veic.custo_km) : (mediaKmL > 0 ? precoComb / mediaKmL : 0);
     const distancia = item.distancia_km;
     const diasViagem = item.km_max_dia > 0 ? Math.ceil(distancia / item.km_max_dia) : 1;
     const pernoites = Math.max(0, diasViagem - 1);
     const custoCombustivelIda = custoKm * distancia * item.quantidade_veiculos;
     const custoPernoiteIda = pernoites * item.hospedagem_pernoite * item.quantidade_pessoas;
-    const custoIda = custoCombustivelIda + custoPernoiteIda + item.pedagios_ida;
+    // Custo de horas das pessoas: dias de viagem × jornada diária × custo/hora × pessoas
+    const custoHorasPessoasIda = diasViagem * jornadaDiaria * item.custo_hora_pessoa * item.quantidade_pessoas;
+    const custoIda = custoCombustivelIda + custoPernoiteIda + item.pedagios_ida + custoHorasPessoasIda;
     const custoTotal = custoIda * 2;
-    return { veic, mediaKmL, custoKm, diasViagem, pernoites, custoCombustivelIda, custoPernoiteIda, custoIda, custoTotal };
-  }, [veiculosCadastrados]);
+    return { veic, mediaKmL, custoKm, diasViagem, pernoites, custoCombustivelIda, custoPernoiteIda, custoHorasPessoasIda, custoIda, custoTotal };
+  }, [veiculosCadastrados, jornadaDiaria]);
 
   const custoMobDesmobTotal = useMemo(() => {
     return mobDesmobItens.reduce((acc, item) => acc + calcularMobDesmobItem(item).custoTotal, 0);
@@ -1289,6 +1294,10 @@ export default function Mobilizacao() {
                             <Input className="h-8 text-xs" type="number" value={item.quantidade_pessoas} onChange={(e) => updateMobDesmob(item._key, "quantidade_pessoas", Number(e.target.value))} min={1} />
                           </div>
                           <div>
+                            <Label className="text-[10px]">Custo H/H (R$)</Label>
+                            <Input className="h-8 text-xs" type="number" step="0.01" value={item.custo_hora_pessoa || ""} onChange={(e) => updateMobDesmob(item._key, "custo_hora_pessoa", Number(e.target.value))} placeholder="R$/hora" />
+                          </div>
+                          <div>
                             <Label className="text-[10px]">Veículos</Label>
                             <Input className="h-8 text-xs" type="number" value={item.quantidade_veiculos} onChange={(e) => updateMobDesmob(item._key, "quantidade_veiculos", Number(e.target.value))} min={1} />
                           </div>
@@ -1298,18 +1307,22 @@ export default function Mobilizacao() {
                         </Button>
                       </div>
                       {calc.veic && item.distancia_km > 0 && (
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-2 border-t border-border/50">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 pt-2 border-t border-border/50">
                           <div className="text-[10px] text-muted-foreground">
                             <span className="block font-medium text-foreground">{calc.diasViagem} dia(s) de viagem</span>
                             {calc.pernoites} pernoite(s)
                           </div>
                           <div className="text-[10px] text-muted-foreground">
                             <span className="block">Combustível (ida): <span className="font-medium text-foreground">{fmt(calc.custoCombustivelIda)}</span></span>
-                            <span>{calc.mediaKmL.toFixed(1)} km/L · {fmt(calc.custoKm)}/km</span>
+                            <span>{calc.mediaKmL > 0 ? `${calc.mediaKmL.toFixed(1)} km/L · ` : ""}{fmt(calc.custoKm)}/km</span>
                           </div>
                           <div className="text-[10px] text-muted-foreground">
                             <span className="block">Pernoite (ida): <span className="font-medium text-foreground">{fmt(calc.custoPernoiteIda)}</span></span>
                             <span>Pedágios (ida): {fmt(item.pedagios_ida)}</span>
+                          </div>
+                          <div className="text-[10px] text-muted-foreground">
+                            <span className="block">Horas Pessoal (ida): <span className="font-medium text-foreground">{fmt(calc.custoHorasPessoasIda)}</span></span>
+                            <span>{calc.diasViagem}d × {jornadaDiaria}h × {item.quantidade_pessoas} pessoa(s)</span>
                           </div>
                           <div className="text-[10px]">
                             <span className="block text-muted-foreground">Ida: {fmt(calc.custoIda)}</span>
