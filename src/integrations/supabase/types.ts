@@ -122,6 +122,7 @@ export type Database = {
           created_at: string
           descricao: string | null
           id: string
+          jornada_id: string | null
           local_trabalho: string
           nome: string
           regime_contratacao: string
@@ -134,6 +135,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          jornada_id?: string | null
           local_trabalho?: string
           nome: string
           regime_contratacao?: string
@@ -146,6 +148,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          jornada_id?: string | null
           local_trabalho?: string
           nome?: string
           regime_contratacao?: string
@@ -153,7 +156,15 @@ export type Database = {
           unidade_salarial?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cargos_jornada_id_fkey"
+            columns: ["jornada_id"]
+            isOneToOne: false
+            referencedRelation: "jornadas_trabalho"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       combustiveis: {
         Row: {
