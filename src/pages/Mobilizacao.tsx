@@ -345,6 +345,18 @@ export default function Mobilizacao() {
   const updateQuarto = (key: number, field: string, value: any) => {
     setQuartosHotel(prev => prev.map(q => q._key === key ? { ...q, [field]: value } : q));
   };
+  // Duração hospedagem (pré-configurada com duração do projeto)
+  const [duracaoHospedagemMeses, setDuracaoHospedagemMeses] = useState(duracaoMeses);
+  // Sync default when duracaoMeses changes (only if user hasn't customized)
+  const duracaoHospedagemSynced = useRef(true);
+  useEffect(() => {
+    if (duracaoHospedagemSynced.current) setDuracaoHospedagemMeses(duracaoMeses);
+  }, [duracaoMeses]);
+  const handleDuracaoHospedagem = (v: number) => {
+    duracaoHospedagemSynced.current = false;
+    setDuracaoHospedagemMeses(v);
+  };
+
   // Alojamento mobiliado
   const [alojamentoMobiliadoValor, setAlojamentoMobiliadoValor] = useState(3000);
   const [alojamentoMobiliadoQtd, setAlojamentoMobiliadoQtd] = useState(1);
@@ -352,7 +364,7 @@ export default function Mobilizacao() {
   const [alojamentoMobiliarAluguel, setAlojamentoMobiliarAluguel] = useState(2000);
   const [alojamentoMobiliarQtd, setAlojamentoMobiliarQtd] = useState(1);
   const [alojamentoMobiliarMobilia, setAlojamentoMobiliarMobilia] = useState(5000);
-  const [alojamentoMobiliarRevenda, setAlojamentoMobiliarRevenda] = useState(50); // % de revenda
+  const [alojamentoMobiliarRevenda, setAlojamentoMobiliarRevenda] = useState(50);
 
   const custoHospedagemMensal = useMemo(() => {
     if (tipoHospedagem === "hotel") {
@@ -361,16 +373,16 @@ export default function Mobilizacao() {
     if (tipoHospedagem === "alojamento_mobiliado") {
       return alojamentoMobiliadoValor * alojamentoMobiliadoQtd;
     }
-    // alojamento_mobiliar: aluguel + mobília amortizada - revenda
     const aluguelTotal = alojamentoMobiliarAluguel * alojamentoMobiliarQtd;
     const mobiliaTotal = alojamentoMobiliarMobilia * alojamentoMobiliarQtd;
     const revendaTotal = mobiliaTotal * (alojamentoMobiliarRevenda / 100);
     const custoLiquidoMobilia = mobiliaTotal - revendaTotal;
-    // Amortizar mobília sobre a duração do projeto
-    const amortizacaoMensal = duracaoMeses > 0 ? custoLiquidoMobilia / duracaoMeses : custoLiquidoMobilia;
+    const amortizacaoMensal = duracaoHospedagemMeses > 0 ? custoLiquidoMobilia / duracaoHospedagemMeses : custoLiquidoMobilia;
     return aluguelTotal + amortizacaoMensal;
   }, [tipoHospedagem, quartosHotel, diasTrabalho, alojamentoMobiliadoValor, alojamentoMobiliadoQtd,
-    alojamentoMobiliarAluguel, alojamentoMobiliarQtd, alojamentoMobiliarMobilia, alojamentoMobiliarRevenda, duracaoMeses]);
+    alojamentoMobiliarAluguel, alojamentoMobiliarQtd, alojamentoMobiliarMobilia, alojamentoMobiliarRevenda, duracaoHospedagemMeses]);
+
+  const custoHospedagemTotal = useMemo(() => custoHospedagemMensal * duracaoHospedagemMeses, [custoHospedagemMensal, duracaoHospedagemMeses]);
 
   // Custos (sem hospedagem, que agora é separada)
   const [custos, setCustos] = useState<(CustoItem & { _key: number })[]>([
@@ -917,7 +929,18 @@ export default function Mobilizacao() {
             </Section>
 
             {/* Hospedagem */}
-            <Section title="Hospedagem" icon={Home} badge={fmt(custoHospedagemMensal) + "/mês"}>
+            <Section title="Hospedagem" icon={Home} badge={fmt(custoHospedagemTotal) + " total"}>
+              {/* Duração da hospedagem */}
+              <div className="flex items-end gap-3 mb-3 p-2 rounded-lg bg-muted/20 border">
+                <div className="w-32">
+                  <Label className="text-[10px]">Duração (meses)</Label>
+                  <Input className="h-8 text-xs" type="number" value={duracaoHospedagemMeses} onChange={(e) => handleDuracaoHospedagem(Number(e.target.value))} min={1} />
+                </div>
+                <div className="text-[10px] text-muted-foreground pb-1.5 space-y-0.5">
+                  <div>Mensal: <span className="font-medium text-foreground">{fmt(custoHospedagemMensal)}</span></div>
+                  <div>Total ({duracaoHospedagemMeses}m): <span className="font-bold text-primary">{fmt(custoHospedagemTotal)}</span></div>
+                </div>
+              </div>
               <div className="space-y-3">
                 <div className="grid grid-cols-3 gap-2">
                   {([
@@ -1029,8 +1052,8 @@ export default function Mobilizacao() {
                         <span className="font-medium">{fmt(alojamentoMobiliarMobilia * alojamentoMobiliarQtd * (1 - alojamentoMobiliarRevenda / 100))}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Amortização/mês ({duracaoMeses}m):</span>
-                        <span className="font-medium">{fmt(duracaoMeses > 0 ? (alojamentoMobiliarMobilia * alojamentoMobiliarQtd * (1 - alojamentoMobiliarRevenda / 100)) / duracaoMeses : 0)}</span>
+                        <span className="text-muted-foreground">Amortização/mês ({duracaoHospedagemMeses}m):</span>
+                        <span className="font-medium">{fmt(duracaoHospedagemMeses > 0 ? (alojamentoMobiliarMobilia * alojamentoMobiliarQtd * (1 - alojamentoMobiliarRevenda / 100)) / duracaoHospedagemMeses : 0)}</span>
                       </div>
                       <Separator className="my-1" />
                       <div className="flex justify-between text-xs font-bold">
@@ -1218,13 +1241,13 @@ export default function Mobilizacao() {
                   <div className="text-xs font-medium text-muted-foreground mb-2">Custos por Categoria</div>
                   <div className="space-y-1.5">
                     {/* Hospedagem (separada) */}
-                    {custoHospedagemMensal > 0 && (
+                    {custoHospedagemTotal > 0 && (
                       <div className="flex items-center justify-between text-xs">
                         <span className="flex items-center gap-1.5">
                           <Home className="w-3 h-3 text-muted-foreground" />
-                          Hospedagem
+                          Hospedagem ({duracaoHospedagemMeses}m)
                         </span>
-                        <span className="font-medium">{fmt(custoHospedagemMensal)}</span>
+                        <span className="font-medium">{fmt(custoHospedagemTotal)}</span>
                       </div>
                     )}
                     {/* Combustível (km rodado) */}
@@ -1262,7 +1285,7 @@ export default function Mobilizacao() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm font-bold text-primary">
                     <span>Custo Total</span>
-                    <span>{fmt(resultado.custo_total + custoHospedagemMensal + custoCombustivelMensal)}</span>
+                    <span>{fmt(resultado.custo_total + custoHospedagemTotal + custoCombustivelMensal)}</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span>Custo/Dia</span>
