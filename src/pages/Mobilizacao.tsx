@@ -31,7 +31,12 @@ import {
   type EquipeItem,
   type MobilizacaoParams,
 } from "@/lib/mobilizacao-calculo";
+import {
+  parseGeoFile, getGeoJSONCenter, getGeoJSONBounds,
+  findMunicipiosFromGeoJSON,
+} from "@/lib/geo-utils";
 import { supabase } from "@/integrations/supabase/client";
+import type { FeatureCollection } from "geojson";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
