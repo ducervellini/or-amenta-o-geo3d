@@ -395,7 +395,7 @@ export default function ComposicaoDetalhe() {
                 </TabsList>
               </div>
 
-              {(["mao_de_obra", "equipamento", "veiculo", "material"] as const).map((tipo) => (
+              {(["mao_de_obra", "equipamento", "material"] as const).map((tipo) => (
                 <TabsContent key={tipo} value={tipo} className="space-y-3">
                   <div className="flex justify-end">
                     <Button size="sm" className="gap-1.5" onClick={() => { setTipoNovo(tipo); setEditingItem(null); setShowItemForm(true); }}>

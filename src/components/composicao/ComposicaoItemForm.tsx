@@ -226,7 +226,7 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
             <TabsContent value="params" className="space-y-3 pt-2">
               {tipo === "mao_de_obra" && <ParamsMaoDeObra params={paramsMO} onChange={setParamsMO} />}
               {tipo === "equipamento" && <ParamsEquipamento params={paramsEq} onChange={setParamsEq} />}
-              {tipo === "veiculo" && <ParamsVeiculo params={paramsVe} onChange={setParamsVe} />}
+              {tipo === "material" && <ParamsMaterialForm params={paramsMa} onChange={setParamsMa} />}
               {tipo === "material" && <ParamsMaterialForm params={paramsMa} onChange={setParamsMa} />}
             </TabsContent>
 
