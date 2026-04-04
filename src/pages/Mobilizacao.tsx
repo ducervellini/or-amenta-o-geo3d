@@ -1262,7 +1262,7 @@ export default function Mobilizacao() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm font-bold text-primary">
                     <span>Custo Total</span>
-                    <span>{fmt(resultado.custo_total)}</span>
+                    <span>{fmt(resultado.custo_total + custoHospedagemMensal + custoCombustivelMensal)}</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span>Custo/Dia</span>
