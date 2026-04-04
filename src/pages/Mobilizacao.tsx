@@ -76,6 +76,7 @@ interface PluviometriaResult {
     distancia_km: number;
   };
   periodo: { inicio: string; fim: string };
+  anos_analisados: number[];
   resumo: {
     precipitacao_total_mm: number;
     dias_com_chuva: number;
@@ -85,10 +86,23 @@ interface PluviometriaResult {
   };
   mensal: {
     mes: string;
-    precipitacao_total: number;
-    dias_chuva: number;
-    dias_registro: number;
-    precipitacao_media_diaria: number;
+    mes_numero: number;
+    precipitacao_media: number;
+    precipitacao_min: number;
+    precipitacao_max: number;
+    dias_chuva_media: number;
+    dias_registro_media: number;
+    anos_dados: number;
+  }[];
+  historico_anual: {
+    ano: number;
+    mensal: {
+      mes: string;
+      mes_numero: number;
+      precipitacao_total: number;
+      dias_chuva: number;
+      dias_registro: number;
+    }[];
   }[];
 }
 
@@ -374,7 +388,7 @@ export default function Mobilizacao() {
   };
 
   // Max bar for chart
-  const maxPrecip = pluviometria ? Math.max(...pluviometria.mensal.map((m) => m.precipitacao_total), 1) : 1;
+  const maxPrecip = pluviometria ? Math.max(...pluviometria.mensal.map((m) => m.precipitacao_max), 1) : 1;
 
   return (
     <TooltipProvider>
@@ -617,8 +631,8 @@ export default function Mobilizacao() {
                 <div className="flex items-end gap-3">
                   <div className="flex-1">
                     <p className="text-xs text-muted-foreground mb-2">
-                      Consulta dados históricos de precipitação do INMET para a estação mais próxima do local do projeto,
-                      no período definido. O resultado atualiza automaticamente os dias de chuva/mês.
+                      Consulta dados históricos de precipitação do INMET (últimos 5 anos) para estimar o regime de chuvas
+                      mês a mês durante a duração do projeto. O resultado atualiza automaticamente os dias de chuva/mês.
                     </p>
                   </div>
                   <Button
@@ -647,6 +661,8 @@ export default function Mobilizacao() {
                         <span>{pluviometria.estacao.distancia_km} km do projeto</span>
                         <span className="text-muted-foreground">UF:</span>
                         <span>{pluviometria.estacao.uf}</span>
+                        <span className="text-muted-foreground">Anos analisados:</span>
+                        <span>{pluviometria.anos_analisados?.join(', ') || '—'}</span>
                       </div>
                     </div>
 
@@ -654,11 +670,11 @@ export default function Mobilizacao() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                       <div className="p-2 rounded-md bg-primary/10 text-center">
                         <div className="text-lg font-bold text-primary">{pluviometria.resumo.precipitacao_total_mm}</div>
-                        <div className="text-[10px] text-muted-foreground">mm total</div>
+                        <div className="text-[10px] text-muted-foreground">mm total (média)</div>
                       </div>
                       <div className="p-2 rounded-md bg-primary/10 text-center">
                         <div className="text-lg font-bold text-primary">{pluviometria.resumo.dias_com_chuva}</div>
-                        <div className="text-[10px] text-muted-foreground">dias c/ chuva</div>
+                        <div className="text-[10px] text-muted-foreground">dias c/ chuva (média)</div>
                       </div>
                       <div className="p-2 rounded-md bg-primary/10 text-center">
                         <div className="text-lg font-bold text-primary">{pluviometria.resumo.media_dias_chuva_mes}</div>
@@ -670,34 +686,51 @@ export default function Mobilizacao() {
                       </div>
                     </div>
 
-                    {/* Monthly chart */}
+                    {/* Monthly chart - average with min/max range */}
                     <div>
                       <div className="text-xs font-medium mb-2 flex items-center gap-1">
-                        <BarChart3 className="w-3 h-3" /> Precipitação Mensal (mm)
+                        <BarChart3 className="w-3 h-3" /> Precipitação Estimada por Mês do Projeto (média histórica)
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         {pluviometria.mensal.map((m) => {
-                          const pct = (m.precipitacao_total / maxPrecip) * 100;
-                          const mesLabel = new Date(m.mes + "-01").toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
+                          const pctAvg = (m.precipitacao_media / maxPrecip) * 100;
+                          const pctMax = (m.precipitacao_max / maxPrecip) * 100;
                           return (
-                            <div key={m.mes} className="flex items-center gap-2 text-[11px]">
-                              <span className="w-16 text-right text-muted-foreground">{mesLabel}</span>
-                              <div className="flex-1 h-5 bg-muted rounded-sm overflow-hidden">
-                                <div
-                                  className="h-full bg-primary/60 rounded-sm flex items-center px-1"
-                                  style={{ width: `${Math.max(pct, 2)}%` }}
-                                >
-                                  {pct > 20 && (
-                                    <span className="text-[9px] text-primary-foreground font-medium">
-                                      {Math.round(m.precipitacao_total)}mm
-                                    </span>
-                                  )}
+                            <div key={m.mes} className="space-y-0.5">
+                              <div className="flex items-center gap-2 text-[11px]">
+                                <span className="w-10 text-right font-medium">{m.mes}</span>
+                                <div className="flex-1 h-6 bg-muted rounded-sm overflow-hidden relative">
+                                  {/* Max range background */}
+                                  <div
+                                    className="absolute h-full bg-primary/15 rounded-sm"
+                                    style={{ width: `${Math.max(pctMax, 2)}%` }}
+                                  />
+                                  {/* Average bar */}
+                                  <div
+                                    className="relative h-full bg-primary/60 rounded-sm flex items-center px-1"
+                                    style={{ width: `${Math.max(pctAvg, 2)}%` }}
+                                  >
+                                    {pctAvg > 25 && (
+                                      <span className="text-[9px] text-primary-foreground font-medium">
+                                        {m.precipitacao_media}mm
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
+                                {pctAvg <= 25 && (
+                                  <span className="text-[9px] text-muted-foreground w-14">{m.precipitacao_media}mm</span>
+                                )}
+                                <span className="w-20 text-[9px] text-muted-foreground">
+                                  {m.dias_chuva_media}d chuva
+                                </span>
                               </div>
-                              {pct <= 20 && (
-                                <span className="text-[9px] text-muted-foreground w-12">{Math.round(m.precipitacao_total)}mm</span>
-                              )}
-                              <span className="w-16 text-[9px] text-muted-foreground">{m.dias_chuva}d chuva</span>
+                              <div className="flex items-center gap-2 text-[9px] text-muted-foreground pl-12">
+                                <span>min: {m.precipitacao_min}mm</span>
+                                <span>·</span>
+                                <span>máx: {m.precipitacao_max}mm</span>
+                                <span>·</span>
+                                <span>{m.anos_dados} anos</span>
+                              </div>
                             </div>
                           );
                         })}
