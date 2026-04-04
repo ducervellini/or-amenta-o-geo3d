@@ -29,6 +29,7 @@ import AdminLocalPedagios from "./pages/admin-local/Pedagios";
 import AdminLocalPassagens from "./pages/admin-local/Passagens";
 import AdminLocalHospedagem from "./pages/admin-local/Hospedagem";
 import Composicoes from "./pages/Composicoes";
+import Mobilizacao from "./pages/Mobilizacao";
 import ComposicaoDetalhe from "./pages/ComposicaoDetalhe";
 import Orcamentos from "./pages/Orcamentos";
 import ParametrosAdminLocal from "./pages/parametros/AdminLocal";
