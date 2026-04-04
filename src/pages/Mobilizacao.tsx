@@ -388,7 +388,7 @@ export default function Mobilizacao() {
   const { data: veiculosCadastrados } = useSupabaseQuery("veiculos");
 
   // Custos (sem hospedagem, que agora é separada)
-  const [custos, setCustos] = useState<(CustoItem & { _key: number; veiculo_id?: string; km_dia?: number })[]>([]);
+  const [custos, setCustos] = useState<(CustoItem & { _key: number; veiculo_id?: string; km_dia?: number; preco_combustivel?: number })[]>([]);
   let custoKeyRef = 4;
 
   // Equipes
