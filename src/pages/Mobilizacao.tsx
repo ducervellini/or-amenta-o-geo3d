@@ -447,11 +447,46 @@ export default function Mobilizacao() {
                       type="file"
                       accept=".kmz,.kml,.shp,.zip"
                       className="hidden"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (file) {
                           setArquivoGeo(file.name);
-                          toast.info(`Arquivo "${file.name}" carregado. Parsing de coordenadas será implementado com API geográfica.`);
+                          setLoadingGeo(true);
+                          setGeoProgress("Lendo arquivo...");
+                          try {
+                            const geojson = await parseGeoFile(file);
+                            setGeoJsonData(geojson);
+
+                            // Extract center and update lat/lng
+                            const center = getGeoJSONCenter(geojson);
+                            if (center) {
+                              setLat(Math.round(center.lat * 10000) / 10000);
+                              setLng(Math.round(center.lng * 10000) / 10000);
+                            }
+
+                            toast.success(`Arquivo "${file.name}" carregado com ${geojson.features.length} feição(ões)`);
+
+                            // Find municipalities
+                            setLoadingMunicipios(true);
+                            setGeoProgress("Identificando municípios...");
+                            const munis = await findMunicipiosFromGeoJSON(geojson, (cur, total) => {
+                              setGeoProgress(`Geocodificando ponto ${cur}/${total}...`);
+                            });
+                            if (munis.length > 0) {
+                              setMunicipiosRota(munis);
+                              // Set first municipality as main
+                              setMunicipio(munis[0].nome);
+                              setEstado(munis[0].uf);
+                              toast.success(`${munis.length} município(s) identificado(s)`);
+                            }
+                          } catch (err: any) {
+                            console.error("Erro parsing geo:", err);
+                            toast.error("Erro ao ler arquivo: " + (err.message || "formato inválido"));
+                          } finally {
+                            setLoadingGeo(false);
+                            setLoadingMunicipios(false);
+                            setGeoProgress("");
+                          }
                         }
                         e.target.value = "";
                       }}
