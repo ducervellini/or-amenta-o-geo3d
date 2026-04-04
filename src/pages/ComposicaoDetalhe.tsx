@@ -382,14 +382,6 @@ export default function ComposicaoDetalhe() {
             </Button>
           </div>
 
-          {/* Service metrics */}
-          {tipoGeometria && (
-            <MetricasServicoForm
-              tipoGeometria={tipoGeometria}
-              metricas={metricas}
-              onChange={setMetricas}
-            />
-          )}
 
           {/* Items by group */}
           {!isNew && (
