@@ -279,6 +279,8 @@ function Section({
 export default function Mobilizacao() {
   // ── State ──
   const [nome, setNome] = useState("Nova Mobilização");
+  const [saving, setSaving] = useState(false);
+  const [mobilizacaoId, setMobilizacaoId] = useState<string | null>(null);
   const [modoLocalizacao, setModoLocalizacao] = useState<"manual" | "arquivo">("manual");
   const [municipio, setMunicipio] = useState("");
   const [estado, setEstado] = useState("");
