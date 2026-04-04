@@ -207,10 +207,40 @@ export default function OrcamentoDetalhe() {
 
   const custoMobDesmob = useMemo(() => {
     if (!mobilizacao?.mob_desmob_itens || !Array.isArray(mobilizacao.mob_desmob_itens)) return 0;
+    const jornadaDiaria = Number(mobilizacao.jornada_diaria || 8);
     return mobilizacao.mob_desmob_itens.reduce((sum: number, item: any) => {
-      return sum + Number(item.custo_total || 0);
+      // Replicate calcularMobDesmobItem logic from Mobilizacao.tsx
+      const distancia = Number(item.distancia_km || 0);
+      const kmMaxDia = Number(item.km_max_dia || 600);
+      const diasViagem = kmMaxDia > 0 ? Math.ceil(distancia / kmMaxDia) : 1;
+      const pernoites = Math.max(0, diasViagem - 1);
+      const qVeiculos = Number(item.quantidade_veiculos || 1);
+      const qPessoas = Number(item.quantidade_pessoas || 1);
+      const hospPernoite = Number(item.hospedagem_pernoite || 0);
+      const custoHoraPessoa = Number(item.custo_hora_pessoa || 0);
+      const pedagiosIda = Number(item.pedagios_ida || 0);
+
+      // Combustível: estimate from veiculos table if available
+      let custoCombKm = 0;
+      if (item.veiculo_id && veiculosCadastrados) {
+        const veic = (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id);
+        if (veic) {
+          const mediaKmL = Number(veic.media_km_l || 0);
+          const precoComb = Number(veic.combustivel_preco_litro || 0);
+          const consumoKm = Number(veic.combustivel_consumo_km || 0);
+          custoCombKm = consumoKm > 0
+            ? precoComb * consumoKm
+            : (mediaKmL > 0 ? precoComb / mediaKmL : 0);
+        }
+      }
+
+      const custoCombustivelIda = custoCombKm * distancia * qVeiculos;
+      const custoPernoiteIda = pernoites * hospPernoite * qPessoas;
+      const custoHorasPessoasIda = diasViagem * jornadaDiaria * custoHoraPessoa * qPessoas;
+      const custoIda = custoCombustivelIda + custoPernoiteIda + pedagiosIda + custoHorasPessoasIda;
+      return sum + (custoIda * 2); // ida + volta
     }, 0);
-  }, [mobilizacao]);
+  }, [mobilizacao, veiculosCadastrados]);
 
   const custoAdmLocal = mobilizacao?.custo_total || 0;
   const custoAdmLocalOutros = Math.max(0, custoAdmLocal - custoDeslocamentos - custoMobDesmob);
