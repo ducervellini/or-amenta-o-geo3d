@@ -263,6 +263,11 @@ export default function Cargos() {
                           <span className="capitalize">{labels[row.unidade_salarial] || row.unidade_salarial}</span>
                         </td>
                         <td>
+                          <Badge variant="outline" className="text-xs">
+                            {row.local_trabalho === "escritorio" ? "Escritório" : "Campo"}
+                          </Badge>
+                        </td>
+                        <td>
                           {isPJ ? (
                             <span className="text-muted-foreground">—</span>
                           ) : (
