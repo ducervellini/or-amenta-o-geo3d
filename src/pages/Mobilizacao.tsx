@@ -546,8 +546,10 @@ export default function Mobilizacao() {
         const mediaKmL = selectedVeiculo?.media_km_l || 0;
         const precoComb = Number(selectedVeiculo?.combustivel_preco_litro || 0);
         const custoKmComb = mediaKmL > 0 ? precoComb / mediaKmL : 0;
-        const custoKmVeic = Number(selectedVeiculo?.custo_km || 0);
-        custoMes = (custoKmComb + custoKmVeic) * (item.km_dia || 0) * diasProdutivosMes * item.quantidade;
+        const kmMesProd = (item.km_dia || 0) * diasProdutivosMes;
+        const custoCombMes = custoKmComb * kmMesProd * item.quantidade;
+        const aluguelMes = Number(selectedVeiculo?.valor_aluguel_mensal || 0) * item.quantidade;
+        custoMes = custoCombMes + aluguelMes;
       } else if (item.frequencia === "diario") {
         custoMes = item.valor_unitario * item.quantidade * diasProdutivosMes;
       } else if (item.frequencia === "mensal") {
