@@ -87,6 +87,14 @@ export default function Composicoes() {
   const [search, setSearch] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const allColKeys = ["ordem_id", "grupo_nome", "codigo", "nome", "mercado_id", "area_empresa_id", "modulo_id", "descricao", "unidade", "custo_unitario_total"];
+  const [visibleCols, setVisibleCols] = useState<Set<string>>(new Set(allColKeys));
+  const toggleCol = (key: string) => setVisibleCols((prev) => {
+    const next = new Set(prev);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    return next;
+  });
+  const colLabels: Record<string, string> = { ordem_id: "ID", grupo_nome: "Grupo", codigo: "Código", nome: "Nome", mercado_id: "Mercado", area_empresa_id: "Área da Empresa", modulo_id: "Departamento", descricao: "Descrição", unidade: "Unidade", custo_unitario_total: "Custo Unitário" };
 
   const { data: composicoes, isLoading } = useSupabaseQuery("composicoes");
   const { data: servicos } = useSupabaseQuery("servicos");
