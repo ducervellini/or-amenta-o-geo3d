@@ -559,6 +559,69 @@ export type Database = {
         }
         Relationships: []
       }
+      grupos_servicos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      grupos_servicos_servicos: {
+        Row: {
+          created_at: string
+          grupo_id: string
+          id: string
+          servico_id: string
+        }
+        Insert: {
+          created_at?: string
+          grupo_id: string
+          id?: string
+          servico_id: string
+        }
+        Update: {
+          created_at?: string
+          grupo_id?: string
+          id?: string
+          servico_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grupos_servicos_servicos_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_servicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grupos_servicos_servicos_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "servicos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       historico_aprendizado: {
         Row: {
           created_at: string

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Eye, Edit, Trash2, Loader2 } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash2, Loader2, ChevronRight, ChevronDown, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSupabaseQuery, useSupabaseDelete } from "@/hooks/useSupabaseCrud";
 import { SortableHeader, useTableSort } from "@/components/ui/sortable-header";
@@ -26,81 +26,52 @@ type RowData = {
   isAvulsa: boolean;
 };
 
-function ComposicoesTableContent({ filtered, handleRowClick, getMercadoNome, getAreaNome, getModuloNome, navigate, setDeletingId }: {
-  filtered: RowData[];
-  handleRowClick: (row: RowData) => void;
+function ServiceRow({ row, navigate, setDeletingId, getMercadoNome, getAreaNome, getModuloNome }: {
+  row: RowData;
+  navigate: (path: string) => void;
+  setDeletingId: (id: string) => void;
   getMercadoNome: (id: string | null | undefined) => string;
   getAreaNome: (id: string | null | undefined) => string;
   getModuloNome: (id: string | null | undefined) => string;
-  navigate: (path: string) => void;
-  setDeletingId: (id: string) => void;
 }) {
-  const { sorted, sortKey, sortDirection, handleSort } = useTableSort(filtered as unknown as Record<string, unknown>[]);
-  const cols = [
-    { key: "codigo", label: "Código" },
-    { key: "nome", label: "Nome" },
-    { key: "mercado_id", label: "Mercado" },
-    { key: "area_empresa_id", label: "Área da Empresa" },
-    { key: "modulo_id", label: "Departamento" },
-    { key: "descricao", label: "Descrição" },
-    { key: "unidade", label: "Unidade" },
-    { key: "custo_unitario_total", label: "Custo Unitário" },
-  ];
+  const handleClick = () => {
+    if (row.type === "composicao") navigate(`/composicoes/${row.id}`);
+    else navigate(`/composicoes/novo?servico_id=${row.id}`);
+  };
 
   return (
-    <div className="overflow-x-auto">
-      <table className="data-table">
-        <thead>
-          <tr>
-            {cols.map((col) => (
-              <SortableHeader key={col.key} label={col.label} sortKey={col.key} currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
-            ))}
-            <th className="text-center">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.length === 0 ? (
-            <tr>
-              <td colSpan={9} className="text-center py-8 text-muted-foreground">Nenhuma composição encontrada</td>
-            </tr>
+    <tr className="cursor-pointer hover:bg-muted/50" onClick={handleClick}>
+      <td></td>
+      <td className="font-medium text-accent">{row.codigo}</td>
+      <td className="font-medium">{row.nome}</td>
+      <td className="text-sm">{getMercadoNome(row.mercado_id as string | null)}</td>
+      <td>
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
+          {getAreaNome(row.area_empresa_id as string | null)}
+        </span>
+      </td>
+      <td className="text-sm">{getModuloNome(row.modulo_id as string | null)}</td>
+      <td className="text-sm text-muted-foreground max-w-[200px] truncate">{row.descricao ? String(row.descricao) : "-"}</td>
+      <td className="text-sm">{row.unidade}</td>
+      <td className="font-semibold font-mono">
+        {row.type === "composicao" ? `R$ ${fmt(row.custo_unitario_total)}` : <span className="text-xs text-muted-foreground italic">Sem composição</span>}
+      </td>
+      <td className="text-center">
+        <div className="flex items-center justify-center gap-1">
+          {row.type === "composicao" ? (
+            <>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/${row.id}`); }}><Eye className="w-4 h-4" /></Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/${row.id}`); }}><Edit className="w-4 h-4" /></Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); setDeletingId(row.id); }}><Trash2 className="w-4 h-4" /></Button>
+            </>
           ) : (
-            (sorted as unknown as RowData[]).map((row) => (
-              <tr key={`${row.type}-${row.id}`} className="cursor-pointer hover:bg-muted/50" onClick={() => handleRowClick(row)}>
-                <td className="font-medium text-accent">{row.codigo}</td>
-                <td className="font-medium">{row.nome}</td>
-                <td className="text-sm">{getMercadoNome(row.mercado_id as string | null)}</td>
-                <td>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
-                    {getAreaNome(row.area_empresa_id as string | null)}
-                  </span>
-                </td>
-                <td className="text-sm">{getModuloNome(row.modulo_id as string | null)}</td>
-                <td className="text-sm text-muted-foreground max-w-[200px] truncate">{row.descricao ? String(row.descricao) : "-"}</td>
-                <td className="text-sm">{row.unidade}</td>
-                <td className="font-semibold font-mono">
-                  {row.type === "composicao" ? `R$ ${fmt(row.custo_unitario_total)}` : <span className="text-xs text-muted-foreground italic">Sem composição</span>}
-                </td>
-                <td className="text-center">
-                  <div className="flex items-center justify-center gap-1">
-                    {row.type === "composicao" ? (
-                      <>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/${row.id}`); }}><Eye className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/${row.id}`); }}><Edit className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); setDeletingId(row.id); }}><Trash2 className="w-4 h-4" /></Button>
-                      </>
-                    ) : (
-                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/novo?servico_id=${row.id}`); }}>
-                        <Plus className="w-3 h-3 mr-1" />Criar
-                      </Button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))
+            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/novo?servico_id=${row.id}`); }}>
+              <Plus className="w-3 h-3 mr-1" />Criar
+            </Button>
           )}
-        </tbody>
-      </table>
-    </div>
+        </div>
+      </td>
+    </tr>
   );
 }
 
@@ -108,15 +79,17 @@ export default function Composicoes() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   const { data: composicoes, isLoading } = useSupabaseQuery("composicoes");
   const { data: servicos } = useSupabaseQuery("servicos");
   const { data: mercados } = useSupabaseQuery("mercados");
   const { data: areasEmpresa } = useSupabaseQuery("areas_empresa");
   const { data: modulos } = useSupabaseQuery("modulos");
+  const { data: grupos } = useSupabaseQuery("grupos_servicos", { orderBy: "nome", ascending: true });
+  const { data: vinculos } = useSupabaseQuery("grupos_servicos_servicos");
   const deleteComposicao = useSupabaseDelete("composicoes");
 
-  // Merge: composições avulsas + serviços sem composição
   const composicaoRows = (composicoes || []).map((c) => {
     const servico = servicos?.find((s) => s.id === c.servico_id);
     return {
@@ -135,7 +108,6 @@ export default function Composicoes() {
     };
   });
 
-  // Serviços que ainda não têm composição
   const servicosSemComposicao = (servicos || []).filter(
     (s) => !(composicoes || []).some((c) => c.servico_id === s.id)
   ).map((s) => ({
@@ -155,24 +127,41 @@ export default function Composicoes() {
 
   const allRows = [...composicaoRows, ...servicosSemComposicao];
 
-  const filtered = allRows.filter(
-    (r) =>
-      r.nome.toLowerCase().includes(search.toLowerCase()) ||
-      r.codigo.toLowerCase().includes(search.toLowerCase())
+  // Build group structure
+  const grupoRows = (grupos || []).map((g) => {
+    const servicoIds = (vinculos || []).filter((v) => v.grupo_id === g.id).map((v) => String(v.servico_id));
+    const rows = allRows.filter((r) => {
+      const sId = r.type === "composicao" ? String(r.servico_id || "") : r.id;
+      return servicoIds.includes(sId);
+    });
+    return { grupo: g, rows, servicoIds };
+  });
+
+  // Services not in any group (avulsas)
+  const allGroupedServiceIds = new Set(
+    (vinculos || []).map((v) => String(v.servico_id))
   );
+  const avulsaRows = allRows.filter((r) => {
+    if (r.isAvulsa) return true; // composições avulsas always show
+    const sId = r.type === "composicao" ? String(r.servico_id || "") : r.id;
+    return !allGroupedServiceIds.has(sId);
+  });
+
+  const matchesSearch = (r: RowData) =>
+    r.nome.toLowerCase().includes(search.toLowerCase()) ||
+    r.codigo.toLowerCase().includes(search.toLowerCase());
+
+  const toggleGroup = (id: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
 
   const handleDelete = () => {
     if (!deletingId) return;
     deleteComposicao.mutate(deletingId, { onSuccess: () => setDeletingId(null) });
-  };
-
-  const handleRowClick = (row: typeof allRows[0]) => {
-    if (row.type === "composicao") {
-      navigate(`/composicoes/${row.id}`);
-    } else {
-      // Criar composição a partir do serviço
-      navigate(`/composicoes/novo?servico_id=${row.id}`);
-    }
   };
 
   const getMercadoNome = (id: string | null | undefined) => {
@@ -180,18 +169,28 @@ export default function Composicoes() {
     const m = mercados?.find((m) => m.id === id);
     return m ? String(m.nome) : "-";
   };
-
   const getAreaNome = (id: string | null | undefined) => {
     if (!id) return "-";
     const a = areasEmpresa?.find((a) => a.id === id);
     return a ? String(a.nome) : "-";
   };
-
   const getModuloNome = (id: string | null | undefined) => {
     if (!id) return "-";
     const d = modulos?.find((d) => d.id === id);
     return d ? String(d.nome) : "-";
   };
+
+  const cols = [
+    { key: "expand", label: "" },
+    { key: "codigo", label: "Código" },
+    { key: "nome", label: "Nome" },
+    { key: "mercado_id", label: "Mercado" },
+    { key: "area_empresa_id", label: "Área da Empresa" },
+    { key: "modulo_id", label: "Departamento" },
+    { key: "descricao", label: "Descrição" },
+    { key: "unidade", label: "Unidade" },
+    { key: "custo_unitario_total", label: "Custo Unitário" },
+  ];
 
   return (
     <div className="page-container animate-fade-in">
@@ -225,7 +224,92 @@ export default function Composicoes() {
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <ComposicoesTableContent filtered={filtered} handleRowClick={handleRowClick} getMercadoNome={getMercadoNome} getAreaNome={getAreaNome} getModuloNome={getModuloNome} navigate={navigate} setDeletingId={setDeletingId} />
+          <div className="overflow-x-auto">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th className="w-10"></th>
+                  {cols.slice(1).map((col) => (
+                    <th key={col.key}>{col.label}</th>
+                  ))}
+                  <th className="text-center">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* Groups */}
+                {grupoRows.map(({ grupo, rows }) => {
+                  const filteredRows = search ? rows.filter(matchesSearch) : rows;
+                  if (search && filteredRows.length === 0) return null;
+                  const isExpanded = expandedGroups.has(String(grupo.id));
+                  const custoTotal = rows.reduce((sum, r) => sum + (r.type === "composicao" ? r.custo_unitario_total : 0), 0);
+
+                  return (
+                    <React.Fragment key={String(grupo.id)}>
+                      <tr
+                        className="bg-muted/30 hover:bg-muted/50 cursor-pointer font-medium"
+                        onClick={() => toggleGroup(String(grupo.id))}
+                      >
+                        <td className="w-10">
+                          {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                        </td>
+                        <td>
+                          <div className="flex items-center gap-2">
+                            <FolderOpen className="w-4 h-4 text-accent" />
+                            <span className="text-accent font-semibold">{String(grupo.nome)}</span>
+                          </div>
+                        </td>
+                        <td colSpan={5} className="text-sm text-muted-foreground">
+                          {rows.length} serviço{rows.length !== 1 ? "s" : ""}
+                        </td>
+                        <td className="text-sm">&nbsp;</td>
+                        <td className="font-semibold font-mono">
+                          {custoTotal > 0 ? `R$ ${fmt(custoTotal)}` : "-"}
+                        </td>
+                        <td></td>
+                      </tr>
+                      {isExpanded && (search ? filteredRows : rows).map((row) => (
+                        <ServiceRow
+                          key={`${row.type}-${row.id}`}
+                          row={row}
+                          navigate={navigate}
+                          setDeletingId={setDeletingId}
+                          getMercadoNome={getMercadoNome}
+                          getAreaNome={getAreaNome}
+                          getModuloNome={getModuloNome}
+                        />
+                      ))}
+                    </React.Fragment>
+                  );
+                })}
+
+                {/* Ungrouped / avulsa rows */}
+                {avulsaRows.filter(matchesSearch).length > 0 && grupoRows.length > 0 && (
+                  <tr className="bg-muted/20">
+                    <td colSpan={10} className="text-xs font-semibold text-muted-foreground py-2">
+                      Sem grupo
+                    </td>
+                  </tr>
+                )}
+                {avulsaRows.filter(matchesSearch).map((row) => (
+                  <ServiceRow
+                    key={`${row.type}-${row.id}`}
+                    row={row}
+                    navigate={navigate}
+                    setDeletingId={setDeletingId}
+                    getMercadoNome={getMercadoNome}
+                    getAreaNome={getAreaNome}
+                    getModuloNome={getModuloNome}
+                  />
+                ))}
+
+                {grupoRows.length === 0 && avulsaRows.filter(matchesSearch).length === 0 && (
+                  <tr>
+                    <td colSpan={10} className="text-center py-8 text-muted-foreground">Nenhuma composição encontrada</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
