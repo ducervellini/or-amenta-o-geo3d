@@ -42,7 +42,7 @@ const UNIDADES = [
   "travessias", "un", "unidades", "vértices",
 ];
 
-export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_obra", initialValues, onSubmit, loading }: Props) {
+export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_obra", initialValues, onSubmit, loading, servicoUnidade }: Props) {
   const [tipo, setTipo] = useState<TipoInsumo>(tipoInicial);
   const [descricao, setDescricao] = useState("");
   const [quantidade, setQuantidade] = useState(1); // units produced in the period
