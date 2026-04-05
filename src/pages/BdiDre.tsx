@@ -154,6 +154,7 @@ export default function BdiDre() {
   const [saving, setSaving] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [custoDireto, setCustoDireto] = useState(0);
+  const [lucroLiqDesejado, setLucroLiqDesejado] = useState<number | null>(null);
 
   // ── Queries ──
   const { data: savedBdis } = useQuery({
@@ -202,6 +203,23 @@ export default function BdiDre() {
   // ── Single source of truth: all calculations derived from bdiItems + custoDireto ──
   const resultado = useMemo(() => calcAll(bdiItems, custoDireto), [bdiItems, custoDireto]);
 
+  // ── Sync lucro líquido desejado → L component ──
+  const handleLucroLiqChange = useCallback((pct: number) => {
+    setLucroLiqDesejado(pct);
+    // In this model, net margin % on revenue = L% (Lucro Bruto component)
+    setBdiItems(prev => prev.map(item =>
+      item.categoria === "lucro" ? { ...item, percentual: pct } : item
+    ));
+  }, []);
+
+  // Keep lucroLiqDesejado in sync when L changes directly
+  useEffect(() => {
+    const lucroItem = bdiItems.find(i => i.categoria === "lucro");
+    if (lucroItem && lucroLiqDesejado !== null && Math.abs(lucroItem.percentual - lucroLiqDesejado) > 0.001) {
+      setLucroLiqDesejado(null);
+    }
+  }, [bdiItems]);
+
   // ── Handlers ──
   const handleChange = useCallback((index: number, value: string) => {
     setBdiItems(prev => {
@@ -209,6 +227,7 @@ export default function BdiDre() {
       updated[index] = { ...updated[index], percentual: parseFloat(value) || 0 };
       return updated;
     });
+    setLucroLiqDesejado(null);
   }, []);
 
   const handleSave = async () => {
@@ -404,7 +423,7 @@ export default function BdiDre() {
 
           {/* Custo Direto input */}
           <Card>
-            <CardContent className="pt-4 pb-4">
+            <CardContent className="pt-4 pb-4 space-y-3">
               <div className="flex items-center gap-3">
                 <Label className="text-xs whitespace-nowrap font-semibold">Custo Direto (R$)</Label>
                 <Input
@@ -420,6 +439,27 @@ export default function BdiDre() {
                   >
                     <RefreshCw className="w-3 h-3" /> Sincronizar
                   </Button>
+                )}
+              </div>
+              <div className="flex items-center gap-3 p-2.5 rounded-lg bg-accent/5 border border-accent/20">
+                <Label className="text-xs whitespace-nowrap font-semibold text-accent">Lucro Líquido desejado (%)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="Ex: 5.00"
+                  value={lucroLiqDesejado ?? ""}
+                  onChange={e => {
+                    const v = parseFloat(e.target.value);
+                    if (!isNaN(v)) handleLucroLiqChange(v);
+                    else setLucroLiqDesejado(null);
+                  }}
+                  className="h-8 text-xs font-mono flex-1 border-accent/30"
+                />
+                <span className="text-xs text-muted-foreground">%</span>
+                {lucroLiqDesejado !== null && (
+                  <Badge variant="outline" className="text-[10px] border-accent/30 text-accent shrink-0">
+                    Preço: {fmt(resultado.receitaBruta)}
+                  </Badge>
                 )}
               </div>
             </CardContent>
