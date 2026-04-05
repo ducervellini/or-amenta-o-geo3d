@@ -70,7 +70,8 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
     if (initialValues) {
       setTipo((initialValues.tipo_insumo as TipoInsumo) || "mao_de_obra");
       setDescricao((initialValues.descricao as string) || "");
-      setQuantidade(Number(initialValues.quantidade) || 1);
+      const p = (initialValues.parametros as Record<string, unknown>) || {};
+      setQuantidade(Number(p.produtividade) || Number(initialValues.quantidade) || 1);
       setUnidade((initialValues.unidade as string) || "un");
       const p = (initialValues.parametros as Record<string, unknown>) || {};
       setPeriodo((p.periodo as "hora" | "dia" | "mês") || "dia");
