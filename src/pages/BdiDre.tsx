@@ -442,7 +442,7 @@ export default function BdiDre() {
                 )}
               </div>
               <div className="flex items-center gap-3 p-2.5 rounded-lg bg-accent/5 border border-accent/20">
-                <Label className="text-xs whitespace-nowrap font-semibold text-accent">Lucro Líquido desejado (%)</Label>
+                <Label className="text-xs whitespace-nowrap font-semibold text-accent">Lucro Bruto desejado (%)</Label>
                 <Input
                   type="number"
                   step="0.01"
