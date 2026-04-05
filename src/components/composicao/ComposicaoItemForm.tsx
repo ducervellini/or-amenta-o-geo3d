@@ -331,14 +331,20 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
           </div>
 
           {/* Resumo do item */}
-          <div className="bg-primary/5 rounded-lg p-4 flex justify-between items-center border border-primary/20">
-            <div>
-              <div className="text-xs text-muted-foreground">Custo Unitário (por {unidade})</div>
-              <div className="font-mono font-semibold">R$ {fmtBR(resultado.custo_unitario)}</div>
-            </div>
-            <div className="text-right">
-              <div className="text-xs text-muted-foreground">Custo Total ({quantidade} {unidade})</div>
-              <div className="font-mono font-bold text-lg text-primary">R$ {fmtBR(resultado.custo_total)}</div>
+          <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div className="text-xs text-muted-foreground">Produtividade</div>
+                <div className="font-mono font-medium">{fmtBR(quantidade)} {unidade}/{periodo}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Coeficiente</div>
+                <div className="font-mono font-medium">{fmtBR(coeficienteCalculado)} h/{unidade}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground font-semibold">Custo Unitário (1 {unidade})</div>
+                <div className="font-mono font-bold text-lg text-primary">R$ {fmtBR(resultado.custo_unitario)}</div>
+              </div>
             </div>
           </div>
 
