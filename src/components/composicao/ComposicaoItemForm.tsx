@@ -71,10 +71,10 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
       setDescricao((initialValues.descricao as string) || "");
       setQuantidade(Number(initialValues.quantidade) || 1);
       setUnidade((initialValues.unidade as string) || "un");
-      setPeriodo(((initialValues as any).periodo || (initialValues as any).prazo || "dia") as "hora" | "dia" | "mês");
+      const p = (initialValues.parametros as Record<string, unknown>) || {};
+      setPeriodo((p.periodo as "hora" | "dia" | "mês") || "dia");
       setObservacoes((initialValues.observacoes as string) || "");
       setInsumoId((initialValues.insumo_id as string) || "");
-      const p = (initialValues.parametros as Record<string, unknown>) || {};
       if (initialValues.tipo_insumo === "mao_de_obra") setParamsMO({ ...getDefaultParamsMaoDeObra(), ...p } as ParametrosMaoDeObra);
       if (initialValues.tipo_insumo === "equipamento") setParamsEq({ ...getDefaultParamsEquipamento(), ...p } as ParametrosEquipamento);
       if (initialValues.tipo_insumo === "material") setParamsMa({ ...getDefaultParamsMaterial(), ...p } as ParametrosMaterial);
@@ -190,7 +190,7 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const params = tipo === "mao_de_obra" ? paramsMO : tipo === "equipamento" ? paramsEq : paramsMa;
+    const baseParams = tipo === "mao_de_obra" ? paramsMO : tipo === "equipamento" ? paramsEq : paramsMa;
     onSubmit({
       tipo_insumo: tipo,
       insumo_id: insumoId || crypto.randomUUID(),
@@ -198,11 +198,10 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
       quantidade,
       coeficiente: tipo === "mao_de_obra" ? coeficienteCalculado : 1,
       unidade,
-      periodo,
       observacoes,
       custo_unitario: resultado.custo_unitario,
       custo_total: resultado.custo_total,
-      parametros: params,
+      parametros: { ...baseParams, periodo },
       grupo_custo: "direto",
     });
   };
