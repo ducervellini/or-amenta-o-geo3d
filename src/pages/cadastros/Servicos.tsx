@@ -14,10 +14,9 @@ export default function Servicos() {
       const area = areasEmpresa?.find((a) => a.id === areaId);
       const modulo = modulos?.find((d) => d.id === moduloId);
 
-      const mCode = mercado ? String(mercado.nome).substring(0, 3).toUpperCase() : "XXX";
       const aCode = area ? String(area.nome).substring(0, 4).toUpperCase() : "XXXX";
       const dCode = modulo ? String(modulo.nome).substring(0, 3).toUpperCase() : "XXX";
-      const prefix = `SRV-${mCode}-${aCode}-${dCode}-`;
+      const prefix = `SRV-${aCode}-${dCode}-`;
 
       const matching = (servicos || [])
         .map((s) => String(s.codigo))
