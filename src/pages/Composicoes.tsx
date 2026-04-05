@@ -126,11 +126,19 @@ export default function Composicoes() {
   }));
 
   const allRows = [...composicaoRows, ...servicosSemComposicao];
+  const { sorted: sortedAllRows, sortKey, sortDirection, handleSort } = useTableSort<RowData>(allRows);
+
+  // Fixed activity order
+  const ORDEM_ATIVIDADES = ["cadastro", "p&m", "avaliação", "negociação", "jurídico", "regularização"];
+  const getOrdemIndex = (nome: string) => {
+    const idx = ORDEM_ATIVIDADES.findIndex((a) => nome.toLowerCase().startsWith(a));
+    return idx === -1 ? ORDEM_ATIVIDADES.length : idx;
+  };
 
   // Build group structure
-  const grupoRows = (grupos || []).map((g) => {
+  const grupoRows = (grupos || []).sort((a, b) => getOrdemIndex(String(a.nome)) - getOrdemIndex(String(b.nome))).map((g) => {
     const servicoIds = (vinculos || []).filter((v) => v.grupo_id === g.id).map((v) => String(v.servico_id));
-    const rows = allRows.filter((r) => {
+    const rows = sortedAllRows.filter((r) => {
       const sId = r.type === "composicao" ? String(r.servico_id || "") : r.id;
       return servicoIds.includes(sId);
     });
@@ -141,7 +149,7 @@ export default function Composicoes() {
   const allGroupedServiceIds = new Set(
     (vinculos || []).map((v) => String(v.servico_id))
   );
-  const avulsaRows = allRows.filter((r) => {
+  const avulsaRows = sortedAllRows.filter((r) => {
     if (r.isAvulsa) return true; // composições avulsas always show
     const sId = r.type === "composicao" ? String(r.servico_id || "") : r.id;
     return !allGroupedServiceIds.has(sId);
@@ -230,7 +238,14 @@ export default function Composicoes() {
                 <tr>
                   <th className="w-10"></th>
                   {cols.slice(1).map((col) => (
-                    <th key={col.key}>{col.label}</th>
+                    <SortableHeader
+                      key={col.key}
+                      label={col.label}
+                      sortKey={col.key}
+                      currentSort={sortKey}
+                      currentDirection={sortDirection}
+                      onSort={handleSort}
+                    />
                   ))}
                   <th className="text-center">Ações</th>
                 </tr>
