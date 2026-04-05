@@ -133,6 +133,7 @@ export default function ComposicaoDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isNew = id === "novo";
+  const [searchParams] = useState(() => new URLSearchParams(window.location.search));
 
   const { data: servicos } = useSupabaseQuery("servicos");
   const { data: mercados } = useSupabaseQuery("mercados");
@@ -204,6 +205,16 @@ export default function ComposicaoDetalhe() {
       })();
     }
   }, [id, isNew]);
+
+  // Auto-set servico_id from query param for new compositions
+  useEffect(() => {
+    if (isNew) {
+      const qsServicoId = searchParams.get("servico_id");
+      if (qsServicoId) {
+        setServicoId(qsServicoId);
+      }
+    }
+  }, [isNew, searchParams]);
 
   // Helper to generate 3-char abbreviation
   const abrev = (str: string) => {
