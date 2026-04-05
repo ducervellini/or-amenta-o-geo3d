@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import {
-  Calculator, Save, Info, Trash2, Edit, DollarSign, ArrowUp,
-  TrendingUp, Link2, Briefcase,
+  Calculator, Save, Info, Trash2, Edit, DollarSign,
+  TrendingUp, Link2, Briefcase, ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,13 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -47,6 +42,8 @@ const defaultBDI: BDIItem[] = [
   { label: "CPRB", sigla: "CPRB", percentual: 0.00, descricao: "Contribuição Previdenciária s/ Receita Bruta" },
 ];
 
+const TRIBUTOS_SIGLAS = ["PIS", "COFINS", "ISS", "CPRB", "ICMS"];
+
 function calcBdi(items: BDIItem[]) {
   const ac = items.find((i) => i.sigla === "AC")?.percentual || 0;
   const sg = items.find((i) => i.sigla === "S+G")?.percentual || 0;
@@ -55,7 +52,7 @@ function calcBdi(items: BDIItem[]) {
   const com = items.find((i) => i.sigla === "COM")?.percentual || 0;
   const l = items.find((i) => i.sigla === "L")?.percentual || 0;
   const tributos = items
-    .filter((i) => ["PIS", "COFINS", "ISS", "CPRB"].includes(i.sigla))
+    .filter((i) => TRIBUTOS_SIGLAS.includes(i.sigla))
     .reduce((sum, i) => sum + i.percentual, 0);
   const bdiCalc =
     ((1 + (ac + sg + r) / 100) * (1 + df / 100) * (1 + com / 100) * (1 + l / 100)) /
@@ -64,24 +61,12 @@ function calcBdi(items: BDIItem[]) {
   return { bdiCalc, bdiPercent: bdiCalc * 100, ac, sg, r, df, com, l, tributos };
 }
 
-// ── DRE types ──
-
-interface BDIComp {
-  sigla: string;
-  label: string;
-  percentual: number;
-  descricao: string;
-}
-
 // ══════════════════════════════════════════════
 // Component
 // ══════════════════════════════════════════════
 
 export default function BdiDre() {
   const queryClient = useQueryClient();
-
-  // ── Shared state ──
-  const [selectedBdiId, setSelectedBdiId] = useState<string>("");
 
   // ── BDI state ──
   const [bdiItems, setBdiItems] = useState<BDIItem[]>(defaultBDI);
@@ -122,7 +107,6 @@ export default function BdiDre() {
     },
   });
 
-  // Auto-select latest oportunidade
   const latestOportunidade = oportunidades?.[0];
   const selectedOportunidadeId = latestOportunidade?.id || "";
 
@@ -143,24 +127,13 @@ export default function BdiDre() {
     enabled: !!selectedOportunidadeId,
   });
 
-  // Auto-load cost from latest oportunidade's orcamento
   useEffect(() => {
     if (orcamentoOportunidade) {
       setCustoDireto(Number(orcamentoOportunidade.custo_total) || 0);
-      if (orcamentoOportunidade.bdi_id) {
-        setSelectedBdiId(orcamentoOportunidade.bdi_id);
-      }
     }
   }, [orcamentoOportunidade]);
 
-  // Auto-select first BDI if nothing selected
-  useEffect(() => {
-    if (!selectedBdiId && savedBdis?.length) {
-      setSelectedBdiId(savedBdis[0].id);
-    }
-  }, [savedBdis, selectedBdiId]);
-
-  // ── BDI calculations ──
+  // ── BDI calculations (live from current items) ──
   const { bdiCalc, bdiPercent, ac, sg, r, df, com, l, tributos } = calcBdi(bdiItems);
 
   const handleBdiChange = (index: number, value: string) => {
@@ -220,7 +193,6 @@ export default function BdiDre() {
     setBdiItems([...loaded, ...extras]);
     setBdiNome(bdi.nome);
     setEditId(bdi.id);
-    setSelectedBdiId(bdi.id);
   };
 
   const handleBdiDelete = async (id: string) => {
@@ -235,42 +207,26 @@ export default function BdiDre() {
     }
   };
 
-  // ── DRE calculations ──
-
-  const bdiComponentes = useMemo((): BDIComp[] => {
-    if (!selectedBdiId || !savedBdis) return [];
-    const bdi = savedBdis.find((b: any) => b.id === selectedBdiId);
-    if (!bdi) return [];
-    const comp = bdi.componentes as Record<string, any>;
-    return Object.entries(comp).map(([sigla, val]: [string, any]) => ({
-      sigla,
-      label: val?.label || sigla,
-      percentual: Number(val?.percentual ?? 0),
-      descricao: val?.descricao || "",
-    }));
-  }, [selectedBdiId, savedBdis]);
-
-  const selectedBdi = savedBdis?.find((b: any) => b.id === selectedBdiId);
+  // ── DRE calculations (live from current BDI items) ──
 
   const categorias = useMemo(() => {
-    const TRIBUTOS_SIGLAS = ["PIS", "COFINS", "ISS", "CPRB", "ICMS"];
-    const tributos: BDIComp[] = [];
-    const despesas: BDIComp[] = [];
-    let lucroComp: BDIComp | null = null;
-    let riscoComp: BDIComp | null = null;
-    let comissaoComp: BDIComp | null = null;
+    const tributosList: BDIItem[] = [];
+    const despesas: BDIItem[] = [];
+    let lucroComp: BDIItem | null = null;
+    let riscoComp: BDIItem | null = null;
+    let comissaoComp: BDIItem | null = null;
 
-    for (const c of bdiComponentes) {
+    for (const c of bdiItems) {
       const s = c.sigla.toUpperCase();
       const lab = c.label.toUpperCase();
       if (s === "L" || lab.includes("LUCRO")) lucroComp = c;
       else if (s === "R" || lab.includes("RISCO")) riscoComp = c;
       else if (s === "COM" || lab.includes("COMISS")) comissaoComp = c;
-      else if (TRIBUTOS_SIGLAS.includes(s) || lab.includes("TRIBUT") || lab.includes("IMPOSTO")) tributos.push(c);
+      else if (TRIBUTOS_SIGLAS.includes(s) || lab.includes("TRIBUT") || lab.includes("IMPOSTO")) tributosList.push(c);
       else despesas.push(c);
     }
-    return { tributos, despesas, lucroComp, riscoComp, comissaoComp };
-  }, [bdiComponentes]);
+    return { tributos: tributosList, despesas, lucroComp, riscoComp, comissaoComp };
+  }, [bdiItems]);
 
   const resultado = useMemo(() => {
     const totalTributosPct = categorias.tributos.reduce((s, t) => s + t.percentual, 0);
@@ -309,7 +265,7 @@ export default function BdiDre() {
       despesasDetail, riscoValor, riscoPct,
       comissaoValor: custoDireto * (comissaoPct / 100), comissaoPct,
       totalDespesas, totalDespesasPct, lucroAntesIR,
-      irpjValor, csllValor, totalIR, totalIRPct: totalIRPct,
+      irpjValor, csllValor, totalIR, totalIRPct,
       lucroLiquidoFinal, bdiPct: bdiPctCalc, bdiValor,
       margemLiquida, margemBruta, margemEbit,
     };
@@ -339,14 +295,14 @@ export default function BdiDre() {
 
   return (
     <div className="page-container animate-fade-in">
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="page-title">BDI & Formação de Preço</h1>
           <p className="page-subtitle">
-            Configure o BDI e simule a DRE para formação de preço de venda
+            Configure o BDI e veja a DRE se formar automaticamente
           </p>
         </div>
-        {/* Oportunidade badge */}
         {latestOportunidade && (
           <div className="flex items-center gap-2 text-xs bg-muted/50 rounded-lg px-3 py-2">
             <Briefcase className="w-4 h-4 text-primary" />
@@ -361,306 +317,240 @@ export default function BdiDre() {
         )}
       </div>
 
-      <Tabs defaultValue="bdi" className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="bdi" className="gap-2">
-            <Calculator className="w-4 h-4" />
-            BDI
-          </TabsTrigger>
-          <TabsTrigger value="dre" className="gap-2">
-            <DollarSign className="w-4 h-4" />
-            DRE
-          </TabsTrigger>
-        </TabsList>
+      {/* ── Main layout: BDI left, DRE right ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
-        {/* ══════════════════════ TAB: BDI ══════════════════════ */}
-        <TabsContent value="bdi">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-card rounded-lg border shadow-sm">
-                <div className="p-5 border-b flex items-center gap-2">
-                  <Calculator className="w-5 h-5 text-accent" />
-                  <h2 className="text-lg font-semibold">Componentes do BDI</h2>
-                </div>
-                <div className="p-5 space-y-3">
-                  {bdiItems.map((item, idx) => (
-                    <div key={item.sigla} className="flex items-center gap-4 p-3 rounded-lg bg-muted/50">
-                      <div className="w-16 text-center">
-                        <span className="text-xs font-bold text-accent uppercase">{item.sigla}</span>
+        {/* ══════════ LEFT: BDI Configuration ══════════ */}
+        <div className="space-y-4">
+          {/* Load saved config */}
+          {(savedBdis || []).length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Link2 className="w-4 h-4" /> Carregar Configuração Salva
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {(savedBdis || []).map((bdi: any) => (
+                    <div
+                      key={bdi.id}
+                      className={`group flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors hover:bg-muted/80 ${
+                        editId === bdi.id ? "border-primary bg-primary/5" : "bg-card"
+                      }`}
+                    >
+                      <div className="flex-1" onClick={() => handleBdiLoad(bdi)}>
+                        <p className="text-xs font-medium">{bdi.nome}</p>
+                        <p className="text-[10px] text-muted-foreground">BDI: {Number(bdi.bdi_calculado).toFixed(2)}%</p>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{item.label}</p>
-                        <p className="text-xs text-muted-foreground">{item.descricao}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={item.percentual}
-                          onChange={(e) => handleBdiChange(idx, e.target.value)}
-                          className="w-24 px-3 py-2 text-sm text-right bg-background border rounded-md focus:ring-2 focus:ring-ring outline-none"
-                        />
-                        <span className="text-sm text-muted-foreground">%</span>
-                      </div>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => handleBdiDelete(bdi.id)}>
+                        <Trash2 className="w-3 h-3 text-destructive" />
+                      </Button>
                     </div>
                   ))}
                 </div>
-                <div className="p-5 border-t flex items-center gap-3">
-                  <Input
-                    placeholder="Nome da configuração (ex: BDI Padrão)"
-                    value={bdiNome}
-                    onChange={(e) => setBdiNome(e.target.value)}
-                    className="max-w-xs"
-                  />
-                  <Button className="gap-2" onClick={handleBdiSave} disabled={saving}>
-                    <Save className="w-4 h-4" />
-                    {editId ? "Atualizar" : "Salvar"}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* BDI components editor */}
+          <div className="bg-card rounded-lg border shadow-sm">
+            <div className="p-4 border-b flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calculator className="w-5 h-5 text-accent" />
+                <h2 className="text-base font-semibold">Componentes do BDI</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="bg-accent/10 text-accent px-3 py-1 rounded-full">
+                  <span className="text-sm font-bold">{bdiPercent.toFixed(2)}%</span>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 space-y-2">
+              {bdiItems.map((item, idx) => (
+                <div key={item.sigla} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/40 hover:bg-muted/70 transition-colors">
+                  <span className="text-[10px] font-bold text-accent uppercase w-12 text-center shrink-0">{item.sigla}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate">{item.label}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={item.percentual}
+                      onChange={(e) => handleBdiChange(idx, e.target.value)}
+                      className="w-20 px-2 py-1.5 text-xs text-right bg-background border rounded-md focus:ring-2 focus:ring-ring outline-none"
+                    />
+                    <span className="text-xs text-muted-foreground">%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Save section */}
+            <div className="p-4 border-t space-y-3">
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="Nome da configuração (ex: BDI Padrão)"
+                  value={bdiNome}
+                  onChange={(e) => setBdiNome(e.target.value)}
+                  className="h-9 text-sm"
+                />
+                <Button size="sm" className="gap-1.5 shrink-0" onClick={handleBdiSave} disabled={saving}>
+                  <Save className="w-3.5 h-3.5" />
+                  {editId ? "Atualizar" : "Salvar"}
+                </Button>
+                {editId && (
+                  <Button variant="ghost" size="sm" onClick={() => { setEditId(null); setBdiNome(""); setBdiItems(defaultBDI); }}>
+                    Cancelar
                   </Button>
-                  {editId && (
-                    <Button variant="ghost" onClick={() => { setEditId(null); setBdiNome(""); setBdiItems(defaultBDI); }}>
-                      Cancelar
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {(savedBdis || []).length > 0 && (
-                <div className="bg-card rounded-lg border shadow-sm">
-                  <div className="p-5 border-b">
-                    <h2 className="text-lg font-semibold">Configurações Salvas</h2>
-                  </div>
-                  <div className="divide-y">
-                    {(savedBdis || []).map((bdi: any) => (
-                      <div key={bdi.id} className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
-                        <div className="flex-1 cursor-pointer" onClick={() => handleBdiLoad(bdi)}>
-                          <p className="font-medium text-sm">{bdi.nome}</p>
-                          <p className="text-xs text-muted-foreground">
-                            BDI: {Number(bdi.bdi_calculado).toFixed(2)}% — {new Date(bdi.created_at).toLocaleDateString("pt-BR")}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleBdiLoad(bdi)}>
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleBdiDelete(bdi.id)}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-4">
-              <div className="bg-card rounded-lg border shadow-sm p-6 text-center">
-                <p className="text-sm text-muted-foreground mb-2">BDI Calculado</p>
-                <p className="text-4xl font-bold text-accent">{bdiPercent.toFixed(2)}%</p>
-                <p className="text-xs text-muted-foreground mt-3">Fator multiplicador: {(1 + bdiCalc).toFixed(4)}</p>
-              </div>
-
-              <div className="bg-card rounded-lg border shadow-sm p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <Info className="w-4 h-4 text-info" />
-                  <h3 className="text-sm font-semibold">Fórmula</h3>
-                </div>
-                <div className="bg-muted rounded-md p-3 text-xs font-mono text-muted-foreground leading-relaxed">
-                  BDI = [(1+AC+S+R+G) × (1+DF) × (1+COM) × (1+L)] / (1-I) - 1
-                </div>
-                <div className="mt-3 space-y-1 text-xs text-muted-foreground">
-                  <p>AC = Administração Central</p>
-                  <p>S+G = Seguros e Garantias</p>
-                  <p>R = Risco</p>
-                  <p>DF = Despesas Financeiras</p>
-                  <p>COM = Comissões</p>
-                  <p>L = Lucro</p>
-                  <p>I = Impostos (PIS+COFINS+ISS+CPRB)</p>
-                </div>
-              </div>
-
-              <div className="bg-card rounded-lg border shadow-sm p-5">
-                <h3 className="text-sm font-semibold mb-3">Resumo</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Custos Indiretos</span><span className="font-medium">{(ac + sg + r).toFixed(2)}%</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Desp. Financeiras</span><span className="font-medium">{df.toFixed(2)}%</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Comissões</span><span className="font-medium">{com.toFixed(2)}%</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Lucro</span><span className="font-medium">{l.toFixed(2)}%</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Tributos</span><span className="font-medium">{tributos.toFixed(2)}%</span></div>
-                  <div className="flex justify-between pt-2 border-t font-semibold"><span>BDI Total</span><span className="text-accent">{bdiPercent.toFixed(2)}%</span></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* ══════════════════════ TAB: DRE ══════════════════════ */}
-        <TabsContent value="dre">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="space-y-4">
-              {/* BDI selecionado */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Link2 className="w-4 h-4" /> Configuração BDI
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Select value={selectedBdiId} onValueChange={setSelectedBdiId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Escolha uma configuração BDI" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(savedBdis || []).map((bdi: any) => (
-                        <SelectItem key={bdi.id} value={bdi.id}>
-                          {bdi.nome} ({Number(bdi.bdi_calculado).toFixed(2)}%)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {selectedBdi && (
-                    <div className="bg-muted/50 rounded-md p-3 space-y-1">
-                      <div className="text-xs font-medium">{selectedBdi.nome}</div>
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {bdiComponentes.map(c => (
-                          <Badge key={c.sigla} variant="outline" className="text-[10px]">
-                            {c.sigla} {c.percentual.toFixed(2)}%
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Oportunidade info */}
-              {latestOportunidade && (
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Briefcase className="w-4 h-4" /> Oportunidade
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="bg-muted/50 rounded-md p-3 space-y-1">
-                      <div className="text-xs font-medium">{latestOportunidade.codigo} — {latestOportunidade.descricao}</div>
-                      <div className="text-xs text-muted-foreground">
-                        Cliente: {(latestOportunidade as any).clientes?.nome || "—"}
-                      </div>
-                      {orcamentoOportunidade && (
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Custo Total: {fmt(Number(orcamentoOportunidade.custo_total))}
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Parâmetros */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Parâmetros</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label className="text-xs">Custo Direto Total (R$)</Label>
-                    <Input type="number" value={custoDireto} onChange={e => setCustoDireto(parseFloat(e.target.value) || 0)} className="mt-1" />
-                  </div>
-                  <Separator />
-                  <div>
-                    <Label className="text-xs font-semibold text-primary">Lucro Líquido Desejado (%)</Label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Input type="number" step="0.01" value={lucroLiquidoPct} onChange={e => setLucroLiquidoPct(parseFloat(e.target.value) || 0)} className="border-primary/50" />
-                      <span className="text-sm text-muted-foreground">%</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">% sobre a receita bruta</p>
-                  </div>
-                  <Separator />
-                  <div className="text-xs font-medium text-muted-foreground">Impostos sobre Lucro</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-xs">IRPJ (%)</Label>
-                      <Input type="number" step="0.01" value={irpjPct} onChange={e => setIrpjPct(parseFloat(e.target.value) || 0)} className="mt-1 h-8 text-xs" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">CSLL (%)</Label>
-                      <Input type="number" step="0.01" value={csllPct} onChange={e => setCsllPct(parseFloat(e.target.value) || 0)} className="mt-1 h-8 text-xs" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Indicadores */}
-              <Card>
-                <CardContent className="pt-6 text-center">
-                  <p className="text-sm text-muted-foreground mb-1">BDI Resultante</p>
-                  <p className="text-3xl font-bold text-primary font-mono">{fmtPct(resultado.bdiPct)}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{fmt(resultado.bdiValor)} sobre {fmt(custoDireto)}</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3"><CardTitle className="text-sm">Indicadores</CardTitle></CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Margem Bruta</span><span className="font-medium font-mono">{fmtPct(resultado.margemBruta)}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Margem EBIT</span><span className="font-medium font-mono">{fmtPct(resultado.margemEbit)}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Margem Líquida</span><span className="font-medium font-mono text-primary">{fmtPct(resultado.margemLiquida)}</span></div>
-                  <Separator />
-                  <div className="flex justify-between"><span className="text-muted-foreground">Custo / Receita</span><span className="font-medium font-mono">{resultado.receitaBruta > 0 ? fmtPct((custoDireto / resultado.receitaBruta) * 100) : "0%"}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Carga Tributária</span><span className="font-medium font-mono">{fmtPct(resultado.totalTributosPct + resultado.totalIRPct)}</span></div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* DRE table */}
-            <div className="lg:col-span-2 bg-card rounded-lg border shadow-sm">
-              <div className="p-5 border-b flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-accent" />
-                <h2 className="text-lg font-semibold">DRE — Caminho Inverso</h2>
-                {selectedBdi && (
-                  <Badge variant="secondary" className="text-xs ml-2">
-                    <Link2 className="w-3 h-3 mr-1" />
-                    {selectedBdi.nome}
-                  </Badge>
-                )}
-                <span className="ml-auto text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                  Preço: {fmt(resultado.receitaBruta)}
-                </span>
-              </div>
-              <div className="p-5">
-                {!selectedBdiId ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <Link2 className="w-8 h-8 mx-auto mb-3 opacity-50" />
-                    <p className="text-sm font-medium">Selecione uma configuração BDI</p>
-                    <p className="text-xs mt-1">A DRE será gerada com os componentes do BDI selecionado</p>
-                  </div>
-                ) : (
-                  dreRows.map((row, idx) => (
-                    <div
-                      key={idx}
-                      className={`flex items-center justify-between py-2.5 px-3 rounded-md ${
-                        row.highlight ? "bg-muted font-semibold" : row.accent ? "bg-primary/10 font-bold border border-primary/30" : ""
-                      }`}
-                      style={{ paddingLeft: `${row.level * 24 + 12}px` }}
-                    >
-                      <span className={`text-sm ${row.level === 2 ? "text-muted-foreground" : ""}`}>{row.label}</span>
-                      <div className="flex items-center gap-3">
-                        {row.pct !== undefined && (
-                          <span className="text-xs text-muted-foreground w-14 text-right">{fmtPct(row.pct)}</span>
-                        )}
-                        <span className={`text-sm font-mono w-32 text-right ${row.value < 0 ? "text-destructive" : ""} ${row.accent ? "text-primary text-base" : ""}`}>
-                          {row.value < 0 ? "-" : ""}{fmt(Math.abs(row.value))}
-                        </span>
-                      </div>
-                    </div>
-                  ))
                 )}
               </div>
             </div>
           </div>
-        </TabsContent>
-      </Tabs>
+
+          {/* Formula reference */}
+          <Card>
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Info className="w-3.5 h-3.5 text-muted-foreground" />
+                <h3 className="text-xs font-semibold text-muted-foreground">Fórmula BDI</h3>
+              </div>
+              <div className="bg-muted rounded-md p-2 text-[10px] font-mono text-muted-foreground leading-relaxed">
+                BDI = [(1+AC+S+R+G) × (1+DF) × (1+COM) × (1+L)] / (1-I) - 1
+              </div>
+              <div className="mt-2 text-xs text-muted-foreground">
+                Fator multiplicador: <span className="font-mono font-medium">{(1 + bdiCalc).toFixed(4)}</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* ══════════ RIGHT: DRE (auto-generated from BDI) ══════════ */}
+        <div className="space-y-4">
+          {/* DRE parameters */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <TrendingUp className="w-4 h-4" /> Parâmetros da DRE
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label className="text-xs">Custo Direto (R$)</Label>
+                  <Input
+                    type="number"
+                    value={custoDireto}
+                    onChange={e => setCustoDireto(parseFloat(e.target.value) || 0)}
+                    className="mt-1 h-8 text-xs"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold text-primary">Lucro Líquido (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={lucroLiquidoPct}
+                    onChange={e => setLucroLiquidoPct(parseFloat(e.target.value) || 0)}
+                    className="mt-1 h-8 text-xs border-primary/50"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-[10px]">IRPJ (%)</Label>
+                    <Input type="number" step="0.01" value={irpjPct} onChange={e => setIrpjPct(parseFloat(e.target.value) || 0)} className="mt-1 h-8 text-xs" />
+                  </div>
+                  <div>
+                    <Label className="text-[10px]">CSLL (%)</Label>
+                    <Input type="number" step="0.01" value={csllPct} onChange={e => setCsllPct(parseFloat(e.target.value) || 0)} className="mt-1 h-8 text-xs" />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* KPI cards */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 text-center">
+              <p className="text-[10px] text-muted-foreground">Preço de Venda</p>
+              <p className="text-sm font-bold font-mono text-primary">{fmt(resultado.receitaBruta)}</p>
+            </div>
+            <div className="bg-accent/10 border border-accent/30 rounded-lg p-3 text-center">
+              <p className="text-[10px] text-muted-foreground">BDI Resultante</p>
+              <p className="text-sm font-bold font-mono text-accent">{fmtPct(resultado.bdiPct)}</p>
+            </div>
+            <div className={`rounded-lg p-3 text-center border ${
+              resultado.lucroLiquidoFinal >= 0
+                ? "bg-emerald-500/10 border-emerald-500/30"
+                : "bg-destructive/10 border-destructive/30"
+            }`}>
+              <p className="text-[10px] text-muted-foreground">Lucro Líquido</p>
+              <p className={`text-sm font-bold font-mono ${
+                resultado.lucroLiquidoFinal >= 0 ? "text-emerald-600" : "text-destructive"
+              }`}>
+                {fmt(resultado.lucroLiquidoFinal)}
+              </p>
+              <p className="text-[10px] text-muted-foreground">{fmtPct(resultado.margemLiquida)}</p>
+            </div>
+          </div>
+
+          {/* DRE table */}
+          <div className="bg-card rounded-lg border shadow-sm">
+            <div className="p-4 border-b flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-accent" />
+              <h2 className="text-base font-semibold">DRE — Formação de Preço</h2>
+              <ArrowRight className="w-4 h-4 text-muted-foreground mx-1" />
+              <span className="text-xs text-muted-foreground">Atualização em tempo real</span>
+            </div>
+            <div className="p-4">
+              {dreRows.map((row, idx) => (
+                <div
+                  key={idx}
+                  className={`flex items-center justify-between py-2 px-3 rounded-md ${
+                    row.highlight ? "bg-muted font-semibold" : row.accent ? "bg-primary/10 font-bold border border-primary/30" : ""
+                  }`}
+                  style={{ paddingLeft: `${row.level * 20 + 12}px` }}
+                >
+                  <span className={`text-xs ${row.level === 2 ? "text-muted-foreground" : ""}`}>{row.label}</span>
+                  <div className="flex items-center gap-3">
+                    {row.pct !== undefined && (
+                      <span className="text-[10px] text-muted-foreground w-12 text-right">{fmtPct(row.pct)}</span>
+                    )}
+                    <span className={`text-xs font-mono w-28 text-right ${row.value < 0 ? "text-destructive" : ""} ${row.accent ? "text-primary text-sm" : ""}`}>
+                      {row.value < 0 ? "-" : ""}{fmt(Math.abs(row.value))}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Indicators */}
+          <Card>
+            <CardContent className="pt-4 pb-4">
+              <div className="grid grid-cols-4 gap-3 text-center text-xs">
+                <div>
+                  <p className="text-muted-foreground">Margem Bruta</p>
+                  <p className="font-mono font-semibold">{fmtPct(resultado.margemBruta)}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Margem EBIT</p>
+                  <p className="font-mono font-semibold">{fmtPct(resultado.margemEbit)}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Margem Líquida</p>
+                  <p className="font-mono font-semibold text-primary">{fmtPct(resultado.margemLiquida)}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Carga Tributária</p>
+                  <p className="font-mono font-semibold">{fmtPct(resultado.totalTributosPct + resultado.totalIRPct)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
