@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { CrudPage } from "@/components/crud/CrudPage";
 import { useSupabaseQuery } from "@/hooks/useSupabaseCrud";
+import GruposServicosSidebar from "@/components/servicos/GruposServicosSidebar";
 
 export default function Servicos() {
   const { data: mercados } = useSupabaseQuery("mercados");
