@@ -88,7 +88,7 @@ function SortableTable({ data, columns, onEdit, onDelete }: {
 }
 
 export function CrudPage<T extends TableName>({
-  table, title, subtitle, columns, formFields, searchField, filter, defaultFilters, hiddenDefaults,
+  table, title, subtitle, columns, formFields, searchField, filter, defaultFilters, hiddenDefaults, onFieldChange,
 }: CrudPageProps<T>) {
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
@@ -175,6 +175,7 @@ export function CrudPage<T extends TableName>({
         initialValues={editItem || undefined}
         onSubmit={handleSubmit}
         loading={insertMutation.isPending || updateMutation.isPending}
+        onFieldChange={onFieldChange}
       />
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
