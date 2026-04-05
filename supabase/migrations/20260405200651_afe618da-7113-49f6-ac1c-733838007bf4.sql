@@ -1,0 +1,1 @@
+ALTER TABLE public.servicos ADD COLUMN ordem_id text DEFAULT '' NOT NULL;

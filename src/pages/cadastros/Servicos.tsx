@@ -7,7 +7,7 @@ export default function Servicos() {
   const { data: mercados } = useSupabaseQuery("mercados");
   const { data: areasEmpresa } = useSupabaseQuery("areas_empresa");
   const { data: modulos } = useSupabaseQuery("modulos");
-  const { data: servicos } = useSupabaseQuery("servicos");
+  const { data: servicos } = useSupabaseQuery("servicos", { orderBy: "ordem_id", ascending: true });
 
   const generateNextCode = useCallback(
     (mercadoId: string, areaId: string, moduloId: string) => {
@@ -59,6 +59,7 @@ export default function Servicos() {
           searchField="nome"
           onFieldChange={handleFieldChange}
           columns={[
+            { key: "ordem_id", label: "ID", render: (v) => <span className="font-mono text-xs font-semibold">{v ? String(v) : "-"}</span> },
             { key: "codigo", label: "Código", render: (v) => <span className="font-medium text-accent">{String(v)}</span> },
             { key: "nome", label: "Nome", render: (v) => <span className="font-medium">{String(v)}</span> },
             {
@@ -93,6 +94,7 @@ export default function Servicos() {
             { key: "unidade_medicao", label: "Unidade", render: (v) => <span className="text-sm">{v ? String(v) : "-"}</span> },
           ]}
           formFields={[
+            { name: "ordem_id", label: "ID (ordem de execução)", type: "text", placeholder: "Ex: 01, 01.1, 02, A1" },
             {
               name: "mercado_id",
               label: "Mercado",
