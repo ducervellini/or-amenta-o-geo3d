@@ -204,6 +204,13 @@ export default function OrcamentoDetalhe() {
     }
   }, [existingOrcamento]);
 
+  // Auto-populate serviços from grupo when no existing data
+  useEffect(() => {
+    if (composicoes && composicoes.length > 0 && servicos.length === 0 && !existingOrcamento && grupoId) {
+      setServicos(composicoes.map((c: any) => ({ composicao_id: c.id, quantidade: 0 })));
+    }
+  }, [composicoes, grupoId]);
+
   // Auto-select first BDI if none selected
   useEffect(() => {
     if (!selectedBdiId && bdiProfiles?.length) {
