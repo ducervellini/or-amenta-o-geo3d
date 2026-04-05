@@ -496,13 +496,13 @@ export default function BdiDre() {
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-medium truncate">{item.label}</p>
                             {isLucro && (
-                              <p className="text-[10px] text-muted-foreground">Calculado via &quot;Lucro Líquido desejado&quot;</p>
+                              <p className="text-[10px] text-muted-foreground">Calculado via &quot;Lucro Bruto desejado&quot;</p>
                             )}
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
                             {isLucro ? (
                               <span className="w-20 px-2 py-1.5 text-xs text-right bg-muted border rounded-md font-mono text-muted-foreground">
-                                {item.percentual.toFixed(2)}
+                                {resultado.margemBruta.toFixed(2)}
                               </span>
                             ) : (
                               <input
