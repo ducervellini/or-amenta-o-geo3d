@@ -219,14 +219,14 @@ export default function OrcamentoDetalhe() {
     return bdiProfiles.find((b: any) => b.id === selectedBdiId) || bdiProfiles[0] || null;
   }, [bdiProfiles, selectedBdiId]);
 
-  const bdiPercentual = bdiData?.bdi_calculado || 0;
-  const bdiComponentes: { nome: string; percentual: number }[] = useMemo(() => {
+  const bdiComponentes: { nome: string; percentual: number; categoria?: string }[] = useMemo(() => {
     if (!bdiData?.componentes) return [];
     const comp = bdiData.componentes;
     if (Array.isArray(comp)) return comp;
     return Object.entries(comp).map(([_key, val]: [string, any]) => ({
       nome: val?.label || _key,
       percentual: Number(val?.percentual ?? val ?? 0),
+      categoria: val?.categoria || undefined,
     }));
   }, [bdiData]);
 
