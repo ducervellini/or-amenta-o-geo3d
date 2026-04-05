@@ -18,7 +18,7 @@ export function SortableHeader({ label, sortKey, currentSort, currentDirection, 
   const isActive = currentSort === sortKey;
   return (
     <th
-      className={`cursor-pointer select-none hover:bg-muted/50 transition-colors relative group ${className || ""}`}
+      className={`cursor-pointer select-none hover:bg-muted/50 transition-colors relative group resize-x overflow-hidden min-w-[50px] ${className || ""}`}
       onClick={() => onSort(sortKey)}
       style={style}
     >
