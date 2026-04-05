@@ -273,7 +273,7 @@ export default function Composicoes() {
               <thead>
                 <tr>
                   <th className="w-10"></th>
-                  {cols.slice(1).map((col) => (
+                  {cols.slice(1).filter((col) => visibleCols.has(col.key)).map((col) => (
                     <SortableHeader
                       key={col.key}
                       label={col.label}
