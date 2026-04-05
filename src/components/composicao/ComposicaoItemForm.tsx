@@ -25,6 +25,7 @@ interface Props {
   existingItems?: Record<string, unknown>[]; // existing composition items for MO coeficiente
   onSubmit: (values: Record<string, unknown>) => void;
   loading?: boolean;
+  servicoUnidade?: string;
 }
 
 const tipoLabels: Record<TipoInsumo, string> = {
