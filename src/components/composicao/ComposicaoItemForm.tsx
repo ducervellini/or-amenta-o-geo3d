@@ -43,10 +43,9 @@ const UNIDADES = [
 export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_obra", initialValues, onSubmit, loading }: Props) {
   const [tipo, setTipo] = useState<TipoInsumo>(tipoInicial);
   const [descricao, setDescricao] = useState("");
-  const [quantidade, setQuantidade] = useState(1); // units produced in the prazo period
+  const [quantidade, setQuantidade] = useState(1); // units produced in the period
   const [unidade, setUnidade] = useState("un");
-  const [prazo, setPrazo] = useState<"horas" | "dias" | "mês">("dias");
-  const [prazoPeriodos, setPrazoPeriodos] = useState(1); // how many periods (hours/days/months)
+  const [periodo, setPeriodo] = useState<"hora" | "dia" | "mês">("dia");
   const [observacoes, setObservacoes] = useState("");
   const [insumoId, setInsumoId] = useState("");
 
