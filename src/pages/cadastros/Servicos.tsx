@@ -50,112 +50,117 @@ export default function Servicos() {
   );
 
   return (
-    <CrudPage
-      table="servicos"
-      title="Serviços"
-      subtitle="Cadastro de serviços técnicos de engenharia"
-      searchField="nome"
-      onFieldChange={handleFieldChange}
-      columns={[
-        { key: "codigo", label: "Código", render: (v) => <span className="font-medium text-accent">{String(v)}</span> },
-        { key: "nome", label: "Nome", render: (v) => <span className="font-medium">{String(v)}</span> },
-        {
-          key: "mercado_id",
-          label: "Mercado",
-          render: (v) => {
-            const m = mercados?.find((m) => m.id === v);
-            return <span className="text-sm">{m ? String(m.nome) : "-"}</span>;
-          },
-        },
-        {
-          key: "area_empresa_id",
-          label: "Área da Empresa",
-          render: (v) => {
-            const a = areasEmpresa?.find((a) => a.id === v);
-            return (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
-                {a ? String(a.nome) : "-"}
-              </span>
-            );
-          },
-        },
-        {
-          key: "modulo_id",
-          label: "Departamento",
-          render: (v) => {
-            const d = modulos?.find((d) => d.id === v);
-            return <span className="text-sm">{d ? String(d.nome) : "-"}</span>;
-          },
-        },
-        { key: "descricao", label: "Descrição", render: (v) => <span className="text-sm text-muted-foreground">{v ? String(v) : "-"}</span> },
-        { key: "unidade_medicao", label: "Unidade", render: (v) => <span className="text-sm">{v ? String(v) : "-"}</span> },
-      ]}
-      formFields={[
-        {
-          name: "mercado_id",
-          label: "Mercado",
-          type: "select",
-          required: true,
-          options: (mercados || []).map((m) => ({ label: String(m.nome), value: String(m.id) })),
-        },
-        {
-          name: "area_empresa_id",
-          label: "Área da Empresa",
-          type: "select",
-          required: true,
-          options: (areasEmpresa || []).map((a) => ({ label: String(a.nome), value: String(a.id) })),
-        },
-        {
-          name: "modulo_id",
-          label: "Departamento",
-          type: "select",
-          options: (modulos || []).map((d) => ({ label: String(d.nome), value: String(d.id) })),
-        },
-        { name: "codigo", label: "Código", type: "text", required: true, placeholder: "Gerado automaticamente" },
-        { name: "nome", label: "Nome", type: "text", required: true, placeholder: "Nome do serviço" },
-        { name: "descricao", label: "Descrição", type: "textarea" },
-        {
-          name: "unidade_medicao",
-          label: "Unidade",
-          type: "select",
-          options: [
-            { label: "amostras", value: "amostras" },
-            { label: "bandeiras", value: "bandeiras" },
-            { label: "base", value: "base" },
-            { label: "caderno de preços", value: "caderno de preços" },
-            { label: "cadastros", value: "cadastros" },
-            { label: "contrato", value: "contrato" },
-            { label: "dia", value: "dia" },
-            { label: "diligência", value: "diligência" },
-            { label: "h", value: "h" },
-            { label: "ha", value: "ha" },
-            { label: "imóveis", value: "imóveis" },
-            { label: "km", value: "km" },
-            { label: "km²", value: "km²" },
-            { label: "laudos", value: "laudos" },
-            { label: "m", value: "m" },
-            { label: "m²", value: "m²" },
-            { label: "marcos", value: "marcos" },
-            { label: "modelo", value: "modelo" },
-            { label: "mês", value: "mês" },
-            { label: "ofertas", value: "ofertas" },
-            { label: "piquetes", value: "piquetes" },
-            { label: "plantas", value: "plantas" },
-            { label: "pontos", value: "pontos" },
-            { label: "propriedades", value: "propriedades" },
-            { label: "protocolo", value: "protocolo" },
-            { label: "pt", value: "pt" },
-            { label: "relatórios", value: "relatórios" },
-            { label: "seções", value: "seções" },
-            { label: "torres", value: "torres" },
-            { label: "travessias", value: "travessias" },
-            { label: "un", value: "un" },
-            { label: "unidades", value: "unidades" },
-            { label: "vértices", value: "vértices" },
-          ],
-          defaultValue: "un",
-        },
-      ]}
-    />
+    <div className="flex h-full">
+      <div className="flex-1 overflow-auto">
+        <CrudPage
+          table="servicos"
+          title="Serviços"
+          subtitle="Cadastro de serviços técnicos de engenharia"
+          searchField="nome"
+          onFieldChange={handleFieldChange}
+          columns={[
+            { key: "codigo", label: "Código", render: (v) => <span className="font-medium text-accent">{String(v)}</span> },
+            { key: "nome", label: "Nome", render: (v) => <span className="font-medium">{String(v)}</span> },
+            {
+              key: "mercado_id",
+              label: "Mercado",
+              render: (v) => {
+                const m = mercados?.find((m) => m.id === v);
+                return <span className="text-sm">{m ? String(m.nome) : "-"}</span>;
+              },
+            },
+            {
+              key: "area_empresa_id",
+              label: "Área da Empresa",
+              render: (v) => {
+                const a = areasEmpresa?.find((a) => a.id === v);
+                return (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
+                    {a ? String(a.nome) : "-"}
+                  </span>
+                );
+              },
+            },
+            {
+              key: "modulo_id",
+              label: "Departamento",
+              render: (v) => {
+                const d = modulos?.find((d) => d.id === v);
+                return <span className="text-sm">{d ? String(d.nome) : "-"}</span>;
+              },
+            },
+            { key: "descricao", label: "Descrição", render: (v) => <span className="text-sm text-muted-foreground">{v ? String(v) : "-"}</span> },
+            { key: "unidade_medicao", label: "Unidade", render: (v) => <span className="text-sm">{v ? String(v) : "-"}</span> },
+          ]}
+          formFields={[
+            {
+              name: "mercado_id",
+              label: "Mercado",
+              type: "select",
+              required: true,
+              options: (mercados || []).map((m) => ({ label: String(m.nome), value: String(m.id) })),
+            },
+            {
+              name: "area_empresa_id",
+              label: "Área da Empresa",
+              type: "select",
+              required: true,
+              options: (areasEmpresa || []).map((a) => ({ label: String(a.nome), value: String(a.id) })),
+            },
+            {
+              name: "modulo_id",
+              label: "Departamento",
+              type: "select",
+              options: (modulos || []).map((d) => ({ label: String(d.nome), value: String(d.id) })),
+            },
+            { name: "codigo", label: "Código", type: "text", required: true, placeholder: "Gerado automaticamente" },
+            { name: "nome", label: "Nome", type: "text", required: true, placeholder: "Nome do serviço" },
+            { name: "descricao", label: "Descrição", type: "textarea" },
+            {
+              name: "unidade_medicao",
+              label: "Unidade",
+              type: "select",
+              options: [
+                { label: "amostras", value: "amostras" },
+                { label: "bandeiras", value: "bandeiras" },
+                { label: "base", value: "base" },
+                { label: "caderno de preços", value: "caderno de preços" },
+                { label: "cadastros", value: "cadastros" },
+                { label: "contrato", value: "contrato" },
+                { label: "dia", value: "dia" },
+                { label: "diligência", value: "diligência" },
+                { label: "h", value: "h" },
+                { label: "ha", value: "ha" },
+                { label: "imóveis", value: "imóveis" },
+                { label: "km", value: "km" },
+                { label: "km²", value: "km²" },
+                { label: "laudos", value: "laudos" },
+                { label: "m", value: "m" },
+                { label: "m²", value: "m²" },
+                { label: "marcos", value: "marcos" },
+                { label: "modelo", value: "modelo" },
+                { label: "mês", value: "mês" },
+                { label: "ofertas", value: "ofertas" },
+                { label: "piquetes", value: "piquetes" },
+                { label: "plantas", value: "plantas" },
+                { label: "pontos", value: "pontos" },
+                { label: "propriedades", value: "propriedades" },
+                { label: "protocolo", value: "protocolo" },
+                { label: "pt", value: "pt" },
+                { label: "relatórios", value: "relatórios" },
+                { label: "seções", value: "seções" },
+                { label: "torres", value: "torres" },
+                { label: "travessias", value: "travessias" },
+                { label: "un", value: "un" },
+                { label: "unidades", value: "unidades" },
+                { label: "vértices", value: "vértices" },
+              ],
+              defaultValue: "un",
+            },
+          ]}
+        />
+      </div>
+      <GruposServicosSidebar servicos={servicos || []} />
+    </div>
   );
 }
