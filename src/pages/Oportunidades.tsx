@@ -12,6 +12,7 @@ const OPORT_COLS = [
   { key: "codigo", label: "Código" },
   { key: "descricao", label: "Descrição" },
   { key: "cliente", label: "Cliente" },
+  { key: "grupo_servicos", label: "Grupo de Serviços" },
   { key: "cidade", label: "Cidade" },
   { key: "estado", label: "Estado" },
 ];
@@ -41,7 +42,7 @@ export default function Oportunidades() {
     queryKey: ["oportunidades"],
     queryFn: async () => {
       const { data, error } = await (supabase.from as any)("oportunidades")
-        .select("*, clientes(nome)")
+        .select("*, clientes(nome), grupos_servicos(nome)")
         .eq("ativo", true)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -53,6 +54,18 @@ export default function Oportunidades() {
     queryKey: ["clientes-select"],
     queryFn: async () => {
       const { data, error } = await (supabase.from as any)("clientes")
+        .select("id, nome")
+        .eq("ativo", true)
+        .order("nome");
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
+  const { data: gruposServicos } = useQuery({
+    queryKey: ["grupos-servicos-select"],
+    queryFn: async () => {
+      const { data, error } = await (supabase.from as any)("grupos_servicos")
         .select("id, nome")
         .eq("ativo", true)
         .order("nome");
