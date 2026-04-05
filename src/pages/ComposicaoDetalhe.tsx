@@ -119,7 +119,7 @@ function ItensTable({ itens, tipoIcons, tipoLabels, fmt, resumo, onEdit, onDelet
             );
           })}
           <tr className="border-t-2 font-semibold bg-muted/30">
-            <td colSpan={5} className="text-right text-sm">Total da Composição</td>
+            <td colSpan={7} className="text-right text-sm">Total da Composição</td>
             <td className="font-mono text-sm">R$ {fmt(resumo.custo_direto)}</td>
             <td></td>
           </tr>
