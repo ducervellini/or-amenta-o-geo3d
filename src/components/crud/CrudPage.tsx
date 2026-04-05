@@ -10,6 +10,7 @@ import {
 } from "@/hooks/useSupabaseCrud";
 import { Database } from "@/integrations/supabase/types";
 import { SortableHeader, useTableSort } from "@/components/ui/sortable-header";
+import { useColumnResize } from "@/hooks/useColumnResize";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,15 +51,19 @@ function SortableTable({ data, columns, onEdit, onDelete }: {
   onDelete: (id: string) => void;
 }) {
   const { sorted, sortKey, sortDirection, handleSort } = useTableSort(data);
+  const { getHeaderProps } = useColumnResize(columns.map((c) => c.key));
   return (
     <div className="overflow-x-auto">
-      <table className="data-table">
+      <table className="data-table" style={{ tableLayout: "fixed", width: "100%" }}>
         <thead>
           <tr>
-            {columns.map((col) => (
-              <SortableHeader key={col.key} label={col.label} sortKey={col.key} currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
-            ))}
-            <th className="text-center">Ações</th>
+            {columns.map((col) => {
+              const hp = getHeaderProps(col.key);
+              return (
+                <SortableHeader key={col.key} label={col.label} sortKey={col.key} currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} style={hp.style} onResizeStart={hp.onResizeStart} />
+              );
+            })}
+            <th className="text-center" style={{ width: 80 }}>Ações</th>
           </tr>
         </thead>
         <tbody>
