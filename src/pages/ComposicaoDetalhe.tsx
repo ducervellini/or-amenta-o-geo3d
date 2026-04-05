@@ -133,6 +133,7 @@ export default function ComposicaoDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isNew = id === "novo";
+  const [searchParams] = useState(() => new URLSearchParams(window.location.search));
 
   const { data: servicos } = useSupabaseQuery("servicos");
   const { data: mercados } = useSupabaseQuery("mercados");
