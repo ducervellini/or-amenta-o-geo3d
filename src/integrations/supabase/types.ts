@@ -1108,6 +1108,7 @@ export type Database = {
           created_at: string
           descricao: string
           estado: string | null
+          grupo_servicos_id: string | null
           id: string
           updated_at: string
         }
@@ -1119,6 +1120,7 @@ export type Database = {
           created_at?: string
           descricao: string
           estado?: string | null
+          grupo_servicos_id?: string | null
           id?: string
           updated_at?: string
         }
@@ -1130,6 +1132,7 @@ export type Database = {
           created_at?: string
           descricao?: string
           estado?: string | null
+          grupo_servicos_id?: string | null
           id?: string
           updated_at?: string
         }
@@ -1139,6 +1142,13 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oportunidades_grupo_servicos_id_fkey"
+            columns: ["grupo_servicos_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_servicos"
             referencedColumns: ["id"]
           },
         ]

@@ -1,0 +1,1 @@
+ALTER TABLE public.oportunidades ADD COLUMN grupo_servicos_id uuid REFERENCES public.grupos_servicos(id) ON DELETE SET NULL;
