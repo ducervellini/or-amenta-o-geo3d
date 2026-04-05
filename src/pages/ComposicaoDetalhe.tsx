@@ -57,12 +57,14 @@ function ItensTable({ itens, tipoIcons, tipoLabels, fmt, resumo, onEdit, onDelet
   const flatData = itens.map((item) => {
     const params = (item.parametros || {}) as Record<string, unknown>;
     const periodoLabel = params.periodo ? String(params.periodo) : "-";
+    const produtividade = Number(params.produtividade) || Number(item.quantidade) || 1;
     return {
       ...item,
       _tipo_label: tipoLabels[String(item.tipo_insumo)] || String(item.tipo_insumo),
       _custo_unitario: item.resultado.custo_unitario,
       _custo_total: item.resultado.custo_total,
       _periodo: periodoLabel,
+      _produtividade: produtividade,
     };
   });
   const { sorted, sortKey, sortDirection, handleSort } = useTableSort(flatData);
