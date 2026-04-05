@@ -484,30 +484,43 @@ export default function BdiDre() {
                     {CATEGORIA_LABELS[group.categoria] || group.categoria}
                   </p>
                   <div className="space-y-1">
-                    {group.items.map(({ item, globalIndex }) => (
-                      <div key={item.sigla} className="flex items-center gap-3 p-2 rounded-lg bg-muted/40 hover:bg-muted/70 transition-colors">
-                        <span className="text-[10px] font-bold text-accent uppercase w-12 text-center shrink-0">{item.sigla}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium truncate">{item.label}</p>
+                    {group.items.map(({ item, globalIndex }) => {
+                      const isLucro = item.categoria === "lucro";
+                      const valorCalculado = item.categoria === "tributo" || item.categoria === "ir"
+                        ? resultado.receitaBruta * (item.percentual / 100)
+                        : custoDireto * (item.percentual / 100);
+
+                      return (
+                        <div key={item.sigla} className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${isLucro ? "bg-primary/10 border border-primary/20" : "bg-muted/40 hover:bg-muted/70"}`}>
+                          <span className="text-[10px] font-bold text-accent uppercase w-12 text-center shrink-0">{item.sigla}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium truncate">{item.label}</p>
+                            {isLucro && (
+                              <p className="text-[10px] text-muted-foreground">Calculado via &quot;Lucro Líquido desejado&quot;</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            {isLucro ? (
+                              <span className="w-20 px-2 py-1.5 text-xs text-right bg-muted border rounded-md font-mono text-muted-foreground">
+                                {item.percentual.toFixed(2)}
+                              </span>
+                            ) : (
+                              <input
+                                type="number" step="0.01"
+                                value={item.percentual}
+                                onChange={e => handleChange(globalIndex, e.target.value)}
+                                className="w-20 px-2 py-1.5 text-xs text-right bg-background border rounded-md focus:ring-2 focus:ring-ring outline-none font-mono"
+                              />
+                            )}
+                            <span className="text-xs text-muted-foreground">%</span>
+                          </div>
+                          {/* Show calculated value */}
+                          <span className={`text-[10px] font-mono w-24 text-right shrink-0 ${isLucro ? "text-primary font-semibold" : "text-muted-foreground"}`}>
+                            {isLucro ? fmt(resultado.lucroBruto) : fmt(valorCalculado)}
+                          </span>
                         </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <input
-                            type="number" step="0.01"
-                            value={item.percentual}
-                            onChange={e => handleChange(globalIndex, e.target.value)}
-                            className="w-20 px-2 py-1.5 text-xs text-right bg-background border rounded-md focus:ring-2 focus:ring-ring outline-none font-mono"
-                          />
-                          <span className="text-xs text-muted-foreground">%</span>
-                        </div>
-                        {/* Show calculated value */}
-                        <span className="text-[10px] text-muted-foreground font-mono w-24 text-right shrink-0">
-                          {item.categoria === "tributo" || item.categoria === "ir"
-                            ? fmt(resultado.receitaBruta * (item.percentual / 100))
-                            : fmt(custoDireto * (item.percentual / 100))
-                          }
-                        </span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ))}
