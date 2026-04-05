@@ -40,6 +40,7 @@ export interface CrudPageProps<T extends TableName> {
   filter?: { column: string; value: unknown };
   defaultFilters?: Record<string, unknown>;
   hiddenDefaults?: Record<string, unknown>;
+  onFieldChange?: (fieldName: string, value: unknown, allValues: Record<string, unknown>) => Record<string, unknown> | undefined;
 }
 
 function SortableTable({ data, columns, onEdit, onDelete }: {

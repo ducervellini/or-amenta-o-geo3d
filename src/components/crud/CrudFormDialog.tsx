@@ -37,6 +37,7 @@ interface CrudFormDialogProps {
   initialValues?: Record<string, unknown>;
   onSubmit: (values: Record<string, unknown>) => void;
   loading?: boolean;
+  onFieldChange?: (fieldName: string, value: unknown, allValues: Record<string, unknown>) => Record<string, unknown> | undefined;
 }
 
 function buildDefaults(fields: FieldConfig[], initialValues?: Record<string, unknown>) {
