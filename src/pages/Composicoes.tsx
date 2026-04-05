@@ -281,10 +281,9 @@ export default function Composicoes() {
                             <span className="text-accent font-semibold">{String(grupo.nome)}</span>
                           </div>
                         </td>
-                        <td colSpan={6} className="text-sm text-muted-foreground">
+                        <td colSpan={7} className="text-sm text-muted-foreground">
                           {rows.length} serviço{rows.length !== 1 ? "s" : ""}
                         </td>
-                        <td className="text-sm">&nbsp;</td>
                         <td className="font-semibold font-mono">
                           {custoTotal > 0 ? `R$ ${fmt(custoTotal)}` : "-"}
                         </td>
