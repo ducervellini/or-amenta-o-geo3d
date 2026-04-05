@@ -159,10 +159,17 @@
   /* Hide non-essential UI */
   nav, header, aside,
   [data-sidebar],
+  [data-sidebar-wrapper],
   .print\:hidden,
   button,
   [role="dialog"] {
     display: none !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
   }
 
   /* Show print-only elements */
@@ -170,17 +177,34 @@
     display: block !important;
   }
 
-  /* Reset layout */
-  body, html {
+  /* Reset ALL layout wrappers to full width */
+  body, html,
+  #root,
+  #root > *,
+  main,
+  [data-wrapper],
+  [class*="SidebarProvider"],
+  [class*="sidebar-provider"],
+  [style*="--sidebar-width"] {
     background: white !important;
     color: black !important;
     font-size: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+    transform: none !important;
+    --sidebar-width: 0px !important;
+    --sidebar-width-mobile: 0px !important;
   }
 
   .page-container {
     padding: 0 !important;
     margin: 0 auto !important;
     max-width: 100% !important;
+    width: 100% !important;
   }
 
   /* Cards without shadows */
