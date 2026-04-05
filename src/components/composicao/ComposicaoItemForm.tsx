@@ -90,6 +90,7 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
       const cargo = cargos?.find((c) => c.id === id);
       if (cargo) {
         setDescricao(String(cargo.nome));
+        if (servicoUnidade) setUnidade(servicoUnidade);
         const regimeContratacao = String((cargo as any).regime_contratacao || "clt");
         const isPJ = regimeContratacao === "pj";
 
