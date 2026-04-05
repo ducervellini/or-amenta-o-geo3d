@@ -473,7 +473,7 @@ export default function BdiDre() {
                 <h2 className="text-base font-semibold">Componentes do BDI</h2>
               </div>
               <div className="bg-accent/10 text-accent px-3 py-1 rounded-full">
-                <span className="text-sm font-bold">{resultado.bdiPercent.toFixed(2)}%</span>
+                <span className="text-sm font-bold">{resultado.bdiResultante.toFixed(2)}%</span>
               </div>
             </div>
 
@@ -553,15 +553,14 @@ export default function BdiDre() {
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center gap-2 mb-2">
                 <Info className="w-3.5 h-3.5 text-muted-foreground" />
-                <h3 className="text-xs font-semibold text-muted-foreground">Fórmula BDI</h3>
+                <h3 className="text-xs font-semibold text-muted-foreground">Fórmula de Preço (inversa)</h3>
               </div>
               <div className="bg-muted rounded-md p-2 text-[10px] font-mono text-muted-foreground leading-relaxed">
-                BDI = [(1+AC+S+R) × (1+DF) × (1+COM) × (1+L)] / (1-I) - 1
+                Preço = (CD + Despesas) / (1 - Tributos% - IR% - Lucro%)
               </div>
               <div className="mt-2 text-xs text-muted-foreground">
-                Fator: <span className="font-mono font-medium">{resultado.fatorMultiplicador.toFixed(4)}</span>
-                {" · "}Preço = CD × <span className="font-mono font-medium">{resultado.fatorMultiplicador.toFixed(4)}</span>
-                {" = "}<span className="font-mono font-medium">{fmt(custoDireto * resultado.fatorMultiplicador)}</span>
+                BDI efetivo: <span className="font-mono font-medium">{fmtPct(resultado.bdiResultante)}</span>
+                {" · "}Preço = <span className="font-mono font-medium">{fmt(resultado.receitaBruta)}</span>
               </div>
             </CardContent>
           </Card>
