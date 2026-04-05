@@ -192,10 +192,10 @@ export default function OrcamentoDetalhe() {
   useEffect(() => {
     if (composicoes === undefined) return;
 
-    const savedQuantities = new Map(
+    const savedQuantities = new Map<string, number>(
       (existingOrcamento?.orcamento_itens_servico || []).map((item: any) => [
         item.composicao_id,
-        Number(item.quantidade),
+        Number(item.quantidade || 0),
       ])
     );
 
