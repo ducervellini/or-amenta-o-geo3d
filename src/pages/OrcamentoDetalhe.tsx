@@ -1120,7 +1120,7 @@ function renderDRE(
                 <span className="text-muted-foreground">{comp.nome}</span>
                 <div className="flex items-center gap-4">
                   <span className="text-xs text-muted-foreground w-16 text-right">{fmtPct(comp.percentual)}</span>
-                  <span className="font-medium w-28 text-right text-destructive">-{fmt(custoTotal * (comp.percentual / 100))}</span>
+                  <span className="font-medium w-28 text-right text-destructive">-{fmt(precoTotal * (comp.percentual / 100))}</span>
                 </div>
               </div>
             ))}
