@@ -66,7 +66,7 @@ export default function OrcamentoDetalhe() {
     queryKey: ["orcamento-oportunidade", id],
     queryFn: async () => {
       const { data, error } = await (supabase.from as any)("oportunidades")
-        .select("*, clientes(nome, codigo)")
+        .select("*, clientes(nome, codigo), grupos_servicos(id, nome)")
         .eq("id", id)
         .single();
       if (error) throw error;
@@ -75,16 +75,43 @@ export default function OrcamentoDetalhe() {
     enabled: !!id,
   });
 
-  const { data: composicoes } = useQuery({
-    queryKey: ["orcamento-composicoes"],
+  const grupoId = oportunidade?.grupo_servicos_id || null;
+
+  // Load servicos linked to the grupo
+  const { data: grupoServicosVinculados } = useQuery({
+    queryKey: ["orcamento-grupo-servicos", grupoId],
     queryFn: async () => {
+      const { data, error } = await (supabase.from as any)("grupos_servicos_servicos")
+        .select("servico_id")
+        .eq("grupo_id", grupoId);
+      if (error) throw error;
+      return (data as any[]).map((r: any) => r.servico_id) as string[];
+    },
+    enabled: !!grupoId,
+  });
+
+  // Load composições linked to the grupo's servicos
+  const { data: composicoes } = useQuery({
+    queryKey: ["orcamento-composicoes", grupoServicosVinculados],
+    queryFn: async () => {
+      if (!grupoServicosVinculados || grupoServicosVinculados.length === 0) {
+        // Fallback: load all
+        const { data, error } = await (supabase.from as any)("composicoes")
+          .select("id, codigo, nome, unidade, custo_unitario_total, servico_id, ordem_id")
+          .eq("ativo", true)
+          .order("ordem_id");
+        if (error) throw error;
+        return data as any[];
+      }
       const { data, error } = await (supabase.from as any)("composicoes")
-        .select("id, codigo, nome, unidade, custo_unitario_total")
+        .select("id, codigo, nome, unidade, custo_unitario_total, servico_id, ordem_id")
         .eq("ativo", true)
-        .order("codigo");
+        .in("servico_id", grupoServicosVinculados)
+        .order("ordem_id");
       if (error) throw error;
       return data as any[];
     },
+    enabled: grupoServicosVinculados !== undefined || !grupoId,
   });
 
   const { data: composicaoItens } = useQuery({
