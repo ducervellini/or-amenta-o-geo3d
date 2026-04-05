@@ -31,13 +31,6 @@ export function SortableHeader({ label, sortKey, currentSort, currentDirection, 
           <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground/50" />
         )}
       </div>
-      {onResizeStart && (
-        <div
-          className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize opacity-0 group-hover:opacity-100 hover:!opacity-100 bg-primary/30 transition-opacity"
-          onMouseDown={onResizeStart}
-          onClick={(e) => e.stopPropagation()}
-        />
-      )}
     </th>
   );
 }
