@@ -27,6 +27,9 @@ export default function GruposServicos() {
   const { data: grupos } = useSupabaseQuery("grupos_servicos", { orderBy: "nome", ascending: true });
   const { data: vinculos } = useSupabaseQuery("grupos_servicos_servicos");
   const { data: servicos } = useSupabaseQuery("servicos", { orderBy: "ordem_id", ascending: true });
+  const { data: mercados } = useSupabaseQuery("mercados");
+  const { data: areasEmpresa } = useSupabaseQuery("areas_empresa");
+  const { data: modulos } = useSupabaseQuery("modulos");
   const insertGrupo = useSupabaseInsert("grupos_servicos");
   const deleteGrupo = useSupabaseDelete("grupos_servicos");
 
