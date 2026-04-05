@@ -303,19 +303,23 @@ export default function Composicoes() {
                         <td className="w-10">
                           {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                         </td>
-                        <td></td>
-                        <td>
-                          <div className="flex items-center gap-2">
-                            <FolderOpen className="w-4 h-4 text-accent" />
-                            <span className="text-accent font-semibold">{String(grupo.nome)}</span>
-                          </div>
-                        </td>
-                        <td colSpan={7} className="text-sm text-muted-foreground">
+                        {visibleCols.has("ordem_id") && <td></td>}
+                        {visibleCols.has("grupo_nome") && (
+                          <td>
+                            <div className="flex items-center gap-2">
+                              <FolderOpen className="w-4 h-4 text-accent" />
+                              <span className="text-accent font-semibold">{String(grupo.nome)}</span>
+                            </div>
+                          </td>
+                        )}
+                        <td colSpan={visibleCols.size - (visibleCols.has("ordem_id") ? 1 : 0) - (visibleCols.has("grupo_nome") ? 1 : 0) - (visibleCols.has("custo_unitario_total") ? 1 : 0)} className="text-sm text-muted-foreground">
                           {rows.length} serviço{rows.length !== 1 ? "s" : ""}
                         </td>
-                        <td className="font-semibold font-mono">
-                          {custoTotal > 0 ? `R$ ${fmt(custoTotal)}` : "-"}
-                        </td>
+                        {visibleCols.has("custo_unitario_total") && (
+                          <td className="font-semibold font-mono">
+                            {custoTotal > 0 ? `R$ ${fmt(custoTotal)}` : "-"}
+                          </td>
+                        )}
                         <td></td>
                       </tr>
                       {isExpanded && (search ? filteredRows : rows).map((row) => (
@@ -327,6 +331,7 @@ export default function Composicoes() {
                           getMercadoNome={getMercadoNome}
                           getAreaNome={getAreaNome}
                           getModuloNome={getModuloNome}
+                          visibleCols={visibleCols}
                         />
                       ))}
                     </React.Fragment>
