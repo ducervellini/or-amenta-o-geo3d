@@ -200,6 +200,25 @@
     --sidebar-width-mobile: 0px !important;
   }
 
+  .app-layout-root,
+  .app-layout-content,
+  .app-layout-main {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: none !important;
+  }
+
+  .app-layout-content {
+    margin-left: 0 !important;
+    transition: none !important;
+  }
+
   .page-container {
     padding: 0 !important;
     margin: 0 auto !important;
