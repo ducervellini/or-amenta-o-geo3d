@@ -46,7 +46,7 @@ const defaultBDI: BDIItem[] = [
   { label: "PIS", sigla: "PIS", percentual: 0.65, descricao: "Programa de Integração Social", categoria: "tributo" },
   { label: "COFINS", sigla: "COFINS", percentual: 3.00, descricao: "Contrib. p/ Financiamento da Seg. Social", categoria: "tributo" },
   { label: "ISS", sigla: "ISS", percentual: 3.00, descricao: "Imposto Sobre Serviços", categoria: "tributo" },
-  { label: "CPRB", sigla: "CPRB", percentual: 0.00, descricao: "Contrib. Previdenciária s/ Receita Bruta", categoria: "tributo" },
+  
   { label: "IRPJ", sigla: "IRPJ", percentual: 4.80, descricao: "Imposto de Renda (Lucro Presumido)", categoria: "ir" },
   { label: "CSLL", sigla: "CSLL", percentual: 2.88, descricao: "Contrib. Social sobre Lucro Líquido", categoria: "ir" },
 ];
