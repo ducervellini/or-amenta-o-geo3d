@@ -611,8 +611,7 @@ export default function OrcamentoDetalhe() {
                     <thead>
                       <tr className="border-b text-xs font-medium text-muted-foreground">
                         <th className="text-left py-2 px-2">Composição</th>
-                        <th className="text-left py-2 px-2">Unidade</th>
-                        <th className="text-right py-2 px-2 w-28">Quantidade</th>
+                        <th className="text-left py-2 px-2 w-48">Dados de Entrada</th>
                         <th className="text-right py-2 px-2">Custo Unit.</th>
                         <th className="text-right py-2 px-2">Subtotal</th>
                         {!grupoId && <th className="w-10"></th>}
@@ -622,11 +621,14 @@ export default function OrcamentoDetalhe() {
                       {servicos.map((s, idx) => {
                         const comp = (composicoes || []).find((c: any) => c.id === s.composicao_id);
                         const subtotal = (comp?.custo_unitario_total || 0) * s.quantidade;
+                        const unidade = comp?.unidade || "un";
                         return (
                           <tr key={idx} className="border-b hover:bg-muted/30">
                             <td className="py-2 px-2">
                               {grupoId ? (
-                                <span className="font-medium">{comp?.codigo} — {comp?.nome || "—"}</span>
+                                <div>
+                                  <span className="font-medium">{comp?.codigo} — {comp?.nome || "—"}</span>
+                                </div>
                               ) : (
                                 <Select
                                   value={s.composicao_id}
@@ -645,17 +647,20 @@ export default function OrcamentoDetalhe() {
                                 </Select>
                               )}
                             </td>
-                            <td className="py-2 px-2 text-muted-foreground">
-                              {comp?.unidade || "—"}
-                            </td>
                             <td className="py-2 px-2">
-                              <Input
-                                type="number"
-                                min={0}
-                                value={s.quantidade}
-                                onChange={(e) => updateServico(idx, "quantidade", parseFloat(e.target.value) || 0)}
-                                className="h-9 text-sm text-right w-28 ml-auto"
-                              />
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  value={s.quantidade}
+                                  onChange={(e) => updateServico(idx, "quantidade", parseFloat(e.target.value) || 0)}
+                                  placeholder="0"
+                                  className="h-9 text-sm text-right w-24"
+                                />
+                                <span className="text-xs text-muted-foreground font-medium whitespace-nowrap min-w-[60px]">
+                                  {unidade}
+                                </span>
+                              </div>
                             </td>
                             <td className="py-2 px-2 text-right font-medium">
                               {fmt(comp?.custo_unitario_total || 0)}
