@@ -244,6 +244,23 @@ export default function Composicoes() {
               className="w-full pl-10 pr-4 py-2 text-sm bg-muted rounded-lg border-0 focus:ring-2 focus:ring-ring outline-none"
             />
           </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2 shrink-0">
+                <Columns3 className="w-4 h-4" />
+                Colunas
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56 p-2" align="end">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">Colunas visíveis</p>
+              {allColKeys.map((key) => (
+                <label key={key} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                  <Checkbox checked={visibleCols.has(key)} onCheckedChange={() => toggleCol(key)} />
+                  {colLabels[key]}
+                </label>
+              ))}
+            </PopoverContent>
+          </Popover>
         </div>
 
         {isLoading ? (
