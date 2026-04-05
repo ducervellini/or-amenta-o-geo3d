@@ -76,7 +76,6 @@ function ItensTable({ itens, tipoIcons, tipoLabels, fmt, resumo, onEdit, onDelet
     { key: "_periodo", label: "Duração" },
     { key: "coeficiente", label: "Coef. (h)" },
     { key: "_custo_unitario", label: "Custo Unit." },
-    { key: "_custo_total", label: "Custo Total" },
   ];
   return (
     <div className="overflow-x-auto">
@@ -106,7 +105,6 @@ function ItensTable({ itens, tipoIcons, tipoLabels, fmt, resumo, onEdit, onDelet
                 <td className="text-sm">{item._periodo}</td>
                 <td className="font-mono text-sm">{fmt(Number(item.coeficiente))}</td>
                 <td className="font-mono text-sm">R$ {fmt(item._custo_unitario)}</td>
-                <td className="font-mono font-semibold text-sm">R$ {fmt(item._custo_total)}</td>
                 <td className="text-center">
                   <div className="flex items-center justify-center gap-1">
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(item)}>
@@ -121,7 +119,7 @@ function ItensTable({ itens, tipoIcons, tipoLabels, fmt, resumo, onEdit, onDelet
             );
           })}
           <tr className="border-t-2 font-semibold bg-muted/30">
-            <td colSpan={7} className="text-right text-sm">Total da Composição</td>
+            <td colSpan={6} className="text-right text-sm">Total da Composição</td>
             <td className="font-mono text-sm">R$ {fmt(resumo.custo_direto)}</td>
             <td></td>
           </tr>
