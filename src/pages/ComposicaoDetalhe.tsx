@@ -54,18 +54,27 @@ function ItensTable({ itens, tipoIcons, tipoLabels, fmt, resumo, onEdit, onDelet
   onEdit: (item: any) => void;
   onDelete: (id: string) => void;
 }) {
-  const flatData = itens.map((item) => ({
-    ...item,
-    _tipo_label: tipoLabels[String(item.tipo_insumo)] || String(item.tipo_insumo),
-    _custo_unitario: item.resultado.custo_unitario,
-    _custo_total: item.resultado.custo_total,
-  }));
+  const flatData = itens.map((item) => {
+    const params = (item.parametros || {}) as Record<string, unknown>;
+    const periodoLabel = params.periodo ? String(params.periodo) : "-";
+    const produtividade = Number(params.produtividade) || Number(item.quantidade) || 1;
+    return {
+      ...item,
+      _tipo_label: tipoLabels[String(item.tipo_insumo)] || String(item.tipo_insumo),
+      _custo_unitario: item.resultado.custo_unitario,
+      _custo_total: item.resultado.custo_total,
+      _periodo: periodoLabel,
+      _produtividade: produtividade,
+    };
+  });
   const { sorted, sortKey, sortDirection, handleSort } = useTableSort(flatData);
   const cols = [
     { key: "tipo_insumo", label: "Tipo" },
     { key: "descricao", label: "Descrição" },
-    { key: "quantidade", label: "Qtd" },
-    { key: "coeficiente", label: "Coeficiente" },
+    { key: "_produtividade", label: "Qtd" },
+    { key: "unidade", label: "Unidade" },
+    { key: "_periodo", label: "Duração" },
+    { key: "coeficiente", label: "Coef. (h)" },
     { key: "_custo_unitario", label: "Custo Unit." },
     { key: "_custo_total", label: "Custo Total" },
   ];
@@ -92,7 +101,9 @@ function ItensTable({ itens, tipoIcons, tipoLabels, fmt, resumo, onEdit, onDelet
                   </span>
                 </td>
                 <td className="font-medium text-sm">{String(item.descricao) || "Sem descrição"}</td>
-                <td className="font-mono text-sm">{fmt(Number(item.quantidade))}</td>
+                <td className="font-mono text-sm">{fmt(item._produtividade)}</td>
+                <td className="text-sm">{String(item.unidade || "un")}</td>
+                <td className="text-sm">{item._periodo}</td>
                 <td className="font-mono text-sm">{fmt(Number(item.coeficiente))}</td>
                 <td className="font-mono text-sm">R$ {fmt(item._custo_unitario)}</td>
                 <td className="font-mono font-semibold text-sm">R$ {fmt(item._custo_total)}</td>
@@ -110,7 +121,7 @@ function ItensTable({ itens, tipoIcons, tipoLabels, fmt, resumo, onEdit, onDelet
             );
           })}
           <tr className="border-t-2 font-semibold bg-muted/30">
-            <td colSpan={5} className="text-right text-sm">Total da Composição</td>
+            <td colSpan={7} className="text-right text-sm">Total da Composição</td>
             <td className="font-mono text-sm">R$ {fmt(resumo.custo_direto)}</td>
             <td></td>
           </tr>
