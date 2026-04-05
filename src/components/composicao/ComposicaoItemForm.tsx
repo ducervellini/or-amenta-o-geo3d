@@ -25,6 +25,7 @@ interface Props {
   existingItems?: Record<string, unknown>[]; // existing composition items for MO coeficiente
   onSubmit: (values: Record<string, unknown>) => void;
   loading?: boolean;
+  servicoUnidade?: string;
 }
 
 const tipoLabels: Record<TipoInsumo, string> = {
@@ -41,7 +42,7 @@ const UNIDADES = [
   "travessias", "un", "unidades", "vértices",
 ];
 
-export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_obra", initialValues, onSubmit, loading }: Props) {
+export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_obra", initialValues, onSubmit, loading, servicoUnidade }: Props) {
   const [tipo, setTipo] = useState<TipoInsumo>(tipoInicial);
   const [descricao, setDescricao] = useState("");
   const [quantidade, setQuantidade] = useState(1); // units produced in the period
@@ -89,6 +90,7 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
       const cargo = cargos?.find((c) => c.id === id);
       if (cargo) {
         setDescricao(String(cargo.nome));
+        if (servicoUnidade) setUnidade(servicoUnidade);
         const regimeContratacao = String((cargo as any).regime_contratacao || "clt");
         const isPJ = regimeContratacao === "pj";
 
