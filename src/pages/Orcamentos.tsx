@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Eye, FileText, Edit, Trash2 } from "lucide-react";
+import { Search, FileText, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -7,11 +7,11 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 
-const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  rascunho: { label: "Rascunho", variant: "secondary" },
-  em_andamento: { label: "Em andamento", variant: "default" },
-  revisao: { label: "Revisão", variant: "outline" },
-  finalizado: { label: "Finalizado", variant: "default" },
+const statusConfig: Record<string, { label: string; className: string }> = {
+  rascunho: { label: "Rascunho", className: "bg-muted text-muted-foreground" },
+  em_andamento: { label: "Em andamento", className: "bg-primary/15 text-primary border-primary/30" },
+  revisao: { label: "Revisão", className: "bg-yellow-100 text-yellow-800 border-yellow-300" },
+  finalizado: { label: "Finalizado", className: "bg-accent/15 text-accent border-accent/30 font-semibold" },
 };
 
 export default function Orcamentos() {
@@ -31,7 +31,16 @@ export default function Orcamentos() {
     },
   });
 
-  // Fetch mobilizacoes (ADM Local costs) linked to oportunidades
+  const { data: orcamentos } = useQuery({
+    queryKey: ["orcamentos-salvos"],
+    queryFn: async () => {
+      const { data, error } = await (supabase.from as any)("orcamentos")
+        .select("*, orcamento_itens_servico(id)");
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
   const { data: mobilizacoes } = useQuery({
     queryKey: ["orcamentos-mobilizacoes"],
     queryFn: async () => {
@@ -43,7 +52,6 @@ export default function Orcamentos() {
     },
   });
 
-  // Fetch BDI params
   const { data: bdis } = useQuery({
     queryKey: ["orcamentos-bdi"],
     queryFn: async () => {
@@ -59,9 +67,26 @@ export default function Orcamentos() {
 
   const bdiPercentual = bdis?.[0]?.bdi_calculado || 0;
 
+  const getOrcamento = (opId: string) =>
+    (orcamentos || []).find((orc: any) => orc.oportunidade_id === opId);
+
   const getMobCusto = (opId: string) => {
     const mob = (mobilizacoes || []).find((m: any) => m.oportunidade_id === opId);
     return mob?.custo_total || 0;
+  };
+
+  const getStatus = (op: any) => {
+    const orc = getOrcamento(op.id);
+    if (!orc) return "rascunho";
+
+    const temServicos = (orc.orcamento_itens_servico || []).length > 0;
+    const temMobilizacao = !!(mobilizacoes || []).find((m: any) => m.oportunidade_id === op.id);
+    const temBdi = !!orc.bdi_id;
+    const temGrupo = !!op.grupo_servicos_id;
+
+    if (temServicos && temMobilizacao && temBdi && temGrupo) return "finalizado";
+    if (temServicos || temMobilizacao) return "em_andamento";
+    return "rascunho";
   };
 
   const filtered = (oportunidades || []).filter(
@@ -128,10 +153,10 @@ export default function Orcamentos() {
                 </tr>
               ) : (
                 filtered.map((o: any) => {
-                  const custoAdmLocal = getMobCusto(o.id);
-                  const custoTotal = custoAdmLocal;
-                  const precoTotal = custoTotal > 0 ? custoTotal * (1 + bdiPercentual / 100) : 0;
-                  const status = custoTotal > 0 ? "em_andamento" : "rascunho";
+                  const orc = getOrcamento(o.id);
+                  const custoTotal = orc?.custo_total || getMobCusto(o.id);
+                  const precoTotal = orc?.preco_total || (custoTotal > 0 ? custoTotal * (1 + bdiPercentual / 100) : 0);
+                  const status = getStatus(o);
                   const cfg = statusConfig[status] || statusConfig.rascunho;
 
                   return (
@@ -150,7 +175,7 @@ export default function Orcamentos() {
                       <td className="text-muted-foreground">{bdiPercentual.toFixed(2)}%</td>
                       <td className="font-semibold text-accent">{fmt(precoTotal)}</td>
                       <td>
-                        <Badge variant={cfg.variant}>{cfg.label}</Badge>
+                        <Badge variant="outline" className={cfg.className}>{cfg.label}</Badge>
                       </td>
                       <td className="text-center" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-center gap-1">
