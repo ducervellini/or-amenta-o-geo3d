@@ -275,6 +275,7 @@ export default function Composicoes() {
                         <td className="w-10">
                           {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                         </td>
+                        <td></td>
                         <td>
                           <div className="flex items-center gap-2">
                             <FolderOpen className="w-4 h-4 text-accent" />
