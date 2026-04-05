@@ -101,7 +101,7 @@ function ItensTable({ itens, tipoIcons, tipoLabels, fmt, resumo, onEdit, onDelet
                   </span>
                 </td>
                 <td className="font-medium text-sm">{String(item.descricao) || "Sem descrição"}</td>
-                <td className="font-mono text-sm">{fmt(Number(item.quantidade))}</td>
+                <td className="font-mono text-sm">{fmt(item._produtividade)}</td>
                 <td className="text-sm">{String(item.unidade || "un")}</td>
                 <td className="text-sm">{item._periodo}</td>
                 <td className="font-mono text-sm">{fmt(Number(item.coeficiente))}</td>
