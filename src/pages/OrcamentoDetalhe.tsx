@@ -1088,15 +1088,14 @@ function renderDRE(
   }
 
   const totalTributosPct = tributosReceita.reduce((s, c) => s + c.percentual, 0);
-  const totalTributos = custoTotal * (totalTributosPct / 100);
+  const totalTributos = precoTotal * (totalTributosPct / 100);
   const totalDespIndPct = despesasIndiretas.reduce((s, c) => s + c.percentual, 0);
   const totalDespInd = custoTotal * (totalDespIndPct / 100);
-  const valorLucro = lucroComp ? custoTotal * (lucroComp.percentual / 100) : 0;
   const valorRisco = riscoComp ? custoTotal * (riscoComp.percentual / 100) : 0;
-  const lucroAntesIR = valorLucro - valorRisco;
   const totalImpostosLucroPct = impostosLucro.reduce((s, c) => s + c.percentual, 0);
   const totalImpostosLucro = precoTotal * (totalImpostosLucroPct / 100);
-  const lucroLiquido = lucroAntesIR - totalImpostosLucro;
+  const lucroLiquido = precoTotal - totalTributos - custoTotal - totalDespInd - valorRisco - totalImpostosLucro;
+  const lucroAntesIR = lucroLiquido + totalImpostosLucro;
 
   return (
     <div>
@@ -1121,7 +1120,7 @@ function renderDRE(
                 <span className="text-muted-foreground">{comp.nome}</span>
                 <div className="flex items-center gap-4">
                   <span className="text-xs text-muted-foreground w-16 text-right">{fmtPct(comp.percentual)}</span>
-                  <span className="font-medium w-28 text-right text-destructive">-{fmt(custoTotal * (comp.percentual / 100))}</span>
+                  <span className="font-medium w-28 text-right text-destructive">-{fmt(precoTotal * (comp.percentual / 100))}</span>
                 </div>
               </div>
             ))}
