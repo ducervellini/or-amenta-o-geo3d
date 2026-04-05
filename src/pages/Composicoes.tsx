@@ -307,7 +307,7 @@ export default function Composicoes() {
                 {/* Ungrouped / avulsa rows */}
                 {avulsaRows.filter(matchesSearch).length > 0 && grupoRows.length > 0 && (
                   <tr className="bg-muted/20">
-                    <td colSpan={11} className="text-xs font-semibold text-muted-foreground py-2">
+                    <td colSpan={12} className="text-xs font-semibold text-muted-foreground py-2">
                       Sem grupo
                     </td>
                   </tr>
