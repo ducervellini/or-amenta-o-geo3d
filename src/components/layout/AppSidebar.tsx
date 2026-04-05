@@ -77,8 +77,7 @@ const navigation: NavItem[] = [
   { label: "Composições", path: "/composicoes", icon: Layers },
   { label: "Oportunidades", path: "/oportunidades", icon: Briefcase },
   { label: "ADM Local", path: "/mobilizacao", icon: Building },
-  { label: "BDI", path: "/bdi", icon: Calculator },
-  { label: "DRE", path: "/dre", icon: DollarSign },
+  { label: "BDI & DRE", path: "/bdi", icon: Calculator },
   { label: "Orçamentos", path: "/orcamentos", icon: FileText },
   { label: "Configurações", path: "/configuracoes", icon: Settings },
 ];

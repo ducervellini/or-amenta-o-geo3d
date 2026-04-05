@@ -40,8 +40,7 @@ import ParametrosAdminCentral from "./pages/parametros/AdminCentral";
 import ParametrosFinanciamento from "./pages/parametros/Financiamento";
 import ParametrosTributos from "./pages/parametros/Tributos";
 import ParametrosMargem from "./pages/parametros/Margem";
-import BDI from "./pages/BDI";
-import DRE from "./pages/DRE";
+import BdiDre from "./pages/BdiDre";
 import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
 
@@ -97,8 +96,8 @@ const App = () => (
               <Route path="/parametros/financiamento" element={<ParametrosFinanciamento />} />
               <Route path="/parametros/tributos" element={<ParametrosTributos />} />
               <Route path="/parametros/margem" element={<ParametrosMargem />} />
-              <Route path="/bdi" element={<BDI />} />
-              <Route path="/dre" element={<DRE />} />
+              <Route path="/bdi" element={<BdiDre />} />
+              <Route path="/dre" element={<BdiDre />} />
               <Route path="/configuracoes" element={<Configuracoes />} />
             </Route>
             <Route path="*" element={<NotFound />} />
