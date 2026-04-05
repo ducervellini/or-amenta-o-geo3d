@@ -374,15 +374,15 @@ export default function BdiDre() {
       {/* KPI strip */}
       <div className="grid grid-cols-5 gap-3 mb-6">
         <KpiCard label="Custo Direto" value={fmt(custoDireto)} sub="" />
-        <KpiCard label="Preço de Venda" value={fmt(resultado.receitaBruta)} variant="primary" sub={`BDI: ${fmtPct(resultado.bdiResultante)}`} />
-        <KpiCard label="BDI (fórmula)" value={fmtPct(resultado.bdiPercent)} sub={`Fator: ${resultado.fatorMultiplicador.toFixed(4)}`} variant="accent" />
+        <KpiCard label="BDI" value={fmtPct(resultado.bdiResultante)} variant="accent" sub={`Fator: ${(1 + resultado.bdiResultante / 100).toFixed(4)}`} />
+        <KpiCard label="Preço de Venda" value={fmt(resultado.receitaBruta)} variant="primary" sub="" />
+        <KpiCard label="Margem de Contribuição" value={fmt(resultado.lucroBruto)} sub={fmtPct(resultado.margemBruta)} />
         <KpiCard
           label="Lucro Líquido"
           value={fmt(resultado.lucroLiquido)}
           sub={fmtPct(resultado.margemLiquida)}
           variant={resultado.lucroLiquido >= 0 ? "success" : "danger"}
         />
-        <KpiCard label="Carga Tributária" value={fmtPct(resultado.cargaTributaria)} sub={fmt(resultado.tributosTotal + resultado.irTotal)} />
       </div>
 
       {/* Main layout */}
