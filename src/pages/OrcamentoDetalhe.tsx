@@ -304,30 +304,12 @@ export default function OrcamentoDetalhe() {
       return { precoTotal: custoTotal + vBdi, bdiPercentual: fallbackBdi };
     }
 
-    // Categorize components same as BdiDre calcAll
-    let despesasPct = 0, riscoPct = 0, comissaoPct = 0, lucroPct = 0, tributosPct = 0, irPct = 0;
-    for (const comp of bdiComponentes) {
-      const cat = comp.categoria?.toLowerCase() || "";
-      const nomeUpper = comp.nome.toUpperCase();
-      if (cat === "lucro" || (!cat && nomeUpper.includes("LUCRO"))) {
-        lucroPct += comp.percentual;
-      } else if (cat === "risco" || (!cat && nomeUpper.includes("RISCO"))) {
-        riscoPct += comp.percentual;
-      } else if (cat === "comissao" || (!cat && nomeUpper.includes("COMISS"))) {
-        comissaoPct += comp.percentual;
-      } else if (cat === "ir" || (!cat && (nomeUpper.includes("IRPJ") || nomeUpper.includes("CSLL")))) {
-        irPct += comp.percentual;
-      } else if (cat === "tributo" || (!cat && ["ISS", "PIS", "COFINS", "ICMS"].some(t => nomeUpper.includes(t)))) {
-        tributosPct += comp.percentual;
-      } else {
-        despesasPct += comp.percentual;
-      }
-    }
+    const cat = categorizarComponentes(bdiComponentes);
 
     // Inverse formula: Receita = (CD + Despesas_sobre_CD) / (1 - tributos% - ir% - lucro%)
-    const totalDespSobreCDPct = despesasPct + riscoPct + comissaoPct;
+    const totalDespSobreCDPct = cat.despesasPct + cat.riscoPct + cat.comissaoPct;
     const totalDespValor = custoTotal * (totalDespSobreCDPct / 100);
-    const denominador = 1 - (tributosPct / 100) - (irPct / 100) - (lucroPct / 100);
+    const denominador = 1 - (cat.tributosPct / 100) - (cat.irPct / 100) - (cat.lucroPct / 100);
     const preco = denominador > 0 ? (custoTotal + totalDespValor) / denominador : custoTotal;
     const bdiValor = preco - custoTotal;
     const bdiPct = custoTotal > 0 ? (bdiValor / custoTotal) * 100 : 0;
@@ -1084,9 +1066,59 @@ export default function OrcamentoDetalhe() {
   );
 }
 
+// ── Shared categorization used by BOTH pricing formula and DRE ──
+type BdiComp = { nome: string; percentual: number; categoria?: string };
+
+function categorizarComponentes(componentes: BdiComp[]) {
+  const tributosReceita: BdiComp[] = [];
+  const impostosLucro: BdiComp[] = [];
+  const despesasIndiretas: BdiComp[] = [];
+  let lucroComp: BdiComp | null = null;
+  let riscoComp: BdiComp | null = null;
+  let despesasPct = 0, riscoPct = 0, comissaoPct = 0, lucroPct = 0, tributosPct = 0, irPct = 0;
+
+  for (const comp of componentes) {
+    const cat = comp.categoria?.toLowerCase() || "";
+    const nomeUpper = comp.nome.toUpperCase();
+
+    if (cat === "lucro" || (!cat && nomeUpper.includes("LUCRO"))) {
+      lucroPct += comp.percentual;
+      lucroComp = comp;
+    } else if (cat === "risco" || (!cat && nomeUpper.includes("RISCO"))) {
+      riscoPct += comp.percentual;
+      riscoComp = comp;
+    } else if (cat === "comissao" || (!cat && nomeUpper.includes("COMISS"))) {
+      comissaoPct += comp.percentual;
+      despesasIndiretas.push(comp);
+    } else if (cat === "ir" || (!cat && (nomeUpper.includes("IRPJ") || nomeUpper.includes("CSLL") || nomeUpper.includes("IMPOSTO DE RENDA") || nomeUpper.includes("CONTRIBUIÇÃO SOCIAL")))) {
+      irPct += comp.percentual;
+      impostosLucro.push(comp);
+    } else if (cat === "tributo" || (!cat && (["ISS", "PIS", "COFINS", "CPRB", "ICMS"].some(t => nomeUpper.includes(t)) || nomeUpper.includes("TRIBUT")))) {
+      tributosPct += comp.percentual;
+      tributosReceita.push(comp);
+    } else {
+      despesasPct += comp.percentual;
+      despesasIndiretas.push(comp);
+    }
+  }
+
+  // Fallback: if no IR components found, add defaults to BOTH pricing and DRE
+  if (impostosLucro.length === 0) {
+    impostosLucro.push({ nome: "IRPJ (Lucro Presumido)", percentual: 4.80 });
+    impostosLucro.push({ nome: "CSLL (Lucro Presumido)", percentual: 2.88 });
+    irPct += 4.80 + 2.88;
+  }
+
+  return {
+    tributosReceita, impostosLucro, despesasIndiretas,
+    lucroComp, riscoComp,
+    despesasPct, riscoPct, comissaoPct, lucroPct, tributosPct, irPct,
+  };
+}
+
 // ── DRE render helper ──
 function renderDRE(
-  bdiComponentes: { nome: string; percentual: number; categoria?: string }[],
+  bdiComponentes: BdiComp[],
   custoTotal: number,
   custoServicos: number,
   custoAdmLocal: number,
@@ -1094,37 +1126,7 @@ function renderDRE(
   bdiData: any,
   bdiPercentual: number,
 ) {
-  const tributosReceita: typeof bdiComponentes = [];
-  const impostosLucro: typeof bdiComponentes = [];
-  const despesasIndiretas: typeof bdiComponentes = [];
-  let lucroComp: typeof bdiComponentes[0] | null = null;
-  let riscoComp: typeof bdiComponentes[0] | null = null;
-
-  for (const comp of bdiComponentes) {
-    const nomeUpper = comp.nome.toUpperCase();
-    if (nomeUpper.includes("LUCRO")) {
-      lucroComp = comp;
-    } else if (nomeUpper.includes("RISCO")) {
-      riscoComp = comp;
-    } else if (
-      nomeUpper.includes("IRPJ") || nomeUpper.includes("IR ") || nomeUpper.includes("IMPOSTO DE RENDA") ||
-      nomeUpper.includes("CSLL") || nomeUpper.includes("CONTRIBUIÇÃO SOCIAL")
-    ) {
-      impostosLucro.push(comp);
-    } else if (
-      ["ISS", "PIS", "COFINS", "CPRB", "ICMS"].some(t => nomeUpper.includes(t)) ||
-      nomeUpper.includes("TRIBUT") || nomeUpper.includes("IMPOSTO") || nomeUpper.includes("CONTRIBUI")
-    ) {
-      tributosReceita.push(comp);
-    } else {
-      despesasIndiretas.push(comp);
-    }
-  }
-
-  if (impostosLucro.length === 0) {
-    impostosLucro.push({ nome: "IRPJ (Lucro Presumido)", percentual: 4.80 });
-    impostosLucro.push({ nome: "CSLL (Lucro Presumido)", percentual: 2.88 });
-  }
+  const { tributosReceita, impostosLucro, despesasIndiretas, lucroComp, riscoComp } = categorizarComponentes(bdiComponentes);
 
   const totalTributosPct = tributosReceita.reduce((s, c) => s + c.percentual, 0);
   const totalTributos = precoTotal * (totalTributosPct / 100);
