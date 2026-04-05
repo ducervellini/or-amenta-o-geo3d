@@ -119,6 +119,7 @@
 
   .data-table {
     @apply w-full text-sm;
+    table-layout: fixed;
   }
 
   .data-table th {
