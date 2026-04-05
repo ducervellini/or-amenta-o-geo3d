@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plus, Trash2, FolderOpen, ChevronRight, ChevronDown, X, Pencil, Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { SortableHeader, useTableSort } from "@/components/ui/sortable-header";
 import { useSupabaseQuery, useSupabaseInsert, useSupabaseDelete } from "@/hooks/useSupabaseCrud";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -218,51 +220,18 @@ export default function GruposServicos() {
               </div>
 
               {isExpanded && (
-                <div className="px-4 pb-4 border-t space-y-2 pt-3">
-                  {servicosGrupo.length === 0 && (
-                    <p className="text-xs text-muted-foreground">Nenhum serviço neste grupo</p>
-                  )}
-                  {servicosGrupo.map(({ vinculoId, servico }) => (
-                    <div key={vinculoId} className="flex items-center gap-2 pl-8 text-sm text-muted-foreground">
-                      <span className="font-mono text-xs text-accent shrink-0">{servico!.ordem_id ? String(servico!.ordem_id) : "-"}</span>
-                      <span className="truncate flex-1">{String(servico!.codigo)} — {String(servico!.nome)}</span>
-                      <Button
-                        variant="ghost" size="icon" className="h-7 w-7 shrink-0"
-                        onClick={() => removeVinculo.mutate(vinculoId)}
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  ))}
-
-                  {addingTo === String(g.id) ? (
-                    <select
-                      className="w-full max-w-md text-sm border rounded p-2 bg-background mt-2"
-                      autoFocus
-                      value=""
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          addVinculo.mutate({ grupo_id: String(g.id), servico_id: e.target.value });
-                        }
-                      }}
-                      onBlur={() => setAddingTo(null)}
-                    >
-                      <option value="">Selecionar serviço...</option>
-                      {getServicosDisponiveis(String(g.id)).map((s) => (
-                        <option key={String(s.id)} value={String(s.id)}>
-                          {s.ordem_id ? String(s.ordem_id) + " - " : ""}{String(s.codigo)} — {String(s.nome)}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <Button
-                      variant="outline" size="sm" className="mt-2 ml-8"
-                      onClick={() => setAddingTo(String(g.id))}
-                    >
-                      <Plus className="w-3.5 h-3.5 mr-1" /> Adicionar serviço
-                    </Button>
-                  )}
-                </div>
+                <GrupoServicosTable
+                  servicosGrupo={servicosGrupo}
+                  servicosDisponiveis={getServicosDisponiveis(String(g.id))}
+                  grupoId={String(g.id)}
+                  addingTo={addingTo}
+                  setAddingTo={setAddingTo}
+                  onAddVinculo={(servicoId) => addVinculo.mutate({ grupo_id: String(g.id), servico_id: servicoId })}
+                  onRemoveVinculo={(vinculoId) => removeVinculo.mutate(vinculoId)}
+                  mercados={mercados}
+                  areasEmpresa={areasEmpresa}
+                  modulos={modulos}
+                />
               )}
             </Card>
           );
