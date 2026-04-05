@@ -154,6 +154,7 @@ export default function BdiDre() {
   const [saving, setSaving] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [custoDireto, setCustoDireto] = useState(0);
+  const [lucroLiqDesejado, setLucroLiqDesejado] = useState<number | null>(null);
 
   // ── Queries ──
   const { data: savedBdis } = useQuery({
