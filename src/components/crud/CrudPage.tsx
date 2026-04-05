@@ -99,6 +99,16 @@ export function CrudPage<T extends TableName>({
   const [formOpen, setFormOpen] = useState(false);
   const [editItem, setEditItem] = useState<Record<string, unknown> | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [visibleCols, setVisibleCols] = useState<Set<string>>(() => new Set(columns.map((c) => c.key)));
+
+  const toggleCol = (key: string) => {
+    setVisibleCols((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) { if (next.size > 1) next.delete(key); }
+      else next.add(key);
+      return next;
+    });
+  };
 
   const { data, isLoading } = useSupabaseQuery(table, { filter, filters: defaultFilters });
   const insertMutation = useSupabaseInsert(table);
