@@ -138,7 +138,7 @@ export default function Composicoes() {
   // Build group structure
   const grupoRows = (grupos || []).sort((a, b) => getOrdemIndex(String(a.nome)) - getOrdemIndex(String(b.nome))).map((g) => {
     const servicoIds = (vinculos || []).filter((v) => v.grupo_id === g.id).map((v) => String(v.servico_id));
-    const rows = allRows.filter((r) => {
+    const rows = sortedAllRows.filter((r) => {
       const sId = r.type === "composicao" ? String(r.servico_id || "") : r.id;
       return servicoIds.includes(sId);
     });
