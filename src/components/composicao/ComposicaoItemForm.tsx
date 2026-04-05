@@ -283,13 +283,19 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
             </div>
           </div>
 
-          {/* MO productivity summary */}
-          {tipo === "mao_de_obra" && insumoId && (
+          {/* Productivity summary for MO and Equipamento */}
+          {(tipo === "mao_de_obra" || tipo === "equipamento") && insumoId && (
             <div className="bg-muted/50 rounded-lg p-3 border space-y-1 text-sm">
               <div className="font-semibold text-xs uppercase text-muted-foreground">Cálculo de Produtividade</div>
               <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                <span className="text-muted-foreground">H/H (custo hora):</span>
-                <span className="font-mono font-medium">R$ {fmtBR(resultado.memoria.find(m => m.descricao.includes("Custo hora c/ regime"))?.valor || 0)}</span>
+                <span className="text-muted-foreground">
+                  {tipo === "mao_de_obra" ? "H/H (custo hora):" : "Custo hora produtiva:"}
+                </span>
+                <span className="font-mono font-medium">R$ {fmtBR(
+                  tipo === "mao_de_obra"
+                    ? (resultado.memoria.find(m => m.descricao.includes("Custo hora c/ regime"))?.valor || 0)
+                    : (resultado.memoria.find(m => m.descricao.includes("Custo hora c/ fator"))?.valor || resultado.memoria.find(m => m.descricao.includes("Custo hora produtiva"))?.valor || 0)
+                )}</span>
                 <span className="text-muted-foreground">Período ({periodo}):</span>
                 <span className="font-mono">{fmtBR(periodoEmHoras)} h</span>
                 <span className="text-muted-foreground">Horas por unidade:</span>
