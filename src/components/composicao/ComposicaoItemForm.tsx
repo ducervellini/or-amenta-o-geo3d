@@ -167,19 +167,19 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
     }
   };
 
-  // Convert periodo to hours for MO calculation (always 1 period)
+  // Convert periodo to hours (used for MO and Equipamento)
   const periodoEmHoras = useMemo(() => {
     if (periodo === "hora") return 1;
-    if (periodo === "dia") return paramsMO.horas_diarias;
+    if (periodo === "dia") return tipo === "mao_de_obra" ? paramsMO.horas_diarias : 8;
     // mês
-    return paramsMO.horas_mes;
-  }, [periodo, paramsMO.horas_diarias, paramsMO.horas_mes]);
+    return tipo === "mao_de_obra" ? paramsMO.horas_mes : 176;
+  }, [periodo, tipo, paramsMO.horas_diarias, paramsMO.horas_mes]);
 
   // Auto-calculate coeficiente based on productivity
-  // If worker produces `quantidade` units in 1 period,
+  // If resource produces `quantidade` units in 1 period,
   // then hours per unit = periodoEmHoras / quantidade
   const coeficienteCalculado = useMemo(() => {
-    if (tipo !== "mao_de_obra") return 1;
+    if (tipo === "material") return 1;
     if (quantidade <= 0) return 0;
     return periodoEmHoras / quantidade;
   }, [tipo, periodoEmHoras, quantidade]);
@@ -187,7 +187,7 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
   const resultado: ResultadoCalculo = useMemo(() => {
     try {
       if (tipo === "mao_de_obra") return calcularMaoDeObra(paramsMO, 1, coeficienteCalculado);
-      if (tipo === "equipamento") return calcularEquipamento(paramsEq, quantidade, 1);
+      if (tipo === "equipamento") return calcularEquipamento(paramsEq, 1, coeficienteCalculado);
       return calcularMaterial(paramsMa, quantidade, 1);
     } catch {
       return { custo_unitario: 0, custo_total: 0, memoria: [] };
