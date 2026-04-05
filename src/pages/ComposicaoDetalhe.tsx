@@ -628,6 +628,7 @@ export default function ComposicaoDetalhe() {
         initialValues={editingItem || undefined}
         onSubmit={handleSaveItem}
         loading={insertItem.isPending || updateItem.isPending}
+        servicoUnidade={unidade}
       />
 
       {/* Delete confirmation */}
