@@ -149,7 +149,7 @@ export default function Composicoes() {
   const allGroupedServiceIds = new Set(
     (vinculos || []).map((v) => String(v.servico_id))
   );
-  const avulsaRows = allRows.filter((r) => {
+  const avulsaRows = sortedAllRows.filter((r) => {
     if (r.isAvulsa) return true; // composições avulsas always show
     const sId = r.type === "composicao" ? String(r.servico_id || "") : r.id;
     return !allGroupedServiceIds.has(sId);
