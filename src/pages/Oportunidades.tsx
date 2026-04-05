@@ -25,7 +25,17 @@ export default function Oportunidades() {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
+  const [visibleCols, setVisibleCols] = useState<Set<string>>(() => new Set(OPORT_COLS.map((c) => c.key)));
   const queryClient = useQueryClient();
+
+  const toggleCol = (key: string) => {
+    setVisibleCols((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) { if (next.size > 1) next.delete(key); }
+      else next.add(key);
+      return next;
+    });
+  };
 
   const { data: oportunidades, isLoading } = useQuery({
     queryKey: ["oportunidades"],
