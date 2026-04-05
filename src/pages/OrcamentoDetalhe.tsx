@@ -77,41 +77,17 @@ export default function OrcamentoDetalhe() {
 
   const grupoId = oportunidade?.grupo_servicos_id || null;
 
-  // Load servicos linked to the grupo
-  const { data: grupoServicosVinculados } = useQuery({
-    queryKey: ["orcamento-grupo-servicos", grupoId],
-    queryFn: async () => {
-      const { data, error } = await (supabase.from as any)("grupos_servicos_servicos")
-        .select("servico_id")
-        .eq("grupo_id", grupoId);
-      if (error) throw error;
-      return (data as any[]).map((r: any) => r.servico_id) as string[];
-    },
-    enabled: !!grupoId,
-  });
-
-  // Load composições linked to the grupo's servicos
+  // Load ALL composições
   const { data: composicoes } = useQuery({
-    queryKey: ["orcamento-composicoes", grupoServicosVinculados],
+    queryKey: ["orcamento-composicoes"],
     queryFn: async () => {
-      if (!grupoServicosVinculados || grupoServicosVinculados.length === 0) {
-        // Fallback: load all
-        const { data, error } = await (supabase.from as any)("composicoes")
-          .select("id, codigo, nome, unidade, custo_unitario_total, servico_id, ordem_id")
-          .eq("ativo", true)
-          .order("ordem_id");
-        if (error) throw error;
-        return data as any[];
-      }
       const { data, error } = await (supabase.from as any)("composicoes")
         .select("id, codigo, nome, unidade, custo_unitario_total, servico_id, ordem_id")
         .eq("ativo", true)
-        .in("servico_id", grupoServicosVinculados)
         .order("ordem_id");
       if (error) throw error;
       return data as any[];
     },
-    enabled: grupoServicosVinculados !== undefined || !grupoId,
   });
 
   const { data: composicaoItens } = useQuery({
@@ -204,12 +180,12 @@ export default function OrcamentoDetalhe() {
     }
   }, [existingOrcamento]);
 
-  // Auto-populate serviços from grupo when no existing data
+  // Auto-populate ALL composições with blank quantities
   useEffect(() => {
-    if (composicoes && composicoes.length > 0 && servicos.length === 0 && !existingOrcamento && grupoId) {
+    if (composicoes && composicoes.length > 0 && servicos.length === 0 && !existingOrcamento) {
       setServicos(composicoes.map((c: any) => ({ composicao_id: c.id, quantidade: 0 })));
     }
-  }, [composicoes, grupoId]);
+  }, [composicoes]);
 
   // Auto-select first BDI if none selected
   useEffect(() => {
