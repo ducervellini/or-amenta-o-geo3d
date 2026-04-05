@@ -354,7 +354,7 @@ export default function ComposicaoDetalhe() {
   const updateTotalComposicao = () => {
     if (!isNew && id) {
       setTimeout(() => {
-        const total = itensComCalculo.reduce((s, i) => s + i.resultado.custo_total, 0);
+        const total = itensComCalculo.reduce((s, i) => s + i.resultado.custo_unitario, 0);
         updateComposicao.mutate({ id: id!, values: { custo_unitario_total: total } });
       }, 500);
     }
