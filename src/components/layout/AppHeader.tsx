@@ -28,7 +28,7 @@ export function AppHeader() {
     : "Usuário";
 
   return (
-    <header className="h-16 border-b bg-card flex items-center justify-between px-6 shrink-0">
+    <header className="h-16 border-b bg-card flex items-center justify-between px-6 shrink-0 print:hidden">
       <div className="flex items-center gap-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
