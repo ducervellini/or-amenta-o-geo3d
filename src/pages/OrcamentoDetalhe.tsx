@@ -513,7 +513,7 @@ export default function OrcamentoDetalhe() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
               <div>
                 <span className="text-muted-foreground">Código</span>
                 <p className="font-semibold">{oportunidade.codigo}</p>
@@ -527,6 +527,10 @@ export default function OrcamentoDetalhe() {
                 <p className="font-semibold">
                   {oportunidade.cidade || "—"}, {oportunidade.estado || "—"}
                 </p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Grupo de Serviços</span>
+                <p className="font-semibold">{oportunidade.grupos_servicos?.nome || "—"}</p>
               </div>
               <div>
                 <span className="text-muted-foreground">Data</span>
