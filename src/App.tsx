@@ -13,6 +13,7 @@ import Clientes from "./pages/cadastros/Clientes";
 import AreasEmpresa from "./pages/cadastros/AreasEmpresa";
 import Modulos from "./pages/cadastros/Modulos";
 import Servicos from "./pages/cadastros/Servicos";
+import GruposServicos from "./pages/cadastros/GruposServicos";
 import Cargos from "./pages/cadastros/Cargos";
 import EncargosSociais from "./pages/cadastros/EncargosSociais";
 import Beneficios from "./pages/cadastros/Beneficios";
@@ -68,6 +69,7 @@ const App = () => (
               <Route path="/cadastros/areas-empresa" element={<AreasEmpresa />} />
               <Route path="/cadastros/departamentos" element={<Modulos />} />
               <Route path="/cadastros/servicos" element={<Servicos />} />
+              <Route path="/cadastros/grupos-servicos" element={<GruposServicos />} />
               <Route path="/cadastros/mao-de-obra" element={<Cargos />} />
               <Route path="/cadastros/cargos" element={<Cargos />} />
               <Route path="/cadastros/encargos-sociais" element={<EncargosSociais />} />
