@@ -241,14 +241,14 @@ export default function BdiDre() {
 
       if (editId) {
         const { error } = await (supabase.from as any)("parametros_bdi")
-          .update({ nome: bdiNome.trim(), componentes, bdi_calculado: resultado.bdiPercent })
+          .update({ nome: bdiNome.trim(), componentes, bdi_calculado: resultado.bdiResultante })
           .eq("id", editId);
         if (error) throw error;
         toast.success("BDI atualizado!");
         setEditId(null);
       } else {
         const { error } = await (supabase.from as any)("parametros_bdi")
-          .insert({ nome: bdiNome.trim(), componentes, bdi_calculado: resultado.bdiPercent });
+          .insert({ nome: bdiNome.trim(), componentes, bdi_calculado: resultado.bdiResultante });
         if (error) throw error;
         toast.success("BDI salvo!");
       }

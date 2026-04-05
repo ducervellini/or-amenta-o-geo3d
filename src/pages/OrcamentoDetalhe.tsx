@@ -219,14 +219,14 @@ export default function OrcamentoDetalhe() {
     return bdiProfiles.find((b: any) => b.id === selectedBdiId) || bdiProfiles[0] || null;
   }, [bdiProfiles, selectedBdiId]);
 
-  const bdiPercentual = bdiData?.bdi_calculado || 0;
-  const bdiComponentes: { nome: string; percentual: number }[] = useMemo(() => {
+  const bdiComponentes: { nome: string; percentual: number; categoria?: string }[] = useMemo(() => {
     if (!bdiData?.componentes) return [];
     const comp = bdiData.componentes;
     if (Array.isArray(comp)) return comp;
     return Object.entries(comp).map(([_key, val]: [string, any]) => ({
       nome: val?.label || _key,
       percentual: Number(val?.percentual ?? val ?? 0),
+      categoria: val?.categoria || undefined,
     }));
   }, [bdiData]);
 
@@ -295,8 +295,47 @@ export default function OrcamentoDetalhe() {
   const custoAdmLocal = mobilizacao?.custo_total || 0;
   const custoAdmLocalOutros = Math.max(0, custoAdmLocal - custoDeslocamentos - custoMobDesmob);
   const custoTotal = custoServicos + custoAdmLocal;
-  const valorBdi = custoTotal * (bdiPercentual / 100);
-  const precoTotal = custoTotal + valorBdi;
+
+  // Recalculate price from BDI components using the same inverse formula as BdiDre
+  const { precoTotal, bdiPercentual } = useMemo(() => {
+    if (!bdiComponentes.length || custoTotal <= 0) {
+      const fallbackBdi = bdiData?.bdi_calculado || 0;
+      const vBdi = custoTotal * (fallbackBdi / 100);
+      return { precoTotal: custoTotal + vBdi, bdiPercentual: fallbackBdi };
+    }
+
+    // Categorize components same as BdiDre calcAll
+    let despesasPct = 0, riscoPct = 0, comissaoPct = 0, lucroPct = 0, tributosPct = 0, irPct = 0;
+    for (const comp of bdiComponentes) {
+      const cat = comp.categoria?.toLowerCase() || "";
+      const nomeUpper = comp.nome.toUpperCase();
+      if (cat === "lucro" || (!cat && nomeUpper.includes("LUCRO"))) {
+        lucroPct += comp.percentual;
+      } else if (cat === "risco" || (!cat && nomeUpper.includes("RISCO"))) {
+        riscoPct += comp.percentual;
+      } else if (cat === "comissao" || (!cat && nomeUpper.includes("COMISS"))) {
+        comissaoPct += comp.percentual;
+      } else if (cat === "ir" || (!cat && (nomeUpper.includes("IRPJ") || nomeUpper.includes("CSLL")))) {
+        irPct += comp.percentual;
+      } else if (cat === "tributo" || (!cat && ["ISS", "PIS", "COFINS", "ICMS"].some(t => nomeUpper.includes(t)))) {
+        tributosPct += comp.percentual;
+      } else {
+        despesasPct += comp.percentual;
+      }
+    }
+
+    // Inverse formula: Receita = (CD + Despesas_sobre_CD) / (1 - tributos% - ir% - lucro%)
+    const totalDespSobreCDPct = despesasPct + riscoPct + comissaoPct;
+    const totalDespValor = custoTotal * (totalDespSobreCDPct / 100);
+    const denominador = 1 - (tributosPct / 100) - (irPct / 100) - (lucroPct / 100);
+    const preco = denominador > 0 ? (custoTotal + totalDespValor) / denominador : custoTotal;
+    const bdiValor = preco - custoTotal;
+    const bdiPct = custoTotal > 0 ? (bdiValor / custoTotal) * 100 : 0;
+
+    return { precoTotal: preco, bdiPercentual: bdiPct };
+  }, [bdiComponentes, custoTotal, bdiData]);
+
+  const valorBdi = precoTotal - custoTotal;
 
   const deslocamentosPorCategoria = useMemo(() => {
     if (!mobilizacaoCustos) return {};
@@ -1047,7 +1086,7 @@ export default function OrcamentoDetalhe() {
 
 // ── DRE render helper ──
 function renderDRE(
-  bdiComponentes: { nome: string; percentual: number }[],
+  bdiComponentes: { nome: string; percentual: number; categoria?: string }[],
   custoTotal: number,
   custoServicos: number,
   custoAdmLocal: number,
