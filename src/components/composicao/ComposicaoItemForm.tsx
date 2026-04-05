@@ -22,6 +22,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   tipoInicial?: TipoInsumo;
   initialValues?: Record<string, unknown>;
+  existingItems?: Record<string, unknown>[]; // existing composition items for MO coeficiente
   onSubmit: (values: Record<string, unknown>) => void;
   loading?: boolean;
 }
