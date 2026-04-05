@@ -276,13 +276,12 @@ export default function ComposicaoDetalhe() {
     return itens.map((item): ItemComCalculo => {
       const tipo = String(item.tipo_insumo);
       const params = (item.parametros || {}) as Record<string, unknown>;
-      const qtd = Number(item.quantidade) || 1;
       const coef = Number(item.coeficiente) || 1;
       try {
-        if (tipo === "mao_de_obra") return { ...item, resultado: calcularMaoDeObra({ ...getDefaultParamsMaoDeObra(), ...params } as ParametrosMaoDeObra, qtd, coef) };
-        if (tipo === "equipamento") return { ...item, resultado: calcularEquipamento({ ...getDefaultParamsEquipamento(), ...params } as ParametrosEquipamento, qtd, coef) };
-        if (tipo === "veiculo") return { ...item, resultado: calcularMaterial({ ...getDefaultParamsMaterial(), ...params } as ParametrosMaterial, qtd, coef) };
-        return { ...item, resultado: calcularMaterial({ ...getDefaultParamsMaterial(), ...params } as ParametrosMaterial, qtd, coef) };
+        if (tipo === "mao_de_obra") return { ...item, resultado: calcularMaoDeObra({ ...getDefaultParamsMaoDeObra(), ...params } as ParametrosMaoDeObra, 1, coef) };
+        if (tipo === "equipamento") return { ...item, resultado: calcularEquipamento({ ...getDefaultParamsEquipamento(), ...params } as ParametrosEquipamento, 1, coef) };
+        if (tipo === "veiculo") return { ...item, resultado: calcularMaterial({ ...getDefaultParamsMaterial(), ...params } as ParametrosMaterial, 1, coef) };
+        return { ...item, resultado: calcularMaterial({ ...getDefaultParamsMaterial(), ...params } as ParametrosMaterial, 1, coef) };
       } catch {
         return { ...item, resultado: { custo_unitario: Number(item.custo_unitario) || 0, custo_total: Number(item.custo_total) || 0, memoria: [] } };
       }
@@ -292,7 +291,7 @@ export default function ComposicaoDetalhe() {
   const resumo = useMemo(() => {
     return calcularResumo(itensComCalculo.map((i) => ({
       tipo_insumo: String(i.tipo_insumo),
-      custo_total: i.resultado.custo_total,
+      custo_total: i.resultado.custo_unitario, // soma dos custos unitários
     })));
   }, [itensComCalculo]);
 
