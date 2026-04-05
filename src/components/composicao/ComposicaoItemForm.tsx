@@ -141,12 +141,18 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
         setDescricao(String(eq.nome));
         setUnidade(String(eq.unidade));
         const comb = combustiveis?.find((c) => c.ativo);
-        setParamsEq((prev) => ({
-          ...prev,
+        setParamsEq({
+          valor_aquisicao: Number(eq.valor_aquisicao),
+          valor_residual: Number(eq.valor_residual),
+          vida_util_horas: Number(eq.vida_util_horas),
           depreciacao_hora: Number(eq.depreciacao_hora),
-          manutencao_hora: Number(eq.custo_hora_improdutiva),
-          combustivel_preco_litro: comb ? Number(comb.preco_litro) : 0,
-        }));
+          manutencao_hora: Number(eq.manutencao_hora),
+          combustivel_consumo_hora: Number(eq.combustivel_consumo_hora),
+          combustivel_preco_litro: comb ? Number(comb.preco_litro) : Number(eq.combustivel_preco_litro),
+          custo_km: 0,
+          fator_utilizacao: 1,
+          operador_custo_hora: 0,
+        });
       }
     } else if (tipo === "material") {
       const ma = materiais?.find((m) => m.id === id);
@@ -161,19 +167,19 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
     }
   };
 
-  // Convert periodo to hours for MO calculation (always 1 period)
+  // Convert periodo to hours (used for MO and Equipamento)
   const periodoEmHoras = useMemo(() => {
     if (periodo === "hora") return 1;
-    if (periodo === "dia") return paramsMO.horas_diarias;
+    if (periodo === "dia") return tipo === "mao_de_obra" ? paramsMO.horas_diarias : 8;
     // mês
-    return paramsMO.horas_mes;
-  }, [periodo, paramsMO.horas_diarias, paramsMO.horas_mes]);
+    return tipo === "mao_de_obra" ? paramsMO.horas_mes : 176;
+  }, [periodo, tipo, paramsMO.horas_diarias, paramsMO.horas_mes]);
 
   // Auto-calculate coeficiente based on productivity
-  // If worker produces `quantidade` units in 1 period,
+  // If resource produces `quantidade` units in 1 period,
   // then hours per unit = periodoEmHoras / quantidade
   const coeficienteCalculado = useMemo(() => {
-    if (tipo !== "mao_de_obra") return 1;
+    if (tipo === "material") return 1;
     if (quantidade <= 0) return 0;
     return periodoEmHoras / quantidade;
   }, [tipo, periodoEmHoras, quantidade]);
@@ -181,7 +187,7 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
   const resultado: ResultadoCalculo = useMemo(() => {
     try {
       if (tipo === "mao_de_obra") return calcularMaoDeObra(paramsMO, 1, coeficienteCalculado);
-      if (tipo === "equipamento") return calcularEquipamento(paramsEq, quantidade, 1);
+      if (tipo === "equipamento") return calcularEquipamento(paramsEq, 1, coeficienteCalculado);
       return calcularMaterial(paramsMa, quantidade, 1);
     } catch {
       return { custo_unitario: 0, custo_total: 0, memoria: [] };
@@ -196,7 +202,7 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
       insumo_id: insumoId || crypto.randomUUID(),
       descricao,
       quantidade,
-      coeficiente: tipo === "mao_de_obra" ? coeficienteCalculado : 1,
+      coeficiente: tipo !== "material" ? coeficienteCalculado : 1,
       unidade,
       observacoes,
       custo_unitario: resultado.custo_unitario,
@@ -277,13 +283,19 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
             </div>
           </div>
 
-          {/* MO productivity summary */}
-          {tipo === "mao_de_obra" && insumoId && (
+          {/* Productivity summary for MO and Equipamento */}
+          {(tipo === "mao_de_obra" || tipo === "equipamento") && insumoId && (
             <div className="bg-muted/50 rounded-lg p-3 border space-y-1 text-sm">
               <div className="font-semibold text-xs uppercase text-muted-foreground">Cálculo de Produtividade</div>
               <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                <span className="text-muted-foreground">H/H (custo hora):</span>
-                <span className="font-mono font-medium">R$ {fmtBR(resultado.memoria.find(m => m.descricao.includes("Custo hora c/ regime"))?.valor || 0)}</span>
+                <span className="text-muted-foreground">
+                  {tipo === "mao_de_obra" ? "H/H (custo hora):" : "Custo hora produtiva:"}
+                </span>
+                <span className="font-mono font-medium">R$ {fmtBR(
+                  tipo === "mao_de_obra"
+                    ? (resultado.memoria.find(m => m.descricao.includes("Custo hora c/ regime"))?.valor || 0)
+                    : (resultado.memoria.find(m => m.descricao.includes("Custo hora c/ fator"))?.valor || resultado.memoria.find(m => m.descricao.includes("Custo hora produtiva"))?.valor || 0)
+                )}</span>
                 <span className="text-muted-foreground">Período ({periodo}):</span>
                 <span className="font-mono">{fmtBR(periodoEmHoras)} h</span>
                 <span className="text-muted-foreground">Horas por unidade:</span>
