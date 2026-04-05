@@ -202,13 +202,13 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
       tipo_insumo: tipo,
       insumo_id: insumoId || crypto.randomUUID(),
       descricao,
-      quantidade,
+      quantidade: 1,
       coeficiente: tipo !== "material" ? coeficienteCalculado : 1,
       unidade,
       observacoes,
       custo_unitario: resultado.custo_unitario,
-      custo_total: resultado.custo_total,
-      parametros: { ...baseParams, periodo },
+      custo_total: resultado.custo_unitario, // qty always 1, so total = unitario
+      parametros: { ...baseParams, periodo, produtividade: quantidade },
       grupo_custo: "direto",
     });
   };
