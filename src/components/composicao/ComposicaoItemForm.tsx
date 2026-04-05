@@ -43,10 +43,10 @@ const UNIDADES = [
 export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_obra", initialValues, onSubmit, loading }: Props) {
   const [tipo, setTipo] = useState<TipoInsumo>(tipoInicial);
   const [descricao, setDescricao] = useState("");
-  const [quantidade, setQuantidade] = useState(1);
-  const [coeficiente, setCoeficiente] = useState(1);
+  const [quantidade, setQuantidade] = useState(1); // units produced in the prazo period
   const [unidade, setUnidade] = useState("un");
-  const [prazo, setPrazo] = useState<"horas" | "dias" | "mês">("horas");
+  const [prazo, setPrazo] = useState<"horas" | "dias" | "mês">("dias");
+  const [prazoPeriodos, setPrazoPeriodos] = useState(1); // how many periods (hours/days/months)
   const [observacoes, setObservacoes] = useState("");
   const [insumoId, setInsumoId] = useState("");
 
@@ -71,9 +71,9 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
       setTipo((initialValues.tipo_insumo as TipoInsumo) || "mao_de_obra");
       setDescricao((initialValues.descricao as string) || "");
       setQuantidade(Number(initialValues.quantidade) || 1);
-      setCoeficiente(Number(initialValues.coeficiente) || 1);
       setUnidade((initialValues.unidade as string) || "un");
-      setPrazo((initialValues as any).prazo || "horas");
+      setPrazo(((initialValues as any).prazo as "horas" | "dias" | "mês") || "dias");
+      setPrazoPeriodos(Number((initialValues as any).prazo_periodos) || Number(initialValues.coeficiente) || 1);
       setObservacoes((initialValues.observacoes as string) || "");
       setInsumoId((initialValues.insumo_id as string) || "");
       const p = (initialValues.parametros as Record<string, unknown>) || {};
@@ -93,7 +93,6 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
         const regimeContratacao = String((cargo as any).regime_contratacao || "clt");
         const isPJ = regimeContratacao === "pj";
 
-        // Use cargo's specific encargos_selecionados
         const cargoEncargosIds = Array.isArray((cargo as any).encargos_selecionados)
           ? ((cargo as any).encargos_selecionados as string[])
           : [];
@@ -101,7 +100,6 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
           .filter((e) => cargoEncargosIds.includes(String(e.id)))
           .reduce((s, e) => s + Number(e.percentual), 0);
 
-        // Use cargo's specific beneficios_selecionados
         const cargoBeneficiosIds = Array.isArray((cargo as any).beneficios_selecionados)
           ? ((cargo as any).beneficios_selecionados as string[])
           : [];
@@ -114,17 +112,14 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
             return s + Number(b.valor);
           }, 0);
 
-        // Use cargo's specific jornada
         const jornada = (cargo as any).jornada_id
           ? jornadas?.find((j) => j.id === (cargo as any).jornada_id)
           : null;
 
-        // Use cargo's specific regime
         const regime = (cargo as any).regime_id
           ? regimes?.find((r) => r.id === (cargo as any).regime_id)
           : null;
 
-        // Use cargo's specific horario almoco
         const horario = (cargo as any).horario_almoco_id
           ? horarios?.find((h) => h.id === (cargo as any).horario_almoco_id)
           : null;
@@ -168,15 +163,32 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
     }
   };
 
+  // Convert prazo to hours for MO calculation
+  const prazoEmHoras = useMemo(() => {
+    if (prazo === "horas") return prazoPeriodos;
+    if (prazo === "dias") return prazoPeriodos * paramsMO.horas_diarias;
+    // mês
+    return prazoPeriodos * paramsMO.horas_mes;
+  }, [prazo, prazoPeriodos, paramsMO.horas_diarias, paramsMO.horas_mes]);
+
+  // Auto-calculate coeficiente based on productivity
+  // If worker produces `quantidade` units in `prazoEmHoras` hours,
+  // then hours per unit = prazoEmHoras / quantidade
+  const coeficienteCalculado = useMemo(() => {
+    if (tipo !== "mao_de_obra") return 1;
+    if (quantidade <= 0) return 0;
+    return prazoEmHoras / quantidade;
+  }, [tipo, prazoEmHoras, quantidade]);
+
   const resultado: ResultadoCalculo = useMemo(() => {
     try {
-      if (tipo === "mao_de_obra") return calcularMaoDeObra(paramsMO, quantidade, coeficiente);
-      if (tipo === "equipamento") return calcularEquipamento(paramsEq, quantidade, coeficiente);
-      return calcularMaterial(paramsMa, quantidade, coeficiente);
+      if (tipo === "mao_de_obra") return calcularMaoDeObra(paramsMO, 1, coeficienteCalculado);
+      if (tipo === "equipamento") return calcularEquipamento(paramsEq, quantidade, prazoPeriodos);
+      return calcularMaterial(paramsMa, quantidade, prazoPeriodos);
     } catch {
       return { custo_unitario: 0, custo_total: 0, memoria: [] };
     }
-  }, [tipo, paramsMO, paramsEq, paramsMa, quantidade, coeficiente]);
+  }, [tipo, paramsMO, paramsEq, paramsMa, quantidade, prazoPeriodos, coeficienteCalculado]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -186,9 +198,10 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
       insumo_id: insumoId || crypto.randomUUID(),
       descricao,
       quantidade,
-      coeficiente,
+      coeficiente: tipo === "mao_de_obra" ? coeficienteCalculado : prazoPeriodos,
       unidade,
       prazo,
+      prazo_periodos: prazoPeriodos,
       observacoes,
       custo_unitario: resultado.custo_unitario,
       custo_total: resultado.custo_total,
@@ -202,6 +215,8 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
     if (tipo === "equipamento") return (equipamentos || []).map((e) => ({ id: String(e.id), nome: String(e.nome) }));
     return (materiais || []).map((m) => ({ id: String(m.id), nome: String(m.nome) }));
   }, [tipo, cargos, equipamentos, materiais]);
+
+  const fmtBR = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -237,7 +252,7 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
           </div>
 
           {/* 3. Quantidade + 4. Unidade + 5. Prazo */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-4 gap-3">
             <div className="space-y-1.5">
               <Label>Quantidade</Label>
               <Input type="number" step="0.0001" value={quantidade} onChange={(e) => setQuantidade(parseFloat(e.target.value) || 0)} />
@@ -255,6 +270,10 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
             </div>
             <div className="space-y-1.5">
               <Label>Prazo</Label>
+              <Input type="number" step="0.01" min="0.01" value={prazoPeriodos} onChange={(e) => setPrazoPeriodos(parseFloat(e.target.value) || 1)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Período</Label>
               <Select value={prazo} onValueChange={(v) => setPrazo(v as "horas" | "dias" | "mês")}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -266,15 +285,30 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
             </div>
           </div>
 
-          {/* Parâmetros por tipo */}
-          <Tabs defaultValue="params" className="w-full">
+          {/* MO productivity summary */}
+          {tipo === "mao_de_obra" && insumoId && (
+            <div className="bg-muted/50 rounded-lg p-3 border space-y-1 text-sm">
+              <div className="font-semibold text-xs uppercase text-muted-foreground">Cálculo de Produtividade</div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                <span className="text-muted-foreground">H/H (custo hora):</span>
+                <span className="font-mono font-medium">R$ {fmtBR(resultado.memoria.find(m => m.descricao.includes("Custo hora c/ regime"))?.valor || 0)}</span>
+                <span className="text-muted-foreground">Prazo total em horas:</span>
+                <span className="font-mono">{fmtBR(prazoEmHoras)} h</span>
+                <span className="text-muted-foreground">Horas por unidade:</span>
+                <span className="font-mono">{fmtBR(coeficienteCalculado)} h/{unidade}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Parâmetros por tipo - only show for non-MO or in detail tab */}
+          <Tabs defaultValue={tipo === "mao_de_obra" ? "memoria" : "params"} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="params">Parâmetros</TabsTrigger>
               <TabsTrigger value="memoria">Memória de Cálculo</TabsTrigger>
             </TabsList>
 
             <TabsContent value="params" className="space-y-3 pt-2">
-              {tipo === "mao_de_obra" && <ParamsMaoDeObra params={paramsMO} onChange={setParamsMO} />}
+              {tipo === "mao_de_obra" && <ParamsMaoDeObraReadonly params={paramsMO} />}
               {tipo === "equipamento" && <ParamsEquipamento params={paramsEq} onChange={setParamsEq} />}
               {tipo === "material" && <ParamsMaterialForm params={paramsMa} onChange={setParamsMa} />}
             </TabsContent>
@@ -292,12 +326,12 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
           {/* Resumo do item */}
           <div className="bg-primary/5 rounded-lg p-4 flex justify-between items-center border border-primary/20">
             <div>
-              <div className="text-xs text-muted-foreground">Custo Unitário</div>
-              <div className="font-mono font-semibold">R$ {resultado.custo_unitario.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+              <div className="text-xs text-muted-foreground">Custo Unitário (por {unidade})</div>
+              <div className="font-mono font-semibold">R$ {fmtBR(resultado.custo_unitario)}</div>
             </div>
             <div className="text-right">
-              <div className="text-xs text-muted-foreground">Custo Total</div>
-              <div className="font-mono font-bold text-lg text-primary">R$ {resultado.custo_total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+              <div className="text-xs text-muted-foreground">Custo Total ({quantidade} {unidade})</div>
+              <div className="font-mono font-bold text-lg text-primary">R$ {fmtBR(resultado.custo_total)}</div>
             </div>
           </div>
 
@@ -311,7 +345,7 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
   );
 }
 
-// ===== Sub-forms for each type =====
+// ===== Sub-forms =====
 
 function NumField({ label, value, onChange, step = "0.01" }: { label: string; value: number; onChange: (v: number) => void; step?: string }) {
   return (
@@ -322,45 +356,31 @@ function NumField({ label, value, onChange, step = "0.01" }: { label: string; va
   );
 }
 
-function ParamsMaoDeObra({ params, onChange }: { params: ParametrosMaoDeObra; onChange: (p: ParametrosMaoDeObra) => void }) {
-  const set = (k: keyof ParametrosMaoDeObra, v: number) => onChange({ ...params, [k]: v });
+function ReadonlyField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <div className="h-8 text-sm font-mono flex items-center px-3 bg-muted rounded-md">{value}</div>
+    </div>
+  );
+}
+
+function ParamsMaoDeObraReadonly({ params }: { params: ParametrosMaoDeObra }) {
+  const fmtBR = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
   const isPJ = params.regime_contratacao === "pj";
   return (
     <div className="space-y-3">
-      <div className="text-xs font-semibold text-muted-foreground uppercase">Regime de Contratação</div>
-      <div className="flex gap-2">
-        <Button
-          type="button"
-          size="sm"
-          variant={!isPJ ? "default" : "outline"}
-          className="text-xs flex-1"
-          onClick={() => onChange({ ...params, regime_contratacao: "clt" })}
-        >
-          CLT (com encargos e benefícios)
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant={isPJ ? "default" : "outline"}
-          className="text-xs flex-1"
-          onClick={() => onChange({ ...params, regime_contratacao: "pj", encargos_percentual: 0, beneficios_valor: 0 })}
-        >
-          PJ (apenas salário)
-        </Button>
-      </div>
-      <div className="text-xs font-semibold text-muted-foreground uppercase">Remuneração</div>
+      <div className="text-xs font-semibold text-muted-foreground uppercase">Dados do Cargo (do cadastro)</div>
       <div className="grid grid-cols-3 gap-2">
-        <NumField label="Salário Base (R$/mês)" value={params.salario_base} onChange={(v) => set("salario_base", v)} />
-        {!isPJ && <NumField label="Encargos (%)" value={params.encargos_percentual} onChange={(v) => set("encargos_percentual", v)} />}
-        {!isPJ && <NumField label="Benefícios (R$/mês)" value={params.beneficios_valor} onChange={(v) => set("beneficios_valor", v)} />}
-        {isPJ && <div className="col-span-2 flex items-end text-xs text-muted-foreground pb-2">PJ: sem encargos e sem benefícios</div>}
+        <ReadonlyField label="Salário Base (R$/mês)" value={`R$ ${fmtBR(params.salario_base)}`} />
+        <ReadonlyField label="Encargos (%)" value={isPJ ? "PJ - isento" : `${fmtBR(params.encargos_percentual)}%`} />
+        <ReadonlyField label="Benefícios (R$/mês)" value={isPJ ? "PJ - isento" : `R$ ${fmtBR(params.beneficios_valor)}`} />
       </div>
-      <div className="text-xs font-semibold text-muted-foreground uppercase">Jornada e Regime</div>
       <div className="grid grid-cols-4 gap-2">
-        <NumField label="Horas/mês" value={params.horas_mes} onChange={(v) => set("horas_mes", v)} />
-        <NumField label="Horas/dia" value={params.horas_diarias} onChange={(v) => set("horas_diarias", v)} />
-        <NumField label="Dias trab." value={params.regime_dias_trabalho} onChange={(v) => set("regime_dias_trabalho", v)} />
-        <NumField label="Dias folga" value={params.regime_dias_folga} onChange={(v) => set("regime_dias_folga", v)} />
+        <ReadonlyField label="Horas/mês" value={`${fmtBR(params.horas_mes)} h`} />
+        <ReadonlyField label="Horas/dia" value={`${fmtBR(params.horas_diarias)} h`} />
+        <ReadonlyField label="Dias trab." value={params.regime_dias_trabalho > 0 ? String(params.regime_dias_trabalho) : "-"} />
+        <ReadonlyField label="Dias folga" value={params.regime_dias_folga > 0 ? String(params.regime_dias_folga) : "-"} />
       </div>
     </div>
   );
