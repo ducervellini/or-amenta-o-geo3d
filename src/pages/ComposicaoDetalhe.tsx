@@ -54,18 +54,25 @@ function ItensTable({ itens, tipoIcons, tipoLabels, fmt, resumo, onEdit, onDelet
   onEdit: (item: any) => void;
   onDelete: (id: string) => void;
 }) {
-  const flatData = itens.map((item) => ({
-    ...item,
-    _tipo_label: tipoLabels[String(item.tipo_insumo)] || String(item.tipo_insumo),
-    _custo_unitario: item.resultado.custo_unitario,
-    _custo_total: item.resultado.custo_total,
-  }));
+  const flatData = itens.map((item) => {
+    const params = (item.parametros || {}) as Record<string, unknown>;
+    const periodoLabel = params.periodo ? String(params.periodo) : "-";
+    return {
+      ...item,
+      _tipo_label: tipoLabels[String(item.tipo_insumo)] || String(item.tipo_insumo),
+      _custo_unitario: item.resultado.custo_unitario,
+      _custo_total: item.resultado.custo_total,
+      _periodo: periodoLabel,
+    };
+  });
   const { sorted, sortKey, sortDirection, handleSort } = useTableSort(flatData);
   const cols = [
     { key: "tipo_insumo", label: "Tipo" },
     { key: "descricao", label: "Descrição" },
     { key: "quantidade", label: "Qtd" },
-    { key: "coeficiente", label: "Coeficiente" },
+    { key: "unidade", label: "Unidade" },
+    { key: "_periodo", label: "Duração" },
+    { key: "coeficiente", label: "Coef. (h)" },
     { key: "_custo_unitario", label: "Custo Unit." },
     { key: "_custo_total", label: "Custo Total" },
   ];
@@ -93,6 +100,8 @@ function ItensTable({ itens, tipoIcons, tipoLabels, fmt, resumo, onEdit, onDelet
                 </td>
                 <td className="font-medium text-sm">{String(item.descricao) || "Sem descrição"}</td>
                 <td className="font-mono text-sm">{fmt(Number(item.quantidade))}</td>
+                <td className="text-sm">{String(item.unidade || "un")}</td>
+                <td className="text-sm">{item._periodo}</td>
                 <td className="font-mono text-sm">{fmt(Number(item.coeficiente))}</td>
                 <td className="font-mono text-sm">R$ {fmt(item._custo_unitario)}</td>
                 <td className="font-mono font-semibold text-sm">R$ {fmt(item._custo_total)}</td>
