@@ -257,7 +257,7 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
           {/* 3. Quantidade + 4. Unidade + 5. Prazo */}
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
-              <Label>Quantidade</Label>
+              <Label>Produtividade (qtd/{periodo})</Label>
               <Input type="number" step="0.0001" value={quantidade} onChange={(e) => setQuantidade(parseFloat(e.target.value) || 0)} />
             </div>
             <div className="space-y-1.5">
