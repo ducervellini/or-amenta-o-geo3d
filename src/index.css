@@ -119,18 +119,35 @@
 
   .data-table {
     @apply w-full text-sm;
-    table-layout: fixed;
   }
 
   .data-table th {
     @apply text-left font-semibold text-muted-foreground uppercase text-xs tracking-wider py-3 px-4 border-b;
-    resize: horizontal;
     overflow: hidden;
-    min-width: 50px;
+    position: relative;
+  }
+
+  .data-table th::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 25%;
+    height: 50%;
+    width: 3px;
+    cursor: col-resize;
+    background: transparent;
+    transition: background 0.2s;
+  }
+
+  .data-table th:hover::after {
+    background: hsl(var(--primary) / 0.3);
   }
 
   .data-table td {
     @apply py-3 px-4 border-b border-border/50;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .data-table tr:hover td {
