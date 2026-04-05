@@ -423,7 +423,7 @@ export default function BdiDre() {
 
           {/* Custo Direto input */}
           <Card>
-            <CardContent className="pt-4 pb-4">
+            <CardContent className="pt-4 pb-4 space-y-3">
               <div className="flex items-center gap-3">
                 <Label className="text-xs whitespace-nowrap font-semibold">Custo Direto (R$)</Label>
                 <Input
@@ -439,6 +439,27 @@ export default function BdiDre() {
                   >
                     <RefreshCw className="w-3 h-3" /> Sincronizar
                   </Button>
+                )}
+              </div>
+              <div className="flex items-center gap-3 p-2.5 rounded-lg bg-accent/5 border border-accent/20">
+                <Label className="text-xs whitespace-nowrap font-semibold text-accent">Lucro Líquido desejado (%)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="Ex: 5.00"
+                  value={lucroLiqDesejado ?? ""}
+                  onChange={e => {
+                    const v = parseFloat(e.target.value);
+                    if (!isNaN(v)) handleLucroLiqChange(v);
+                    else setLucroLiqDesejado(null);
+                  }}
+                  className="h-8 text-xs font-mono flex-1 border-accent/30"
+                />
+                <span className="text-xs text-muted-foreground">%</span>
+                {lucroLiqDesejado !== null && (
+                  <Badge variant="outline" className="text-[10px] border-accent/30 text-accent shrink-0">
+                    Preço: {fmt(resultado.receitaBruta)}
+                  </Badge>
                 )}
               </div>
             </CardContent>
