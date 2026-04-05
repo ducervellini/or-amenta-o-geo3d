@@ -142,7 +142,7 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
       const eq = equipamentos?.find((e) => e.id === id);
       if (eq) {
         setDescricao(String(eq.nome));
-        setUnidade(String(eq.unidade));
+        if (servicoUnidade) setUnidade(servicoUnidade);
         const comb = combustiveis?.find((c) => c.ativo);
         setParamsEq({
           valor_aquisicao: Number(eq.valor_aquisicao),
