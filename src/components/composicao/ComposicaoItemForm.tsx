@@ -141,12 +141,18 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
         setDescricao(String(eq.nome));
         setUnidade(String(eq.unidade));
         const comb = combustiveis?.find((c) => c.ativo);
-        setParamsEq((prev) => ({
-          ...prev,
+        setParamsEq({
+          valor_aquisicao: Number(eq.valor_aquisicao),
+          valor_residual: Number(eq.valor_residual),
+          vida_util_horas: Number(eq.vida_util_horas),
           depreciacao_hora: Number(eq.depreciacao_hora),
-          manutencao_hora: Number(eq.custo_hora_improdutiva),
-          combustivel_preco_litro: comb ? Number(comb.preco_litro) : 0,
-        }));
+          manutencao_hora: Number(eq.manutencao_hora),
+          combustivel_consumo_hora: Number(eq.combustivel_consumo_hora),
+          combustivel_preco_litro: comb ? Number(comb.preco_litro) : Number(eq.combustivel_preco_litro),
+          custo_km: 0,
+          fator_utilizacao: 1,
+          operador_custo_hora: 0,
+        });
       }
     } else if (tipo === "material") {
       const ma = materiais?.find((m) => m.id === id);
