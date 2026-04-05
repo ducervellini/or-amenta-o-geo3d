@@ -10,17 +10,14 @@ interface SortableHeaderProps {
   currentDirection: SortDirection;
   onSort: (key: string) => void;
   className?: string;
-  style?: React.CSSProperties;
-  onResizeStart?: (e: React.MouseEvent) => void;
 }
 
-export function SortableHeader({ label, sortKey, currentSort, currentDirection, onSort, className, style, onResizeStart }: SortableHeaderProps) {
+export function SortableHeader({ label, sortKey, currentSort, currentDirection, onSort, className }: SortableHeaderProps) {
   const isActive = currentSort === sortKey;
   return (
     <th
-      className={`cursor-pointer select-none hover:bg-muted/50 transition-colors relative group resize-x overflow-hidden min-w-[50px] ${className || ""}`}
+      className={`cursor-pointer select-none hover:bg-muted/50 transition-colors relative group ${className || ""}`}
       onClick={() => onSort(sortKey)}
-      style={style}
     >
       <div className="flex items-center gap-1.5">
         <span>{label}</span>
@@ -34,13 +31,6 @@ export function SortableHeader({ label, sortKey, currentSort, currentDirection, 
           <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground/50" />
         )}
       </div>
-      {onResizeStart && (
-        <div
-          className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize opacity-0 group-hover:opacity-100 hover:!opacity-100 bg-primary/30 transition-opacity"
-          onMouseDown={onResizeStart}
-          onClick={(e) => e.stopPropagation()}
-        />
-      )}
     </th>
   );
 }
