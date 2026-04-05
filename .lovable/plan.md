@@ -1,44 +1,63 @@
 
+Objetivo: corrigir a causa real da divergência para que, se no BDI & DRE o lucro líquido desejado for 20%, o orçamento também feche em 20% da receita.
 
-## Problema Identificado
+Diagnóstico
+- O erro já não está só na DRE do orçamento; agora o problema principal é a formação do preço.
+- Em `src/pages/BdiDre.tsx`, o cálculo em tempo real usa a fórmula inversa e chega a um `Preço de Venda` correto (`resultado.receitaBruta`) e a um BDI efetivo correto (`resultado.bdiResultante`).
+- Porém, ao salvar, a tela grava em `parametros_bdi.bdi_calculado` o valor `resultado.bdiPercent`, que é o “BDI da fórmula”, não o markup efetivo usado para formar o preço.
+- Em `src/pages/OrcamentoDetalhe.tsx`, o orçamento usa exatamente esse `bdi_calculado` salvo para fazer:
+  - `valorBdi = custoTotal * (bdiPercentual / 100)`
+  - `precoTotal = custoTotal + valorBdi`
+- Resultado: o orçamento passa a usar um preço menor do que o preço realmente calculado na tela BDI & DRE, e por isso o lucro líquido cai para algo como 7,14% em vez de 20%.
 
-A DRE no Orçamento (`OrcamentoDetalhe.tsx`) calcula tributos, lucro e despesas **sobre o custo direto**, quando deveriam ser calculados **sobre a receita bruta (preço de venda)**. Isso causa uma divergência enorme com a DRE da página BDI & DRE.
+Arquivos impactados
+- `src/pages/BdiDre.tsx`
+- `src/pages/OrcamentoDetalhe.tsx`
+- `src/lib/bdi-calculo.ts` (ou novo helper compartilhado, seguindo o padrão já existente)
 
-### Detalhes técnicos
+Plano de correção
+1. Unificar a lógica de formação de preço
+- Extrair para função compartilhada o cálculo que hoje existe em `BdiDre.tsx`.
+- Essa função deve receber custo + componentes do BDI e retornar:
+  - preço de venda correto
+  - BDI efetivo
+  - tributos, IR, despesas e lucro líquido
+- Assim BDI & DRE e Orçamento passam a usar exatamente a mesma conta.
 
-Na página **BDI & DRE** (`BdiDre.tsx`), o cálculo é correto:
-- Usa fórmula inversa: `Receita = (CD + Despesas) / (1 - Tributos% - IR% - Lucro%)`
-- Tributos e IR são calculados sobre a receita bruta
-- Lucro líquido resulta corretamente no percentual desejado
+2. Corrigir o valor oficial salvo do BDI
+- Em `BdiDre.tsx`, deixar de salvar `resultado.bdiPercent` como valor principal usado pelo orçamento.
+- Passar a salvar como `bdi_calculado` o BDI efetivo (`resultado.bdiResultante`), que é o percentual realmente compatível com o preço de venda calculado.
+- O “BDI da fórmula” pode continuar sendo exibido só como informação auxiliar na própria tela, sem ser a base do orçamento.
 
-Na página **Orçamento** (`OrcamentoDetalhe.tsx`, função `renderDRE`), o cálculo está errado:
-- Linha 1091: `totalTributos = custoTotal × tributos%` (deveria ser `precoTotal × tributos%`)
-- Linha 1094: `valorLucro = custoTotal × lucro%` (deveria ser `precoTotal × lucro%`)
-- Linha 1093: `totalDespInd = custoTotal × despesas%` (deveria ser `custoTotal × despesas%` — este está correto pois despesas incidem sobre custo)
-- Linha 1095: `valorRisco = custoTotal × risco%` (correto, incide sobre custo)
-- O preço é calculado simplesmente como `custoTotal × (1 + BDI%)`, mas a DRE não reflete a mesma lógica
+3. Corrigir a formação do preço no orçamento
+- Em `OrcamentoDetalhe.tsx`, parar de depender apenas do `bdi_calculado` cru para formar o preço.
+- Recalcular `precoTotal` e `bdiPercentual` a partir dos componentes do BDI usando a mesma função compartilhada.
+- Isso garante compatibilidade inclusive com perfis antigos, desde que tenham os componentes salvos.
 
-### Plano de Correção
+4. Manter a DRE do orçamento alinhada ao preço correto
+- Depois de corrigir a origem do `precoTotal`, manter a DRE já ajustada:
+  - tributos e IR sobre a receita
+  - despesas indiretas e risco sobre o custo
+  - lucro líquido como resultado residual correto
+- Com isso, o percentual final exibido deixa de ser 7,14% e passa a refletir o alvo configurado.
 
-**Arquivo: `src/pages/OrcamentoDetalhe.tsx`**
+5. Atualizar persistência do orçamento
+- Ao salvar o orçamento, gravar `bdi_percentual` e `preco_total` já recalculados pela lógica unificada.
+- Isso evita que resumos e listagens futuras usem valores inconsistentes.
 
-1. **Corrigir cálculos na função `renderDRE`** (linhas 1090-1099):
-   - Tributos sobre receita: calcular sobre `precoTotal` em vez de `custoTotal`
-   - Lucro bruto: calcular sobre `precoTotal` em vez de `custoTotal`
-   - Manter despesas indiretas e risco sobre `custoTotal` (correto)
-   - Recalcular lucro líquido consistentemente: `Receita - Tributos - CustoTotal - Despesas - IR`
+Detalhes técnicos
+- Causa raiz:
+  - `BdiDre.tsx` salva `resultado.bdiPercent`
+  - `OrcamentoDetalhe.tsx` usa `bdiData?.bdi_calculado` para formar o preço
+  - mas o preço correto da DRE vem de `resultado.receitaBruta`, cujo markup real é `resultado.bdiResultante`
+- Em outras palavras: hoje o sistema salva um percentual e usa outro cálculo para mostrar o preço.
+- A correção precisa alinhar “o que é salvo”, “o que é mostrado” e “o que o orçamento usa”.
 
-2. **Alinhar a lógica com a fórmula BDI multiplicativa** usada em `BdiDre.tsx`:
-   - Receita Bruta = `precoTotal`
-   - (-) Tributos sobre receita = `precoTotal × tributosPct%`
-   - = Receita Líquida
-   - (-) Custo Direto Total
-   - = Lucro Bruto
-   - (-) Despesas indiretas = `custoTotal × despesasPct%`
-   - (-) Risco = `custoTotal × riscoPct%`
-   - = Lucro antes IR (EBIT)
-   - (-) IRPJ/CSLL = `precoTotal × irPct%`
-   - = Lucro Líquido
+Validação esperada
+- Com lucro líquido desejado de 20% no BDI & DRE:
+  - o preço de venda no BDI & DRE e no orçamento deve ser o mesmo
+  - a DRE do orçamento deve mostrar 20,00% da receita no lucro líquido
+  - o BDI salvo e reaproveitado deve corresponder ao markup efetivo do preço, não apenas ao indicador interno da fórmula
 
-Isso fara com que o lucro liquido no orcamento reflita o percentual configurado na pagina BDI & DRE.
-
+Observação
+- Não vejo necessidade de mudança de banco para isso; a correção é de regra de negócio e reaproveitamento consistente dos componentes já salvos.
