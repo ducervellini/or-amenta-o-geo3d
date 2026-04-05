@@ -80,6 +80,7 @@ export default function Composicoes() {
   const [search, setSearch] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const { sorted: sortedAllRows, sortKey, sortDirection, handleSort } = useTableSort<RowData>([] as RowData[]);
 
   const { data: composicoes, isLoading } = useSupabaseQuery("composicoes");
   const { data: servicos } = useSupabaseQuery("servicos");
