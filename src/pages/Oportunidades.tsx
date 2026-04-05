@@ -1,10 +1,20 @@
 import { useState } from "react";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Columns3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CrudFormDialog } from "@/components/crud/CrudFormDialog";
 import { toast } from "sonner";
+
+const OPORT_COLS = [
+  { key: "codigo", label: "Código" },
+  { key: "descricao", label: "Descrição" },
+  { key: "cliente", label: "Cliente" },
+  { key: "cidade", label: "Cidade" },
+  { key: "estado", label: "Estado" },
+];
 
 const ESTADOS_BR = [
   "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA",
@@ -15,7 +25,17 @@ export default function Oportunidades() {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
+  const [visibleCols, setVisibleCols] = useState<Set<string>>(() => new Set(OPORT_COLS.map((c) => c.key)));
   const queryClient = useQueryClient();
+
+  const toggleCol = (key: string) => {
+    setVisibleCols((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) { if (next.size > 1) next.delete(key); }
+      else next.add(key);
+      return next;
+    });
+  };
 
   const { data: oportunidades, isLoading } = useQuery({
     queryKey: ["oportunidades"],
@@ -112,7 +132,7 @@ export default function Oportunidades() {
       </div>
 
       <div className="bg-card rounded-lg border shadow-sm">
-        <div className="p-4 border-b">
+        <div className="p-4 border-b flex items-center gap-3">
           <div className="relative w-full max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
@@ -123,44 +143,64 @@ export default function Oportunidades() {
               className="w-full pl-10 pr-4 py-2 text-sm bg-muted rounded-lg border-0 focus:ring-2 focus:ring-ring outline-none"
             />
           </div>
+          <div className="ml-auto">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Columns3 className="w-4 h-4" /> Colunas
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-52 p-3 space-y-2">
+                {OPORT_COLS.map((col) => (
+                  <label key={col.key} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <Checkbox checked={visibleCols.has(col.key)} onCheckedChange={() => toggleCol(col.key)} />
+                    {col.label}
+                  </label>
+                ))}
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr>
-                <th>Código</th>
-                <th>Descrição</th>
-                <th>Cliente</th>
-                <th>Cidade</th>
-                <th>Estado</th>
+                {OPORT_COLS.filter((c) => visibleCols.has(c.key)).map((col) => (
+                  <th key={col.key}>{col.label}</th>
+                ))}
                 <th className="text-center">Ações</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</td></tr>
+                <tr><td colSpan={visibleCols.size + 1} className="text-center py-8 text-muted-foreground">Carregando...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-8 text-muted-foreground">Nenhuma oportunidade encontrada</td></tr>
+                <tr><td colSpan={visibleCols.size + 1} className="text-center py-8 text-muted-foreground">Nenhuma oportunidade encontrada</td></tr>
               ) : (
-                filtered.map((o: any) => (
-                  <tr key={o.id}>
-                    <td className="font-medium text-accent">{o.codigo}</td>
-                    <td>{o.descricao}</td>
-                    <td>{o.clientes?.nome || "—"}</td>
-                    <td>{o.cidade || "—"}</td>
-                    <td>{o.estado || "—"}</td>
-                    <td className="text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditItem(o); setDialogOpen(true); }}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(o.id)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                filtered.map((o: any) => {
+                  const cellMap: Record<string, React.ReactNode> = {
+                    codigo: <td key="codigo" className="font-medium text-accent">{o.codigo}</td>,
+                    descricao: <td key="descricao">{o.descricao}</td>,
+                    cliente: <td key="cliente">{o.clientes?.nome || "—"}</td>,
+                    cidade: <td key="cidade">{o.cidade || "—"}</td>,
+                    estado: <td key="estado">{o.estado || "—"}</td>,
+                  };
+                  return (
+                    <tr key={o.id}>
+                      {OPORT_COLS.filter((c) => visibleCols.has(c.key)).map((c) => cellMap[c.key])}
+                      <td className="text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditItem(o); setDialogOpen(true); }}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(o.id)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

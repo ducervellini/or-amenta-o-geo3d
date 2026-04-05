@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { Plus, Search, Edit, Trash2, Loader2 } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Loader2, Columns3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CrudFormDialog, FieldConfig } from "./CrudFormDialog";
 import {
   useSupabaseQuery,
@@ -44,19 +46,21 @@ export interface CrudPageProps<T extends TableName> {
   onFieldChange?: (fieldName: string, value: unknown, allValues: Record<string, unknown>) => Record<string, unknown> | undefined;
 }
 
-function SortableTable({ data, columns, onEdit, onDelete }: {
+function SortableTable({ data, columns, onEdit, onDelete, visibleCols }: {
   data: Record<string, unknown>[];
   columns: ColumnConfig[];
   onEdit: (item: Record<string, unknown>) => void;
   onDelete: (id: string) => void;
+  visibleCols: Set<string>;
 }) {
+  const visible = columns.filter((c) => visibleCols.has(c.key));
   const { sorted, sortKey, sortDirection, handleSort } = useTableSort(data);
   return (
     <div className="overflow-x-auto">
       <table className="data-table">
         <thead>
           <tr>
-            {columns.map((col) => (
+            {visible.map((col) => (
               <SortableHeader key={col.key} label={col.label} sortKey={col.key} currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
             ))}
             <th className="text-center">Ações</th>
@@ -65,7 +69,7 @@ function SortableTable({ data, columns, onEdit, onDelete }: {
         <tbody>
           {sorted.map((row: any) => (
             <tr key={row.id}>
-              {columns.map((col) => (
+              {visible.map((col) => (
                 <td key={col.key}>
                   {col.render ? col.render(row[col.key], row) : String(row[col.key] ?? "-")}
                 </td>
@@ -95,6 +99,16 @@ export function CrudPage<T extends TableName>({
   const [formOpen, setFormOpen] = useState(false);
   const [editItem, setEditItem] = useState<Record<string, unknown> | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [visibleCols, setVisibleCols] = useState<Set<string>>(() => new Set(columns.map((c) => c.key)));
+
+  const toggleCol = (key: string) => {
+    setVisibleCols((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) { if (next.size > 1) next.delete(key); }
+      else next.add(key);
+      return next;
+    });
+  };
 
   const { data, isLoading } = useSupabaseQuery(table, { filter, filters: defaultFilters });
   const insertMutation = useSupabaseInsert(table);
@@ -140,8 +154,8 @@ export function CrudPage<T extends TableName>({
       </div>
 
       <div className="bg-card rounded-lg border shadow-sm">
-        {searchField && (
-          <div className="p-4 border-b">
+        <div className="p-4 border-b flex items-center gap-3">
+          {searchField && (
             <div className="relative w-full max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
@@ -152,8 +166,25 @@ export function CrudPage<T extends TableName>({
                 className="w-full pl-10 pr-4 py-2 text-sm bg-muted rounded-lg border-0 focus:ring-2 focus:ring-ring outline-none"
               />
             </div>
+          )}
+          <div className="ml-auto">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Columns3 className="w-4 h-4" /> Colunas
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-52 p-3 space-y-2">
+                {columns.map((col) => (
+                  <label key={col.key} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <Checkbox checked={visibleCols.has(col.key)} onCheckedChange={() => toggleCol(col.key)} />
+                    {col.label}
+                  </label>
+                ))}
+              </PopoverContent>
+            </Popover>
           </div>
-        )}
+        </div>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
@@ -164,7 +195,7 @@ export function CrudPage<T extends TableName>({
             Nenhum registro encontrado
           </div>
         ) : (
-          <SortableTable data={filtered} columns={columns} onEdit={handleEdit} onDelete={(id) => setDeleteId(id)} />
+          <SortableTable data={filtered} columns={columns} onEdit={handleEdit} onDelete={(id) => setDeleteId(id)} visibleCols={visibleCols} />
         )}
       </div>
 
