@@ -201,6 +201,7 @@ export default function Oportunidades() {
                     codigo: <td key="codigo" className="font-medium text-accent">{o.codigo}</td>,
                     descricao: <td key="descricao">{o.descricao}</td>,
                     cliente: <td key="cliente">{o.clientes?.nome || "—"}</td>,
+                    grupo_servicos: <td key="grupo_servicos">{o.grupos_servicos?.nome || "—"}</td>,
                     cidade: <td key="cidade">{o.cidade || "—"}</td>,
                     estado: <td key="estado">{o.estado || "—"}</td>,
                   };
