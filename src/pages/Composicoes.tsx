@@ -292,7 +292,7 @@ export default function Composicoes() {
                       {isExpanded && (search ? filteredRows : rows).map((row) => (
                         <ServiceRow
                           key={`${row.type}-${row.id}`}
-                          row={row}
+                          row={{ ...row, grupo_nome: String(grupo.nome) }}
                           navigate={navigate}
                           setDeletingId={setDeletingId}
                           getMercadoNome={getMercadoNome}
