@@ -190,7 +190,7 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const params = tipo === "mao_de_obra" ? paramsMO : tipo === "equipamento" ? paramsEq : paramsMa;
+    const baseParams = tipo === "mao_de_obra" ? paramsMO : tipo === "equipamento" ? paramsEq : paramsMa;
     onSubmit({
       tipo_insumo: tipo,
       insumo_id: insumoId || crypto.randomUUID(),
@@ -198,11 +198,10 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
       quantidade,
       coeficiente: tipo === "mao_de_obra" ? coeficienteCalculado : 1,
       unidade,
-      periodo,
       observacoes,
       custo_unitario: resultado.custo_unitario,
       custo_total: resultado.custo_total,
-      parametros: params,
+      parametros: { ...baseParams, periodo },
       grupo_custo: "direto",
     });
   };
