@@ -154,8 +154,8 @@ export function CrudPage<T extends TableName>({
       </div>
 
       <div className="bg-card rounded-lg border shadow-sm">
-        {searchField && (
-          <div className="p-4 border-b">
+        <div className="p-4 border-b flex items-center gap-3">
+          {searchField && (
             <div className="relative w-full max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
@@ -166,8 +166,25 @@ export function CrudPage<T extends TableName>({
                 className="w-full pl-10 pr-4 py-2 text-sm bg-muted rounded-lg border-0 focus:ring-2 focus:ring-ring outline-none"
               />
             </div>
+          )}
+          <div className="ml-auto">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Columns3 className="w-4 h-4" /> Colunas
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-52 p-3 space-y-2">
+                {columns.map((col) => (
+                  <label key={col.key} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <Checkbox checked={visibleCols.has(col.key)} onCheckedChange={() => toggleCol(col.key)} />
+                    {col.label}
+                  </label>
+                ))}
+              </PopoverContent>
+            </Popover>
           </div>
-        )}
+        </div>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
@@ -178,7 +195,7 @@ export function CrudPage<T extends TableName>({
             Nenhum registro encontrado
           </div>
         ) : (
-          <SortableTable data={filtered} columns={columns} onEdit={handleEdit} onDelete={(id) => setDeleteId(id)} />
+          <SortableTable data={filtered} columns={columns} onEdit={handleEdit} onDelete={(id) => setDeleteId(id)} visibleCols={visibleCols} />
         )}
       </div>
 
