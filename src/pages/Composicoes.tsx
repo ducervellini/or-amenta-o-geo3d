@@ -305,7 +305,7 @@ export default function Composicoes() {
                 {/* Ungrouped / avulsa rows */}
                 {avulsaRows.filter(matchesSearch).length > 0 && grupoRows.length > 0 && (
                   <tr className="bg-muted/20">
-                    <td colSpan={10} className="text-xs font-semibold text-muted-foreground py-2">
+                    <td colSpan={11} className="text-xs font-semibold text-muted-foreground py-2">
                       Sem grupo
                     </td>
                   </tr>
@@ -324,7 +324,7 @@ export default function Composicoes() {
 
                 {grupoRows.length === 0 && avulsaRows.filter(matchesSearch).length === 0 && (
                   <tr>
-                    <td colSpan={10} className="text-center py-8 text-muted-foreground">Nenhuma composição encontrada</td>
+                    <td colSpan={11} className="text-center py-8 text-muted-foreground">Nenhuma composição encontrada</td>
                   </tr>
                 )}
               </tbody>
