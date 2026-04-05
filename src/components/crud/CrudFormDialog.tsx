@@ -37,6 +37,7 @@ interface CrudFormDialogProps {
   initialValues?: Record<string, unknown>;
   onSubmit: (values: Record<string, unknown>) => void;
   loading?: boolean;
+  onFieldChange?: (fieldName: string, value: unknown, allValues: Record<string, unknown>) => Record<string, unknown> | undefined;
 }
 
 function buildDefaults(fields: FieldConfig[], initialValues?: Record<string, unknown>) {
@@ -55,6 +56,7 @@ export function CrudFormDialog({
   initialValues,
   onSubmit,
   loading,
+  onFieldChange,
 }: CrudFormDialogProps) {
   const [values, setValues] = useState<Record<string, unknown>>(() => buildDefaults(fields, initialValues));
 
@@ -70,7 +72,14 @@ export function CrudFormDialog({
   };
 
   const setValue = (name: string, value: unknown) => {
-    setValues((prev) => ({ ...prev, [name]: value }));
+    setValues((prev) => {
+      const next = { ...prev, [name]: value };
+      if (onFieldChange) {
+        const updates = onFieldChange(name, value, next);
+        if (updates) return { ...next, ...updates };
+      }
+      return next;
+    });
   };
 
   return (
