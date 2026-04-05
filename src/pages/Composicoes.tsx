@@ -96,6 +96,7 @@ export default function Composicoes() {
     return {
       type: "composicao" as const,
       id: String(c.id),
+      ordem_id: servico ? String((servico as any).ordem_id || "") : String((c as any).ordem_id || ""),
       codigo: servico ? String(servico.codigo) : String(c.codigo),
       nome: servico ? String(servico.nome) : String(c.nome),
       mercado_id: servico?.mercado_id,
@@ -114,6 +115,7 @@ export default function Composicoes() {
   ).map((s) => ({
     type: "servico" as const,
     id: String(s.id),
+    ordem_id: String((s as any).ordem_id || ""),
     codigo: String(s.codigo),
     nome: String(s.nome),
     mercado_id: s.mercado_id,
