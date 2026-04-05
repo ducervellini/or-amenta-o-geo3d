@@ -71,7 +71,7 @@ function ItensTable({ itens, tipoIcons, tipoLabels, fmt, resumo, onEdit, onDelet
   const cols = [
     { key: "tipo_insumo", label: "Tipo" },
     { key: "descricao", label: "Descrição" },
-    { key: "quantidade", label: "Qtd" },
+    { key: "_produtividade", label: "Qtd" },
     { key: "unidade", label: "Unidade" },
     { key: "_periodo", label: "Duração" },
     { key: "coeficiente", label: "Coef. (h)" },
