@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Plus, Trash2, FolderOpen, ChevronRight, ChevronDown, X, Pencil, Check, Copy } from "lucide-react";
-import { useColumnResize } from "@/hooks/useColumnResize";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -301,8 +301,6 @@ function GrupoServicosTable({
   );
 
   const { sorted, sortKey, sortDirection, handleSort } = useTableSort(tableData, "ordem_id");
-  const colKeys = ["ordem_id", "codigo", "nome", "mercado_id", "area_empresa_id", "modulo_id", "unidade_medicao"];
-  const { getHeaderProps } = useColumnResize(colKeys);
 
   const getMercadoNome = (id: string) => {
     const m = (mercados || []).find((m) => m.id === id);
@@ -333,12 +331,9 @@ function GrupoServicosTable({
                 { label: "Área", key: "area_empresa_id" },
                 { label: "Departamento", key: "modulo_id" },
                 { label: "Unidade", key: "unidade_medicao" },
-              ].map((col) => {
-                const hp = getHeaderProps(col.key);
-                return (
-                  <SortableHeader key={col.key} label={col.label} sortKey={col.key} currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} style={hp.style} onResizeStart={hp.onResizeStart} />
-                );
-              })}
+              ].map((col) => (
+                  <SortableHeader key={col.key} label={col.label} sortKey={col.key} currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+              ))}
               <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
