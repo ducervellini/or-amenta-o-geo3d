@@ -77,17 +77,32 @@ export default function OrcamentoDetalhe() {
 
   const grupoId = oportunidade?.grupo_servicos_id || null;
 
-  // Load ALL composições
-  const { data: composicoes } = useQuery({
-    queryKey: ["orcamento-composicoes"],
+  const { data: grupoServicoIds } = useQuery({
+    queryKey: ["orcamento-grupo-servicos", grupoId],
     queryFn: async () => {
+      if (!grupoId) return [];
+      const { data, error } = await (supabase.from as any)("grupos_servicos_servicos")
+        .select("servico_id")
+        .eq("grupo_id", grupoId);
+      if (error) throw error;
+      return (data as any[]).map((item: any) => item.servico_id) as string[];
+    },
+    enabled: !!grupoId,
+  });
+
+  const { data: composicoes } = useQuery({
+    queryKey: ["orcamento-composicoes", grupoServicoIds],
+    queryFn: async () => {
+      if (!grupoServicoIds?.length) return [];
       const { data, error } = await (supabase.from as any)("composicoes")
         .select("id, codigo, nome, unidade, custo_unitario_total, servico_id, ordem_id")
         .eq("ativo", true)
+        .in("servico_id", grupoServicoIds)
         .order("ordem_id");
       if (error) throw error;
       return data as any[];
     },
+    enabled: grupoServicoIds !== undefined,
   });
 
   const { data: composicaoItens } = useQuery({
@@ -167,25 +182,30 @@ export default function OrcamentoDetalhe() {
     enabled: !!id,
   });
 
-  // Load existing data
   useEffect(() => {
     if (existingOrcamento) {
       setOrcamentoId(existingOrcamento.id);
-      const itens = (existingOrcamento.orcamento_itens_servico || []).map((i: any) => ({
-        composicao_id: i.composicao_id,
-        quantidade: Number(i.quantidade),
-      }));
-      if (itens.length > 0) setServicos(itens);
       if (existingOrcamento.bdi_id) setSelectedBdiId(existingOrcamento.bdi_id);
     }
   }, [existingOrcamento]);
 
-  // Auto-populate ALL composições with blank quantities
   useEffect(() => {
-    if (composicoes && composicoes.length > 0 && servicos.length === 0 && !existingOrcamento) {
-      setServicos(composicoes.map((c: any) => ({ composicao_id: c.id, quantidade: 0 })));
-    }
-  }, [composicoes]);
+    if (composicoes === undefined) return;
+
+    const savedQuantities = new Map(
+      (existingOrcamento?.orcamento_itens_servico || []).map((item: any) => [
+        item.composicao_id,
+        Number(item.quantidade),
+      ])
+    );
+
+    setServicos(
+      composicoes.map((comp: any) => ({
+        composicao_id: comp.id,
+        quantidade: savedQuantities.get(comp.id) ?? 0,
+      }))
+    );
+  }, [composicoes, existingOrcamento]);
 
   // Auto-select first BDI if none selected
   useEffect(() => {
