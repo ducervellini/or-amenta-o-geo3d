@@ -202,7 +202,7 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
       insumo_id: insumoId || crypto.randomUUID(),
       descricao,
       quantidade,
-      coeficiente: tipo === "mao_de_obra" ? coeficienteCalculado : 1,
+      coeficiente: tipo !== "material" ? coeficienteCalculado : 1,
       unidade,
       observacoes,
       custo_unitario: resultado.custo_unitario,
