@@ -10,40 +10,26 @@ export default function Servicos() {
 
   const generateNextCode = useCallback(
     (mercadoId: string, areaId: string, moduloId: string) => {
-      if (!servicos) return "";
-      const matching = servicos
-        .filter(
-          (s) =>
-            s.mercado_id === mercadoId &&
-            s.area_empresa_id === areaId &&
-            s.modulo_id === moduloId
-        )
+      const mercado = mercados?.find((m) => m.id === mercadoId);
+      const area = areasEmpresa?.find((a) => a.id === areaId);
+      const modulo = modulos?.find((d) => d.id === moduloId);
+
+      const mCode = mercado ? String(mercado.nome).substring(0, 3).toUpperCase() : "XXX";
+      const aCode = area ? String(area.nome).substring(0, 4).toUpperCase() : "XXXX";
+      const dCode = modulo ? String(modulo.nome).substring(0, 3).toUpperCase() : "XXX";
+      const prefix = `SRV-${mCode}-${aCode}-${dCode}-`;
+
+      const matching = (servicos || [])
         .map((s) => String(s.codigo))
-        .sort();
+        .filter((c) => c.startsWith(prefix))
+        .map((c) => parseInt(c.substring(prefix.length), 10))
+        .filter((n) => !isNaN(n))
+        .sort((a, b) => a - b);
 
-      if (matching.length === 0) {
-        // Build prefix from abbreviations
-        const mercado = mercados?.find((m) => m.id === mercadoId);
-        const area = areasEmpresa?.find((a) => a.id === areaId);
-        const prefix = [
-          mercado ? String(mercado.nome).substring(0, 3).toUpperCase() : "SRV",
-          area ? String(area.nome).substring(0, 3).toUpperCase() : "",
-        ]
-          .filter(Boolean)
-          .join("-");
-        return `${prefix}-001`;
-      }
-
-      const lastCode = matching[matching.length - 1];
-      const numMatch = lastCode.match(/(\d+)$/);
-      if (numMatch) {
-        const num = parseInt(numMatch[1], 10) + 1;
-        const prefix = lastCode.substring(0, lastCode.length - numMatch[1].length);
-        return `${prefix}${String(num).padStart(numMatch[1].length, "0")}`;
-      }
-      return `${lastCode}-2`;
+      const next = matching.length > 0 ? matching[matching.length - 1] + 1 : 1;
+      return `${prefix}${String(next).padStart(3, "0")}`;
     },
-    [servicos, mercados, areasEmpresa]
+    [servicos, mercados, areasEmpresa, modulos]
   );
 
   const handleFieldChange = useCallback(
