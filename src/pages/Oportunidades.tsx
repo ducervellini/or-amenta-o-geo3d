@@ -122,6 +122,12 @@ export default function Oportunidades() {
       type: "select" as const,
       options: (clientes || []).map((c: any) => ({ value: c.id, label: c.nome })),
     },
+    {
+      name: "grupo_servicos_id",
+      label: "Grupo de Serviços",
+      type: "select" as const,
+      options: (gruposServicos || []).map((g: any) => ({ value: g.id, label: g.nome })),
+    },
     { name: "cidade", label: "Cidade", type: "text" as const },
     {
       name: "estado",
