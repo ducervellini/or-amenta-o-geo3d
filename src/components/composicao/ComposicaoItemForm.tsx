@@ -285,10 +285,12 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
               <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                 <span className="text-muted-foreground">H/H (custo hora):</span>
                 <span className="font-mono font-medium">R$ {fmtBR(resultado.memoria.find(m => m.descricao.includes("Custo hora c/ regime"))?.valor || 0)}</span>
-                <span className="text-muted-foreground">Prazo total em horas:</span>
-                <span className="font-mono">{fmtBR(prazoEmHoras)} h</span>
+                <span className="text-muted-foreground">Período ({periodo}):</span>
+                <span className="font-mono">{fmtBR(periodoEmHoras)} h</span>
                 <span className="text-muted-foreground">Horas por unidade:</span>
                 <span className="font-mono">{fmtBR(coeficienteCalculado)} h/{unidade}</span>
+                <span className="text-muted-foreground font-semibold">Custo unitário (1 {unidade}):</span>
+                <span className="font-mono font-semibold text-primary">R$ {fmtBR(resultado.custo_unitario)}</span>
               </div>
             </div>
           )}
