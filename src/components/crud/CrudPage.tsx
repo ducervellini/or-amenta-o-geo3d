@@ -46,19 +46,21 @@ export interface CrudPageProps<T extends TableName> {
   onFieldChange?: (fieldName: string, value: unknown, allValues: Record<string, unknown>) => Record<string, unknown> | undefined;
 }
 
-function SortableTable({ data, columns, onEdit, onDelete }: {
+function SortableTable({ data, columns, onEdit, onDelete, visibleCols }: {
   data: Record<string, unknown>[];
   columns: ColumnConfig[];
   onEdit: (item: Record<string, unknown>) => void;
   onDelete: (id: string) => void;
+  visibleCols: Set<string>;
 }) {
+  const visible = columns.filter((c) => visibleCols.has(c.key));
   const { sorted, sortKey, sortDirection, handleSort } = useTableSort(data);
   return (
     <div className="overflow-x-auto">
       <table className="data-table">
         <thead>
           <tr>
-            {columns.map((col) => (
+            {visible.map((col) => (
               <SortableHeader key={col.key} label={col.label} sortKey={col.key} currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
             ))}
             <th className="text-center">Ações</th>
@@ -67,7 +69,7 @@ function SortableTable({ data, columns, onEdit, onDelete }: {
         <tbody>
           {sorted.map((row: any) => (
             <tr key={row.id}>
-              {columns.map((col) => (
+              {visible.map((col) => (
                 <td key={col.key}>
                   {col.render ? col.render(row[col.key], row) : String(row[col.key] ?? "-")}
                 </td>
