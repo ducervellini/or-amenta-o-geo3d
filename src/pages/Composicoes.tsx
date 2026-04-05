@@ -30,38 +30,39 @@ type RowData = {
   grupo_nome?: string;
 };
 
-function ServiceRow({ row, navigate, setDeletingId, getMercadoNome, getAreaNome, getModuloNome }: {
+function ServiceRow({ row, navigate, setDeletingId, getMercadoNome, getAreaNome, getModuloNome, visibleCols }: {
   row: RowData;
   navigate: (path: string) => void;
   setDeletingId: (id: string) => void;
   getMercadoNome: (id: string | null | undefined) => string;
   getAreaNome: (id: string | null | undefined) => string;
   getModuloNome: (id: string | null | undefined) => string;
+  visibleCols: Set<string>;
 }) {
   const handleClick = () => {
     if (row.type === "composicao") navigate(`/composicoes/${row.id}`);
     else navigate(`/composicoes/novo?servico_id=${row.id}`);
   };
 
+  const cellMap: Record<string, React.ReactNode> = {
+    ordem_id: <td key="ordem_id" className="font-mono text-xs font-semibold">{row.ordem_id || "-"}</td>,
+    grupo_nome: <td key="grupo_nome" className="text-sm text-muted-foreground">{row.grupo_nome || "-"}</td>,
+    codigo: <td key="codigo" className="font-medium text-accent">{row.codigo}</td>,
+    nome: <td key="nome" className="font-medium">{row.nome}</td>,
+    mercado_id: <td key="mercado_id" className="text-sm">{getMercadoNome(row.mercado_id as string | null)}</td>,
+    area_empresa_id: <td key="area_empresa_id"><span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">{getAreaNome(row.area_empresa_id as string | null)}</span></td>,
+    modulo_id: <td key="modulo_id" className="text-sm">{getModuloNome(row.modulo_id as string | null)}</td>,
+    descricao: <td key="descricao" className="text-sm text-muted-foreground max-w-[200px] truncate">{row.descricao ? String(row.descricao) : "-"}</td>,
+    unidade: <td key="unidade" className="text-sm">{row.unidade}</td>,
+    custo_unitario_total: <td key="custo_unitario_total" className="font-semibold font-mono">{row.type === "composicao" ? `R$ ${fmt(row.custo_unitario_total)}` : <span className="text-xs text-muted-foreground italic">Sem composição</span>}</td>,
+  };
+
   return (
     <tr className="cursor-pointer hover:bg-muted/50" onClick={handleClick}>
       <td></td>
-      <td className="font-mono text-xs font-semibold">{row.ordem_id || "-"}</td>
-      <td className="text-sm text-muted-foreground">{row.grupo_nome || "-"}</td>
-      <td className="font-medium text-accent">{row.codigo}</td>
-      <td className="font-medium">{row.nome}</td>
-      <td className="text-sm">{getMercadoNome(row.mercado_id as string | null)}</td>
-      <td>
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
-          {getAreaNome(row.area_empresa_id as string | null)}
-        </span>
-      </td>
-      <td className="text-sm">{getModuloNome(row.modulo_id as string | null)}</td>
-      <td className="text-sm text-muted-foreground max-w-[200px] truncate">{row.descricao ? String(row.descricao) : "-"}</td>
-      <td className="text-sm">{row.unidade}</td>
-      <td className="font-semibold font-mono">
-        {row.type === "composicao" ? `R$ ${fmt(row.custo_unitario_total)}` : <span className="text-xs text-muted-foreground italic">Sem composição</span>}
-      </td>
+      {["ordem_id", "grupo_nome", "codigo", "nome", "mercado_id", "area_empresa_id", "modulo_id", "descricao", "unidade", "custo_unitario_total"]
+        .filter((k) => visibleCols.has(k))
+        .map((k) => cellMap[k])}
       <td className="text-center">
         <div className="flex items-center justify-center gap-1">
           {row.type === "composicao" ? (
