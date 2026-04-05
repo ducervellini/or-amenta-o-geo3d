@@ -12,6 +12,7 @@ const OPORT_COLS = [
   { key: "codigo", label: "Código" },
   { key: "descricao", label: "Descrição" },
   { key: "cliente", label: "Cliente" },
+  { key: "grupo_servicos", label: "Grupo de Serviços" },
   { key: "cidade", label: "Cidade" },
   { key: "estado", label: "Estado" },
 ];
@@ -41,7 +42,7 @@ export default function Oportunidades() {
     queryKey: ["oportunidades"],
     queryFn: async () => {
       const { data, error } = await (supabase.from as any)("oportunidades")
-        .select("*, clientes(nome)")
+        .select("*, clientes(nome), grupos_servicos(nome)")
         .eq("ativo", true)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -53,6 +54,18 @@ export default function Oportunidades() {
     queryKey: ["clientes-select"],
     queryFn: async () => {
       const { data, error } = await (supabase.from as any)("clientes")
+        .select("id, nome")
+        .eq("ativo", true)
+        .order("nome");
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
+  const { data: gruposServicos } = useQuery({
+    queryKey: ["grupos-servicos-select"],
+    queryFn: async () => {
+      const { data, error } = await (supabase.from as any)("grupos_servicos")
         .select("id, nome")
         .eq("ativo", true)
         .order("nome");
@@ -108,6 +121,12 @@ export default function Oportunidades() {
       label: "Cliente",
       type: "select" as const,
       options: (clientes || []).map((c: any) => ({ value: c.id, label: c.nome })),
+    },
+    {
+      name: "grupo_servicos_id",
+      label: "Grupo de Serviços",
+      type: "select" as const,
+      options: (gruposServicos || []).map((g: any) => ({ value: g.id, label: g.nome })),
     },
     { name: "cidade", label: "Cidade", type: "text" as const },
     {
@@ -182,6 +201,7 @@ export default function Oportunidades() {
                     codigo: <td key="codigo" className="font-medium text-accent">{o.codigo}</td>,
                     descricao: <td key="descricao">{o.descricao}</td>,
                     cliente: <td key="cliente">{o.clientes?.nome || "—"}</td>,
+                    grupo_servicos: <td key="grupo_servicos">{o.grupos_servicos?.nome || "—"}</td>,
                     cidade: <td key="cidade">{o.cidade || "—"}</td>,
                     estado: <td key="estado">{o.estado || "—"}</td>,
                   };

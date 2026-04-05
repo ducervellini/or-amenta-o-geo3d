@@ -66,7 +66,7 @@ export default function OrcamentoDetalhe() {
     queryKey: ["orcamento-oportunidade", id],
     queryFn: async () => {
       const { data, error } = await (supabase.from as any)("oportunidades")
-        .select("*, clientes(nome, codigo)")
+        .select("*, clientes(nome, codigo), grupos_servicos(id, nome)")
         .eq("id", id)
         .single();
       if (error) throw error;
@@ -75,16 +75,43 @@ export default function OrcamentoDetalhe() {
     enabled: !!id,
   });
 
-  const { data: composicoes } = useQuery({
-    queryKey: ["orcamento-composicoes"],
+  const grupoId = oportunidade?.grupo_servicos_id || null;
+
+  // Load servicos linked to the grupo
+  const { data: grupoServicosVinculados } = useQuery({
+    queryKey: ["orcamento-grupo-servicos", grupoId],
     queryFn: async () => {
+      const { data, error } = await (supabase.from as any)("grupos_servicos_servicos")
+        .select("servico_id")
+        .eq("grupo_id", grupoId);
+      if (error) throw error;
+      return (data as any[]).map((r: any) => r.servico_id) as string[];
+    },
+    enabled: !!grupoId,
+  });
+
+  // Load composições linked to the grupo's servicos
+  const { data: composicoes } = useQuery({
+    queryKey: ["orcamento-composicoes", grupoServicosVinculados],
+    queryFn: async () => {
+      if (!grupoServicosVinculados || grupoServicosVinculados.length === 0) {
+        // Fallback: load all
+        const { data, error } = await (supabase.from as any)("composicoes")
+          .select("id, codigo, nome, unidade, custo_unitario_total, servico_id, ordem_id")
+          .eq("ativo", true)
+          .order("ordem_id");
+        if (error) throw error;
+        return data as any[];
+      }
       const { data, error } = await (supabase.from as any)("composicoes")
-        .select("id, codigo, nome, unidade, custo_unitario_total")
+        .select("id, codigo, nome, unidade, custo_unitario_total, servico_id, ordem_id")
         .eq("ativo", true)
-        .order("codigo");
+        .in("servico_id", grupoServicosVinculados)
+        .order("ordem_id");
       if (error) throw error;
       return data as any[];
     },
+    enabled: grupoServicosVinculados !== undefined || !grupoId,
   });
 
   const { data: composicaoItens } = useQuery({
@@ -176,6 +203,13 @@ export default function OrcamentoDetalhe() {
       if (existingOrcamento.bdi_id) setSelectedBdiId(existingOrcamento.bdi_id);
     }
   }, [existingOrcamento]);
+
+  // Auto-populate serviços from grupo when no existing data
+  useEffect(() => {
+    if (composicoes && composicoes.length > 0 && servicos.length === 0 && !existingOrcamento && grupoId) {
+      setServicos(composicoes.map((c: any) => ({ composicao_id: c.id, quantidade: 0 })));
+    }
+  }, [composicoes, grupoId]);
 
   // Auto-select first BDI if none selected
   useEffect(() => {
@@ -479,7 +513,7 @@ export default function OrcamentoDetalhe() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
               <div>
                 <span className="text-muted-foreground">Código</span>
                 <p className="font-semibold">{oportunidade.codigo}</p>
@@ -493,6 +527,10 @@ export default function OrcamentoDetalhe() {
                 <p className="font-semibold">
                   {oportunidade.cidade || "—"}, {oportunidade.estado || "—"}
                 </p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Grupo de Serviços</span>
+                <p className="font-semibold">{oportunidade.grupos_servicos?.nome || "—"}</p>
               </div>
               <div>
                 <span className="text-muted-foreground">Data</span>
@@ -537,79 +575,107 @@ export default function OrcamentoDetalhe() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Package className="w-4 h-4 text-primary" />
-              Serviços (Composições)
+              Serviços — {oportunidade.grupos_servicos?.nome || "Todos"}
             </CardTitle>
-            <Button size="sm" className="gap-1" onClick={addServico}>
-              <Plus className="w-4 h-4" /> Adicionar
-            </Button>
+            {!grupoId && (
+              <Button size="sm" className="gap-1" onClick={addServico}>
+                <Plus className="w-4 h-4" /> Adicionar
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
-            {servicos.length === 0 ? (
+            {!grupoId && servicos.length === 0 ? (
               <div className="text-center py-10 space-y-3">
                 <Package className="w-10 h-10 mx-auto text-muted-foreground/40" />
-                <p className="text-muted-foreground text-sm">Nenhuma composição adicionada.</p>
+                <p className="text-muted-foreground text-sm">Nenhum grupo de serviços selecionado na oportunidade.</p>
+                <p className="text-muted-foreground text-xs">Edite a oportunidade para vincular um grupo, ou adicione composições manualmente.</p>
                 <Button variant="outline" className="gap-2" onClick={addServico}>
-                  <Plus className="w-4 h-4" /> Adicionar primeira composição
+                  <Plus className="w-4 h-4" /> Adicionar composição
                 </Button>
+              </div>
+            ) : servicos.length === 0 ? (
+              <div className="text-center py-10 space-y-3">
+                <Package className="w-10 h-10 mx-auto text-muted-foreground/40" />
+                <p className="text-muted-foreground text-sm">Nenhuma composição encontrada para este grupo.</p>
               </div>
             ) : (
               <div className="space-y-3">
-                <div className="grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground px-1">
-                  <div className="col-span-5">Composição</div>
-                  <div className="col-span-2">Unidade</div>
-                  <div className="col-span-1">Qtd</div>
-                  <div className="col-span-2">Custo Unit.</div>
-                  <div className="col-span-1">Subtotal</div>
-                  <div className="col-span-1"></div>
+                {grupoId && (
+                  <div className="bg-muted/40 rounded-lg p-3 text-sm text-muted-foreground">
+                    Informe as quantidades de acordo com a unidade de cada serviço.
+                  </div>
+                )}
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b text-xs font-medium text-muted-foreground">
+                        <th className="text-left py-2 px-2">Composição</th>
+                        <th className="text-left py-2 px-2">Unidade</th>
+                        <th className="text-right py-2 px-2 w-28">Quantidade</th>
+                        <th className="text-right py-2 px-2">Custo Unit.</th>
+                        <th className="text-right py-2 px-2">Subtotal</th>
+                        {!grupoId && <th className="w-10"></th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {servicos.map((s, idx) => {
+                        const comp = (composicoes || []).find((c: any) => c.id === s.composicao_id);
+                        const subtotal = (comp?.custo_unitario_total || 0) * s.quantidade;
+                        return (
+                          <tr key={idx} className="border-b hover:bg-muted/30">
+                            <td className="py-2 px-2">
+                              {grupoId ? (
+                                <span className="font-medium">{comp?.codigo} — {comp?.nome || "—"}</span>
+                              ) : (
+                                <Select
+                                  value={s.composicao_id}
+                                  onValueChange={(v) => updateServico(idx, "composicao_id", v)}
+                                >
+                                  <SelectTrigger className="h-9 text-sm">
+                                    <SelectValue placeholder="Selecione..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {(composicoes || []).map((c: any) => (
+                                      <SelectItem key={c.id} value={c.id}>
+                                        {c.codigo} — {c.nome}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            </td>
+                            <td className="py-2 px-2 text-muted-foreground">
+                              {comp?.unidade || "—"}
+                            </td>
+                            <td className="py-2 px-2">
+                              <Input
+                                type="number"
+                                min={0}
+                                value={s.quantidade}
+                                onChange={(e) => updateServico(idx, "quantidade", parseFloat(e.target.value) || 0)}
+                                className="h-9 text-sm text-right w-28 ml-auto"
+                              />
+                            </td>
+                            <td className="py-2 px-2 text-right font-medium">
+                              {fmt(comp?.custo_unitario_total || 0)}
+                            </td>
+                            <td className="py-2 px-2 text-right font-semibold">
+                              {fmt(subtotal)}
+                            </td>
+                            {!grupoId && (
+                              <td className="py-2 px-2 text-center">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeServico(idx)}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
-                {servicos.map((s, idx) => {
-                  const comp = (composicoes || []).find((c: any) => c.id === s.composicao_id);
-                  const subtotal = (comp?.custo_unitario_total || 0) * s.quantidade;
-                  return (
-                    <div key={idx} className="grid grid-cols-12 gap-2 items-center">
-                      <div className="col-span-5">
-                        <Select
-                          value={s.composicao_id}
-                          onValueChange={(v) => updateServico(idx, "composicao_id", v)}
-                        >
-                          <SelectTrigger className="h-9 text-sm">
-                            <SelectValue placeholder="Selecione..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {(composicoes || []).map((c: any) => (
-                              <SelectItem key={c.id} value={c.id}>
-                                {c.codigo} — {c.nome}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="col-span-2 text-sm text-muted-foreground">
-                        {comp?.unidade || "—"}
-                      </div>
-                      <div className="col-span-1">
-                        <Input
-                          type="number"
-                          min={0}
-                          value={s.quantidade}
-                          onChange={(e) => updateServico(idx, "quantidade", parseFloat(e.target.value) || 0)}
-                          className="h-9 text-sm"
-                        />
-                      </div>
-                      <div className="col-span-2 text-sm font-medium">
-                        {fmt(comp?.custo_unitario_total || 0)}
-                      </div>
-                      <div className="col-span-1 text-sm font-semibold">
-                        {fmt(subtotal)}
-                      </div>
-                      <div className="col-span-1 text-center">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeServico(idx)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
 
                 <Separator className="my-2" />
 
