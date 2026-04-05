@@ -1637,6 +1637,7 @@ export type Database = {
           mercado_id: string
           modulo_id: string | null
           nome: string
+          ordem_id: string
           premissas_padrao: Json | null
           produtividade_padrao: number | null
           tipo_geometria: string
@@ -1655,6 +1656,7 @@ export type Database = {
           mercado_id: string
           modulo_id?: string | null
           nome: string
+          ordem_id?: string
           premissas_padrao?: Json | null
           produtividade_padrao?: number | null
           tipo_geometria?: string
@@ -1673,6 +1675,7 @@ export type Database = {
           mercado_id?: string
           modulo_id?: string | null
           nome?: string
+          ordem_id?: string
           premissas_padrao?: Json | null
           produtividade_padrao?: number | null
           tipo_geometria?: string
