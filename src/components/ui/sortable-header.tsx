@@ -10,17 +10,14 @@ interface SortableHeaderProps {
   currentDirection: SortDirection;
   onSort: (key: string) => void;
   className?: string;
-  style?: React.CSSProperties;
-  onResizeStart?: (e: React.MouseEvent) => void;
 }
 
-export function SortableHeader({ label, sortKey, currentSort, currentDirection, onSort, className, style, onResizeStart }: SortableHeaderProps) {
+export function SortableHeader({ label, sortKey, currentSort, currentDirection, onSort, className }: SortableHeaderProps) {
   const isActive = currentSort === sortKey;
   return (
     <th
       className={`cursor-pointer select-none hover:bg-muted/50 transition-colors relative group ${className || ""}`}
       onClick={() => onSort(sortKey)}
-      style={style}
     >
       <div className="flex items-center gap-1.5">
         <span>{label}</span>
