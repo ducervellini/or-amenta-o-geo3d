@@ -108,10 +108,10 @@ export function calcularMaoDeObra(
   memoria.push({ descricao: "Custo hora c/ regime", formula: `${fmt(custoHora)} × ${fmt(fatorRegime)} = ${fmt(custoHoraFinal)}`, valor: custoHoraFinal });
 
   const custoUnitario = custoHoraFinal * coeficiente;
-  memoria.push({ descricao: "Custo unitário (hora × coeficiente)", formula: `${fmt(custoHoraFinal)} × ${fmt(coeficiente)} = ${fmt(custoUnitario)}`, valor: custoUnitario });
+  memoria.push({ descricao: "Custo unitário (1 unidade)", formula: `H/H ${fmt(custoHoraFinal)} × ${fmt(coeficiente)} h/un = ${fmt(custoUnitario)}`, valor: custoUnitario });
 
   const custoTotal = custoUnitario * quantidade;
-  memoria.push({ descricao: "Custo total", formula: `${fmt(custoUnitario)} × ${fmt(quantidade)} = ${fmt(custoTotal)}`, valor: custoTotal });
+  memoria.push({ descricao: "Custo total", formula: `${fmt(custoUnitario)} × ${fmt(quantidade)} un = ${fmt(custoTotal)}`, valor: custoTotal });
 
   return { custo_unitario: custoUnitario, custo_total: custoTotal, memoria };
 }
