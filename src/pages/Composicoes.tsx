@@ -14,6 +14,7 @@ const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2 
 type RowData = {
   type: "composicao" | "servico";
   id: string;
+  ordem_id: string;
   codigo: string;
   nome: string;
   mercado_id: unknown;
