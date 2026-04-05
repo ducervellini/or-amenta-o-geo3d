@@ -353,6 +353,7 @@ export type Database = {
           descricao: string | null
           id: string
           nome: string
+          ordem_id: string
           servico_id: string | null
           status: string
           travado: boolean
@@ -370,6 +371,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome: string
+          ordem_id?: string
           servico_id?: string | null
           status?: string
           travado?: boolean
@@ -387,6 +389,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome?: string
+          ordem_id?: string
           servico_id?: string | null
           status?: string
           travado?: boolean

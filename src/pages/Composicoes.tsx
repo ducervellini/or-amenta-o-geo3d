@@ -14,6 +14,7 @@ const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2 
 type RowData = {
   type: "composicao" | "servico";
   id: string;
+  ordem_id: string;
   codigo: string;
   nome: string;
   mercado_id: unknown;
@@ -42,6 +43,7 @@ function ServiceRow({ row, navigate, setDeletingId, getMercadoNome, getAreaNome,
   return (
     <tr className="cursor-pointer hover:bg-muted/50" onClick={handleClick}>
       <td></td>
+      <td className="font-mono text-xs font-semibold">{row.ordem_id || "-"}</td>
       <td className="font-medium text-accent">{row.codigo}</td>
       <td className="font-medium">{row.nome}</td>
       <td className="text-sm">{getMercadoNome(row.mercado_id as string | null)}</td>
@@ -95,6 +97,7 @@ export default function Composicoes() {
     return {
       type: "composicao" as const,
       id: String(c.id),
+      ordem_id: servico ? String((servico as any).ordem_id || "") : String((c as any).ordem_id || ""),
       codigo: servico ? String(servico.codigo) : String(c.codigo),
       nome: servico ? String(servico.nome) : String(c.nome),
       mercado_id: servico?.mercado_id,
@@ -113,6 +116,7 @@ export default function Composicoes() {
   ).map((s) => ({
     type: "servico" as const,
     id: String(s.id),
+    ordem_id: String((s as any).ordem_id || ""),
     codigo: String(s.codigo),
     nome: String(s.nome),
     mercado_id: s.mercado_id,
@@ -190,6 +194,7 @@ export default function Composicoes() {
 
   const cols = [
     { key: "expand", label: "" },
+    { key: "ordem_id", label: "ID" },
     { key: "codigo", label: "Código" },
     { key: "nome", label: "Nome" },
     { key: "mercado_id", label: "Mercado" },
@@ -273,7 +278,7 @@ export default function Composicoes() {
                             <span className="text-accent font-semibold">{String(grupo.nome)}</span>
                           </div>
                         </td>
-                        <td colSpan={5} className="text-sm text-muted-foreground">
+                        <td colSpan={6} className="text-sm text-muted-foreground">
                           {rows.length} serviço{rows.length !== 1 ? "s" : ""}
                         </td>
                         <td className="text-sm">&nbsp;</td>
@@ -300,7 +305,7 @@ export default function Composicoes() {
                 {/* Ungrouped / avulsa rows */}
                 {avulsaRows.filter(matchesSearch).length > 0 && grupoRows.length > 0 && (
                   <tr className="bg-muted/20">
-                    <td colSpan={10} className="text-xs font-semibold text-muted-foreground py-2">
+                    <td colSpan={11} className="text-xs font-semibold text-muted-foreground py-2">
                       Sem grupo
                     </td>
                   </tr>
@@ -319,7 +324,7 @@ export default function Composicoes() {
 
                 {grupoRows.length === 0 && avulsaRows.filter(matchesSearch).length === 0 && (
                   <tr>
-                    <td colSpan={10} className="text-center py-8 text-muted-foreground">Nenhuma composição encontrada</td>
+                    <td colSpan={11} className="text-center py-8 text-muted-foreground">Nenhuma composição encontrada</td>
                   </tr>
                 )}
               </tbody>
