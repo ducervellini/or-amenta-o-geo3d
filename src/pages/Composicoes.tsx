@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Eye, Edit, Trash2, Loader2, ChevronRight, ChevronDown, FolderOpen } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash2, Loader2, ChevronRight, ChevronDown, FolderOpen, Columns3 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { useSupabaseQuery, useSupabaseDelete } from "@/hooks/useSupabaseCrud";
 import { SortableHeader, useTableSort } from "@/components/ui/sortable-header";
