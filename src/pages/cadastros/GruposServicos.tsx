@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plus, Trash2, FolderOpen, ChevronRight, ChevronDown, X, Pencil, Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { SortableHeader, useTableSort } from "@/components/ui/sortable-header";
 import { useSupabaseQuery, useSupabaseInsert, useSupabaseDelete } from "@/hooks/useSupabaseCrud";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -25,6 +27,9 @@ export default function GruposServicos() {
   const { data: grupos } = useSupabaseQuery("grupos_servicos", { orderBy: "nome", ascending: true });
   const { data: vinculos } = useSupabaseQuery("grupos_servicos_servicos");
   const { data: servicos } = useSupabaseQuery("servicos", { orderBy: "ordem_id", ascending: true });
+  const { data: mercados } = useSupabaseQuery("mercados");
+  const { data: areasEmpresa } = useSupabaseQuery("areas_empresa");
+  const { data: modulos } = useSupabaseQuery("modulos");
   const insertGrupo = useSupabaseInsert("grupos_servicos");
   const deleteGrupo = useSupabaseDelete("grupos_servicos");
 
@@ -218,51 +223,18 @@ export default function GruposServicos() {
               </div>
 
               {isExpanded && (
-                <div className="px-4 pb-4 border-t space-y-2 pt-3">
-                  {servicosGrupo.length === 0 && (
-                    <p className="text-xs text-muted-foreground">Nenhum serviço neste grupo</p>
-                  )}
-                  {servicosGrupo.map(({ vinculoId, servico }) => (
-                    <div key={vinculoId} className="flex items-center gap-2 pl-8 text-sm text-muted-foreground">
-                      <span className="font-mono text-xs text-accent shrink-0">{servico!.ordem_id ? String(servico!.ordem_id) : "-"}</span>
-                      <span className="truncate flex-1">{String(servico!.codigo)} — {String(servico!.nome)}</span>
-                      <Button
-                        variant="ghost" size="icon" className="h-7 w-7 shrink-0"
-                        onClick={() => removeVinculo.mutate(vinculoId)}
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  ))}
-
-                  {addingTo === String(g.id) ? (
-                    <select
-                      className="w-full max-w-md text-sm border rounded p-2 bg-background mt-2"
-                      autoFocus
-                      value=""
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          addVinculo.mutate({ grupo_id: String(g.id), servico_id: e.target.value });
-                        }
-                      }}
-                      onBlur={() => setAddingTo(null)}
-                    >
-                      <option value="">Selecionar serviço...</option>
-                      {getServicosDisponiveis(String(g.id)).map((s) => (
-                        <option key={String(s.id)} value={String(s.id)}>
-                          {s.ordem_id ? String(s.ordem_id) + " - " : ""}{String(s.codigo)} — {String(s.nome)}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <Button
-                      variant="outline" size="sm" className="mt-2 ml-8"
-                      onClick={() => setAddingTo(String(g.id))}
-                    >
-                      <Plus className="w-3.5 h-3.5 mr-1" /> Adicionar serviço
-                    </Button>
-                  )}
-                </div>
+                <GrupoServicosTable
+                  servicosGrupo={servicosGrupo}
+                  servicosDisponiveis={getServicosDisponiveis(String(g.id))}
+                  grupoId={String(g.id)}
+                  addingTo={addingTo}
+                  setAddingTo={setAddingTo}
+                  onAddVinculo={(servicoId) => addVinculo.mutate({ grupo_id: String(g.id), servico_id: servicoId })}
+                  onRemoveVinculo={(vinculoId) => removeVinculo.mutate(vinculoId)}
+                  mercados={mercados}
+                  areasEmpresa={areasEmpresa}
+                  modulos={modulos}
+                />
               )}
             </Card>
           );
@@ -291,6 +263,122 @@ export default function GruposServicos() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+interface GrupoServicosTableProps {
+  servicosGrupo: { vinculoId: string; servico: Record<string, unknown> | undefined }[];
+  servicosDisponiveis: Record<string, unknown>[];
+  grupoId: string;
+  addingTo: string | null;
+  setAddingTo: (id: string | null) => void;
+  onAddVinculo: (servicoId: string) => void;
+  onRemoveVinculo: (vinculoId: string) => void;
+  mercados?: Record<string, unknown>[] | null;
+  areasEmpresa?: Record<string, unknown>[] | null;
+  modulos?: Record<string, unknown>[] | null;
+}
+
+function GrupoServicosTable({
+  servicosGrupo, servicosDisponiveis, grupoId,
+  addingTo, setAddingTo, onAddVinculo, onRemoveVinculo,
+  mercados, areasEmpresa, modulos,
+}: GrupoServicosTableProps) {
+  const tableData = useMemo(() =>
+    servicosGrupo.filter((x) => x.servico).map(({ vinculoId, servico }) => ({
+      vinculoId,
+      ordem_id: String(servico!.ordem_id || ""),
+      codigo: String(servico!.codigo || ""),
+      nome: String(servico!.nome || ""),
+      mercado_id: String(servico!.mercado_id || ""),
+      area_empresa_id: String(servico!.area_empresa_id || ""),
+      modulo_id: String(servico!.modulo_id || ""),
+      unidade_medicao: String(servico!.unidade_medicao || ""),
+    })),
+    [servicosGrupo]
+  );
+
+  const { sorted, sortKey, sortDirection, handleSort } = useTableSort(tableData, "ordem_id");
+
+  const getMercadoNome = (id: string) => {
+    const m = (mercados || []).find((m) => m.id === id);
+    return m ? String(m.nome) : "-";
+  };
+  const getAreaNome = (id: string) => {
+    const a = (areasEmpresa || []).find((a) => a.id === id);
+    return a ? String(a.nome) : "-";
+  };
+  const getModuloNome = (id: string) => {
+    const d = (modulos || []).find((d) => d.id === id);
+    return d ? String(d.nome) : "-";
+  };
+
+  return (
+    <div className="border-t">
+      {sorted.length === 0 ? (
+        <div className="px-4 py-4 text-sm text-muted-foreground">Nenhum serviço neste grupo</div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <SortableHeader label="ID" sortKey="ordem_id" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+              <SortableHeader label="Código" sortKey="codigo" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+              <SortableHeader label="Nome" sortKey="nome" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+              <SortableHeader label="Mercado" sortKey="mercado_id" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+              <SortableHeader label="Área" sortKey="area_empresa_id" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+              <SortableHeader label="Departamento" sortKey="modulo_id" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+              <SortableHeader label="Unidade" sortKey="unidade_medicao" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+              <TableHead className="w-10" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sorted.map((row) => (
+              <TableRow key={row.vinculoId}>
+                <TableCell className="font-mono text-xs font-semibold">{row.ordem_id || "-"}</TableCell>
+                <TableCell className="font-medium text-accent">{row.codigo}</TableCell>
+                <TableCell className="font-medium">{row.nome}</TableCell>
+                <TableCell className="text-sm">{getMercadoNome(row.mercado_id)}</TableCell>
+                <TableCell>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
+                    {getAreaNome(row.area_empresa_id)}
+                  </span>
+                </TableCell>
+                <TableCell className="text-sm">{getModuloNome(row.modulo_id)}</TableCell>
+                <TableCell className="text-sm">{row.unidade_medicao || "-"}</TableCell>
+                <TableCell>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onRemoveVinculo(row.vinculoId)}>
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+
+      <div className="px-4 pb-3 pt-2">
+        {addingTo === grupoId ? (
+          <select
+            className="w-full max-w-md text-sm border rounded p-2 bg-background"
+            autoFocus
+            value=""
+            onChange={(e) => { if (e.target.value) onAddVinculo(e.target.value); }}
+            onBlur={() => setAddingTo(null)}
+          >
+            <option value="">Selecionar serviço...</option>
+            {servicosDisponiveis.map((s) => (
+              <option key={String(s.id)} value={String(s.id)}>
+                {s.ordem_id ? String(s.ordem_id) + " - " : ""}{String(s.codigo)} — {String(s.nome)}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <Button variant="outline" size="sm" onClick={() => setAddingTo(grupoId)}>
+            <Plus className="w-3.5 h-3.5 mr-1" /> Adicionar serviço
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
