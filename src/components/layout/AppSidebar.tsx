@@ -50,6 +50,7 @@ const navigation: NavItem[] = [
       { label: "Departamentos", path: "/cadastros/departamentos" },
       { label: "Clientes", path: "/cadastros/clientes" },
       { label: "Serviços", path: "/cadastros/servicos" },
+      { label: "Grupos de Serviços", path: "/cadastros/grupos-servicos" },
     ],
   },
   {
