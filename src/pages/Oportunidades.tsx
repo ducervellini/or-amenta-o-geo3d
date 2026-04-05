@@ -1,10 +1,20 @@
 import { useState } from "react";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Columns3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CrudFormDialog } from "@/components/crud/CrudFormDialog";
 import { toast } from "sonner";
+
+const OPORT_COLS = [
+  { key: "codigo", label: "Código" },
+  { key: "descricao", label: "Descrição" },
+  { key: "cliente", label: "Cliente" },
+  { key: "cidade", label: "Cidade" },
+  { key: "estado", label: "Estado" },
+];
 
 const ESTADOS_BR = [
   "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA",

@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { Plus, Search, Edit, Trash2, Loader2 } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Loader2, Columns3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CrudFormDialog, FieldConfig } from "./CrudFormDialog";
 import {
   useSupabaseQuery,
