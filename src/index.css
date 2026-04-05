@@ -174,12 +174,12 @@
   body, html {
     background: white !important;
     color: black !important;
-    font-size: 11px !important;
+    font-size: 10px !important;
   }
 
   .page-container {
     padding: 0 !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
     max-width: 100% !important;
   }
 
@@ -204,5 +204,78 @@
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  /* ── Print Report Styles ── */
+  .print-report {
+    max-width: 700px;
+    margin: 0 auto;
+    font-size: 11px;
+  }
+
+  .print-section {
+    margin-bottom: 16px;
+  }
+
+  .print-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    border-bottom: 2px solid #333;
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+  }
+
+  .print-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .print-table th,
+  .print-table td {
+    padding: 4px 8px;
+    border-bottom: 1px solid #e5e5e5;
+    font-size: 11px;
+  }
+
+  .print-table thead th {
+    border-bottom: 2px solid #999;
+    font-weight: 600;
+    font-size: 10px;
+    text-transform: uppercase;
+    color: #555;
+  }
+
+  .print-table tfoot td {
+    border-top: 2px solid #333;
+    border-bottom: none;
+  }
+
+  .print-table-sm td {
+    padding: 2px 8px;
+    font-size: 10px;
+  }
+
+  .print-total-row td {
+    background: #f5f5f5 !important;
+    font-weight: 600;
+  }
+
+  .print-label {
+    color: #666;
+    width: 160px;
+    font-weight: 500;
+  }
+
+  /* DRE section in print */
+  .print-report [class*="Badge"],
+  .print-report [class*="badge"] {
+    border: 1px solid #999 !important;
+    padding: 1px 6px !important;
+    font-size: 9px !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 15mm 12mm;
   }
 }
