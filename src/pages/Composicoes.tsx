@@ -43,6 +43,7 @@ function ServiceRow({ row, navigate, setDeletingId, getMercadoNome, getAreaNome,
   return (
     <tr className="cursor-pointer hover:bg-muted/50" onClick={handleClick}>
       <td></td>
+      <td className="font-mono text-xs font-semibold">{row.ordem_id || "-"}</td>
       <td className="font-medium text-accent">{row.codigo}</td>
       <td className="font-medium">{row.nome}</td>
       <td className="text-sm">{getMercadoNome(row.mercado_id as string | null)}</td>
@@ -193,6 +194,7 @@ export default function Composicoes() {
 
   const cols = [
     { key: "expand", label: "" },
+    { key: "ordem_id", label: "ID" },
     { key: "codigo", label: "Código" },
     { key: "nome", label: "Nome" },
     { key: "mercado_id", label: "Mercado" },
