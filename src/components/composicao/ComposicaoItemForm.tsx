@@ -71,8 +71,7 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
       setDescricao((initialValues.descricao as string) || "");
       setQuantidade(Number(initialValues.quantidade) || 1);
       setUnidade((initialValues.unidade as string) || "un");
-      setPrazo(((initialValues as any).prazo as "horas" | "dias" | "mês") || "dias");
-      setPrazoPeriodos(Number((initialValues as any).prazo_periodos) || Number(initialValues.coeficiente) || 1);
+      setPeriodo(((initialValues as any).periodo || (initialValues as any).prazo || "dia") as "hora" | "dia" | "mês");
       setObservacoes((initialValues.observacoes as string) || "");
       setInsumoId((initialValues.insumo_id as string) || "");
       const p = (initialValues.parametros as Record<string, unknown>) || {};
@@ -162,32 +161,32 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
     }
   };
 
-  // Convert prazo to hours for MO calculation
-  const prazoEmHoras = useMemo(() => {
-    if (prazo === "horas") return prazoPeriodos;
-    if (prazo === "dias") return prazoPeriodos * paramsMO.horas_diarias;
+  // Convert periodo to hours for MO calculation (always 1 period)
+  const periodoEmHoras = useMemo(() => {
+    if (periodo === "hora") return 1;
+    if (periodo === "dia") return paramsMO.horas_diarias;
     // mês
-    return prazoPeriodos * paramsMO.horas_mes;
-  }, [prazo, prazoPeriodos, paramsMO.horas_diarias, paramsMO.horas_mes]);
+    return paramsMO.horas_mes;
+  }, [periodo, paramsMO.horas_diarias, paramsMO.horas_mes]);
 
   // Auto-calculate coeficiente based on productivity
-  // If worker produces `quantidade` units in `prazoEmHoras` hours,
-  // then hours per unit = prazoEmHoras / quantidade
+  // If worker produces `quantidade` units in 1 period,
+  // then hours per unit = periodoEmHoras / quantidade
   const coeficienteCalculado = useMemo(() => {
     if (tipo !== "mao_de_obra") return 1;
     if (quantidade <= 0) return 0;
-    return prazoEmHoras / quantidade;
-  }, [tipo, prazoEmHoras, quantidade]);
+    return periodoEmHoras / quantidade;
+  }, [tipo, periodoEmHoras, quantidade]);
 
   const resultado: ResultadoCalculo = useMemo(() => {
     try {
       if (tipo === "mao_de_obra") return calcularMaoDeObra(paramsMO, 1, coeficienteCalculado);
-      if (tipo === "equipamento") return calcularEquipamento(paramsEq, quantidade, prazoPeriodos);
-      return calcularMaterial(paramsMa, quantidade, prazoPeriodos);
+      if (tipo === "equipamento") return calcularEquipamento(paramsEq, quantidade, 1);
+      return calcularMaterial(paramsMa, quantidade, 1);
     } catch {
       return { custo_unitario: 0, custo_total: 0, memoria: [] };
     }
-  }, [tipo, paramsMO, paramsEq, paramsMa, quantidade, prazoPeriodos, coeficienteCalculado]);
+  }, [tipo, paramsMO, paramsEq, paramsMa, quantidade, coeficienteCalculado]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,10 +196,9 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
       insumo_id: insumoId || crypto.randomUUID(),
       descricao,
       quantidade,
-      coeficiente: tipo === "mao_de_obra" ? coeficienteCalculado : prazoPeriodos,
+      coeficiente: tipo === "mao_de_obra" ? coeficienteCalculado : 1,
       unidade,
-      prazo,
-      prazo_periodos: prazoPeriodos,
+      periodo,
       observacoes,
       custo_unitario: resultado.custo_unitario,
       custo_total: resultado.custo_total,
@@ -251,7 +249,7 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
           </div>
 
           {/* 3. Quantidade + 4. Unidade + 5. Prazo */}
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label>Quantidade</Label>
               <Input type="number" step="0.0001" value={quantidade} onChange={(e) => setQuantidade(parseFloat(e.target.value) || 0)} />
@@ -268,16 +266,12 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Prazo</Label>
-              <Input type="number" step="0.01" min="0.01" value={prazoPeriodos} onChange={(e) => setPrazoPeriodos(parseFloat(e.target.value) || 1)} />
-            </div>
-            <div className="space-y-1.5">
               <Label>Período</Label>
-              <Select value={prazo} onValueChange={(v) => setPrazo(v as "horas" | "dias" | "mês")}>
+              <Select value={periodo} onValueChange={(v) => setPeriodo(v as "hora" | "dia" | "mês")}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="horas">Horas</SelectItem>
-                  <SelectItem value="dias">Dias</SelectItem>
+                  <SelectItem value="hora">Hora</SelectItem>
+                  <SelectItem value="dia">Dia</SelectItem>
                   <SelectItem value="mês">Mês</SelectItem>
                 </SelectContent>
               </Select>
