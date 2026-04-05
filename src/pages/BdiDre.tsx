@@ -203,6 +203,23 @@ export default function BdiDre() {
   // ── Single source of truth: all calculations derived from bdiItems + custoDireto ──
   const resultado = useMemo(() => calcAll(bdiItems, custoDireto), [bdiItems, custoDireto]);
 
+  // ── Sync lucro líquido desejado → L component ──
+  const handleLucroLiqChange = useCallback((pct: number) => {
+    setLucroLiqDesejado(pct);
+    // In this model, net margin % on revenue = L% (Lucro Bruto component)
+    setBdiItems(prev => prev.map(item =>
+      item.categoria === "lucro" ? { ...item, percentual: pct } : item
+    ));
+  }, []);
+
+  // Keep lucroLiqDesejado in sync when L changes directly
+  useEffect(() => {
+    const lucroItem = bdiItems.find(i => i.categoria === "lucro");
+    if (lucroItem && lucroLiqDesejado !== null && Math.abs(lucroItem.percentual - lucroLiqDesejado) > 0.001) {
+      setLucroLiqDesejado(null);
+    }
+  }, [bdiItems]);
+
   // ── Handlers ──
   const handleChange = useCallback((index: number, value: string) => {
     setBdiItems(prev => {
@@ -210,6 +227,7 @@ export default function BdiDre() {
       updated[index] = { ...updated[index], percentual: parseFloat(value) || 0 };
       return updated;
     });
+    setLucroLiqDesejado(null);
   }, []);
 
   const handleSave = async () => {
