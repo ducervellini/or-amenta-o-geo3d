@@ -1032,35 +1032,159 @@ export default function OrcamentoDetalhe() {
         </Button>
       </div>
 
-      {/* Print: show all content */}
-      <div className="hidden print:block space-y-6">
-        {/* Print resumo inline - reuses the BDI step content */}
-        <Card>
-          <CardHeader><CardTitle className="text-base">Serviços</CardTitle></CardHeader>
-          <CardContent>
-            {servicosValidos.map((s, idx) => {
-              const comp = (composicoes || []).find((c: any) => c.id === s.composicao_id);
-              return (
-                <div key={idx} className="flex justify-between text-sm py-1 border-b last:border-0">
-                  <span>{comp?.codigo} — {comp?.nome}</span>
-                  <span>{s.quantidade} × {fmt(comp?.custo_unitario_total || 0)} = {fmt((comp?.custo_unitario_total || 0) * s.quantidade)}</span>
-                </div>
-              );
-            })}
-            <div className="flex justify-between font-bold text-sm mt-2 pt-2 border-t">
-              <span>Total Serviços</span><span>{fmt(custoServicos)}</span>
+      {/* Print: complete report with all tabs */}
+      <div className="hidden print:block print-report space-y-4">
+
+        {/* ── Section 1: Oportunidade ── */}
+        <div className="print-section">
+          <h2 className="print-section-title">1. Dados da Oportunidade</h2>
+          <table className="print-table">
+            <tbody>
+              <tr><td className="print-label">Código</td><td>{oportunidade.codigo}</td></tr>
+              <tr><td className="print-label">Descrição</td><td>{oportunidade.descricao}</td></tr>
+              <tr><td className="print-label">Cliente</td><td>{oportunidade.clientes?.nome || "—"}</td></tr>
+              <tr><td className="print-label">Local</td><td>{oportunidade.cidade || "—"}{oportunidade.estado ? ` / ${oportunidade.estado}` : ""}</td></tr>
+              <tr><td className="print-label">Grupo de Serviços</td><td>{oportunidade.grupos_servicos?.nome || "—"}</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* ── Section 2: Serviços ── */}
+        <div className="print-section print-break-before">
+          <h2 className="print-section-title">2. Serviços (Composições)</h2>
+          <table className="print-table">
+            <thead>
+              <tr>
+                <th className="text-left">Composição</th>
+                <th className="text-right">Qtd</th>
+                <th className="text-right">Custo Unit.</th>
+                <th className="text-right">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {servicosValidos.map((s, idx) => {
+                const comp = (composicoes || []).find((c: any) => c.id === s.composicao_id);
+                const subtotal = (comp?.custo_unitario_total || 0) * s.quantidade;
+                return (
+                  <tr key={idx}>
+                    <td>{comp?.codigo} — {comp?.nome}</td>
+                    <td className="text-right">{s.quantidade} {comp?.unidade || "un"}</td>
+                    <td className="text-right">{fmt(comp?.custo_unitario_total || 0)}</td>
+                    <td className="text-right font-semibold">{fmt(subtotal)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr className="print-total-row">
+                <td colSpan={3} className="text-right font-bold">Total Serviços</td>
+                <td className="text-right font-bold">{fmt(custoServicos)}</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          {/* Breakdown por insumo */}
+          {Object.keys(custoServicosPorTipo).length > 0 && (
+            <div className="mt-3">
+              <p className="text-xs font-semibold mb-1">Breakdown por Insumo</p>
+              <table className="print-table print-table-sm">
+                <tbody>
+                  {Object.entries(TIPO_INSUMO_LABELS).map(([tipo, { label }]) => {
+                    const valor = custoServicosPorTipo[tipo] || 0;
+                    if (valor <= 0) return null;
+                    return (
+                      <tr key={tipo}>
+                        <td>{label}</td>
+                        <td className="text-right">{fmt(valor)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex justify-between font-bold text-sm"><span>ADM Local</span><span>{fmt(custoAdmLocal)}</span></div>
-            <div className="flex justify-between font-bold text-sm mt-1"><span>Custo Total</span><span>{fmt(custoTotal)}</span></div>
-            <div className="flex justify-between font-bold text-sm mt-1"><span>BDI ({fmtPct(bdiPercentual)})</span><span>{fmt(valorBdi)}</span></div>
-            <Separator className="my-2" />
-            <div className="flex justify-between font-bold text-lg"><span>Preço de Venda</span><span className="text-primary">{fmt(precoTotal)}</span></div>
-          </CardContent>
-        </Card>
+          )}
+        </div>
+
+        {/* ── Section 3: ADM Local ── */}
+        <div className="print-section">
+          <h2 className="print-section-title">3. ADM Local</h2>
+          {mobilizacao ? (
+            <div>
+              <table className="print-table print-table-sm">
+                <tbody>
+                  <tr><td className="print-label">Projeto</td><td>{mobilizacao.nome}</td></tr>
+                  <tr><td className="print-label">Dias Produtivos</td><td>{mobilizacao.dias_produtivos}</td></tr>
+                  <tr><td className="print-label">Custo/Dia</td><td>{fmt(mobilizacao.custo_por_dia)}</td></tr>
+                </tbody>
+              </table>
+              <table className="print-table print-table-sm mt-2">
+                <tbody>
+                  {custoMobDesmob > 0 && (
+                    <tr><td>Mob / Desmob</td><td className="text-right">{fmt(custoMobDesmob)}</td></tr>
+                  )}
+                  {Object.entries(deslocamentosPorCategoria).map(([cat, valor]) => {
+                    if (valor <= 0) return null;
+                    return <tr key={cat}><td>{CATEGORIAS_DESL_LABELS[cat] || cat}</td><td className="text-right">{fmt(valor)}</td></tr>;
+                  })}
+                  {custoAdmLocalOutros > 0 && (
+                    <tr><td>Demais custos</td><td className="text-right">{fmt(custoAdmLocalOutros)}</td></tr>
+                  )}
+                </tbody>
+                <tfoot>
+                  <tr className="print-total-row">
+                    <td className="font-bold">Total ADM Local</td>
+                    <td className="text-right font-bold">{fmt(custoAdmLocal)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Nenhum ADM Local configurado.</p>
+          )}
+        </div>
+
+        {/* ── Section 4: BDI & Preço ── */}
+        <div className="print-section print-break-before">
+          <h2 className="print-section-title">4. BDI & Preço de Venda</h2>
+
+          {/* Perfil BDI */}
+          {bdiData && (
+            <div className="mb-3">
+              <p className="text-xs font-semibold mb-1">Perfil: {bdiData.nome} — BDI: {fmtPct(bdiPercentual)}</p>
+              {bdiComponentes.length > 0 && (
+                <table className="print-table print-table-sm">
+                  <thead><tr><th className="text-left">Componente</th><th className="text-right">%</th></tr></thead>
+                  <tbody>
+                    {bdiComponentes.map((comp, i) => (
+                      <tr key={i}><td>{comp.nome}</td><td className="text-right">{fmtPct(comp.percentual)}</td></tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+
+          {/* Resumo consolidado */}
+          <table className="print-table">
+            <tbody>
+              <tr><td>Subtotal Serviços</td><td className="text-right">{fmt(custoServicos)}</td></tr>
+              <tr><td>Subtotal ADM Local</td><td className="text-right">{fmt(custoAdmLocal)}</td></tr>
+              <tr className="print-total-row"><td className="font-bold">Custo Direto Total</td><td className="text-right font-bold">{fmt(custoTotal)}</td></tr>
+              <tr><td>BDI ({fmtPct(bdiPercentual)})</td><td className="text-right">{fmt(valorBdi)}</td></tr>
+            </tbody>
+            <tfoot>
+              <tr className="print-total-row" style={{ fontSize: "14px" }}>
+                <td className="font-bold">Preço de Venda</td>
+                <td className="text-right font-bold">{fmt(precoTotal)}</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          {/* DRE */}
+          <div className="mt-4">
+            {renderDRE(bdiComponentes, custoTotal, custoServicos, custoAdmLocal, precoTotal, bdiData, bdiPercentual)}
+          </div>
+        </div>
       </div>
     </div>
   );
