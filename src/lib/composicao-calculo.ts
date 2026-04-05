@@ -1,6 +1,6 @@
 /**
  * Motor de cálculo de composição de custos
- * Fase 1: Custos diretos (mão de obra, equipamentos, veículos, materiais)
+ * Fase 1: Custos diretos (mão de obra, equipamentos, materiais)
  */
 
 export interface ParametrosMaoDeObra {
@@ -8,9 +8,6 @@ export interface ParametrosMaoDeObra {
   regime_contratacao: "clt" | "pj";
   encargos_percentual: number;
   beneficios_valor: number;
-  alimentacao: number;
-  hospedagem: number;
-  transporte: number;
   horas_mes: number;
   dias_mes: number;
   regime_dias_trabalho: number;
@@ -85,18 +82,12 @@ export function calcularMaoDeObra(
   }
 
   const beneficiosValor = isPJ ? 0 : params.beneficios_valor;
-  const custoMensalBruto = salarioMensal + encargosValor + beneficiosValor;
+  const custoMensalTotal = salarioMensal + encargosValor + beneficiosValor;
   if (isPJ) {
-    memoria.push({ descricao: "Custo mensal bruto (PJ: sem benefícios)", formula: `R$ ${fmt(custoMensalBruto)}`, valor: custoMensalBruto });
+    memoria.push({ descricao: "Custo mensal total (PJ: sem benefícios)", formula: `R$ ${fmt(custoMensalTotal)}`, valor: custoMensalTotal });
   } else {
-    memoria.push({ descricao: "Custo mensal bruto", formula: `${fmt(salarioMensal)} + ${fmt(encargosValor)} + ${fmt(beneficiosValor)} = ${fmt(custoMensalBruto)}`, valor: custoMensalBruto });
+    memoria.push({ descricao: "Custo mensal total", formula: `${fmt(salarioMensal)} + ${fmt(encargosValor)} + ${fmt(beneficiosValor)} = ${fmt(custoMensalTotal)}`, valor: custoMensalTotal });
   }
-
-  const custoMensalCampo = params.alimentacao + params.hospedagem + params.transporte;
-  memoria.push({ descricao: "Custos de campo (alim. + hosp. + transp.)", formula: `${fmt(params.alimentacao)} + ${fmt(params.hospedagem)} + ${fmt(params.transporte)} = ${fmt(custoMensalCampo)}`, valor: custoMensalCampo });
-
-  const custoMensalTotal = custoMensalBruto + custoMensalCampo;
-  memoria.push({ descricao: "Custo mensal total", formula: `${fmt(custoMensalBruto)} + ${fmt(custoMensalCampo)} = ${fmt(custoMensalTotal)}`, valor: custoMensalTotal });
 
   const horasUteisMes = params.horas_mes > 0 ? params.horas_mes : (params.horas_diarias * params.dias_mes);
   const custoHora = horasUteisMes > 0 ? custoMensalTotal / horasUteisMes : 0;
@@ -264,7 +255,6 @@ function fmt(n: number): string {
 export function getDefaultParamsMaoDeObra(): ParametrosMaoDeObra {
   return {
     salario_base: 0, regime_contratacao: "clt", encargos_percentual: 0, beneficios_valor: 0,
-    alimentacao: 0, hospedagem: 0, transporte: 0,
     horas_mes: 176, dias_mes: 22,
     regime_dias_trabalho: 0, regime_dias_folga: 0,
     horas_diarias: 8, almoco_minutos: 60,
