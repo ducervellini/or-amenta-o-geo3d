@@ -25,6 +25,7 @@ type RowData = {
   custo_unitario_total: number;
   servico_id: unknown;
   isAvulsa: boolean;
+  grupo_nome?: string;
 };
 
 function ServiceRow({ row, navigate, setDeletingId, getMercadoNome, getAreaNome, getModuloNome }: {
@@ -43,6 +44,7 @@ function ServiceRow({ row, navigate, setDeletingId, getMercadoNome, getAreaNome,
   return (
     <tr className="cursor-pointer hover:bg-muted/50" onClick={handleClick}>
       <td></td>
+      <td className="text-sm text-muted-foreground">{row.grupo_nome || "-"}</td>
       <td className="font-mono text-xs font-semibold">{row.ordem_id || "-"}</td>
       <td className="font-medium text-accent">{row.codigo}</td>
       <td className="font-medium">{row.nome}</td>
@@ -194,6 +196,7 @@ export default function Composicoes() {
 
   const cols = [
     { key: "expand", label: "" },
+    { key: "grupo_nome", label: "Grupo" },
     { key: "ordem_id", label: "ID" },
     { key: "codigo", label: "Código" },
     { key: "nome", label: "Nome" },
@@ -278,10 +281,9 @@ export default function Composicoes() {
                             <span className="text-accent font-semibold">{String(grupo.nome)}</span>
                           </div>
                         </td>
-                        <td colSpan={6} className="text-sm text-muted-foreground">
+                        <td colSpan={7} className="text-sm text-muted-foreground">
                           {rows.length} serviço{rows.length !== 1 ? "s" : ""}
                         </td>
-                        <td className="text-sm">&nbsp;</td>
                         <td className="font-semibold font-mono">
                           {custoTotal > 0 ? `R$ ${fmt(custoTotal)}` : "-"}
                         </td>
@@ -290,7 +292,7 @@ export default function Composicoes() {
                       {isExpanded && (search ? filteredRows : rows).map((row) => (
                         <ServiceRow
                           key={`${row.type}-${row.id}`}
-                          row={row}
+                          row={{ ...row, grupo_nome: String(grupo.nome) }}
                           navigate={navigate}
                           setDeletingId={setDeletingId}
                           getMercadoNome={getMercadoNome}
@@ -305,7 +307,7 @@ export default function Composicoes() {
                 {/* Ungrouped / avulsa rows */}
                 {avulsaRows.filter(matchesSearch).length > 0 && grupoRows.length > 0 && (
                   <tr className="bg-muted/20">
-                    <td colSpan={11} className="text-xs font-semibold text-muted-foreground py-2">
+                    <td colSpan={12} className="text-xs font-semibold text-muted-foreground py-2">
                       Sem grupo
                     </td>
                   </tr>
