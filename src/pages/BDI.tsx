@@ -23,7 +23,6 @@ const defaultBDI: BDIItem[] = [
   { label: "PIS", sigla: "PIS", percentual: 0.65, descricao: "Programa de Integração Social" },
   { label: "COFINS", sigla: "COFINS", percentual: 3.00, descricao: "Contrib. p/ Financiamento da Seg. Social" },
   { label: "ISS", sigla: "ISS", percentual: 3.00, descricao: "Imposto Sobre Serviços" },
-  { label: "CPRB", sigla: "CPRB", percentual: 0.00, descricao: "Contribuição Previdenciária s/ Receita Bruta" },
 ];
 
 function calcBdi(items: BDIItem[]) {
