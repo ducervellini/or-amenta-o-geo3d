@@ -1086,7 +1086,7 @@ export default function OrcamentoDetalhe() {
 
 // ── DRE render helper ──
 function renderDRE(
-  bdiComponentes: { nome: string; percentual: number }[],
+  bdiComponentes: { nome: string; percentual: number; categoria?: string }[],
   custoTotal: number,
   custoServicos: number,
   custoAdmLocal: number,
