@@ -1,0 +1,1 @@
+ALTER TABLE public.modulos ADD COLUMN codigo text NOT NULL DEFAULT '';

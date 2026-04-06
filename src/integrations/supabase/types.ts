@@ -1028,6 +1028,7 @@ export type Database = {
       modulos: {
         Row: {
           ativo: boolean
+          codigo: string
           created_at: string
           descricao: string | null
           id: string
@@ -1037,6 +1038,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          codigo?: string
           created_at?: string
           descricao?: string | null
           id?: string
@@ -1046,6 +1048,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          codigo?: string
           created_at?: string
           descricao?: string | null
           id?: string
