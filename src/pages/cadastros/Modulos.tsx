@@ -32,7 +32,7 @@ export default function Modulos() {
   const [formOpen, setFormOpen] = useState(false);
   const [editItem, setEditItem] = useState<Record<string, unknown> | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [formValues, setFormValues] = useState({ nome: "", descricao: "" });
+  const [formValues, setFormValues] = useState({ codigo: "", nome: "", descricao: "" });
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [moduloAreas, setModuloAreas] = useState<Record<string, string[]>>({});
   const [areasVersion, setAreasVersion] = useState(0);
@@ -66,7 +66,7 @@ export default function Modulos() {
 
   const openCreate = () => {
     setEditItem(null);
-    setFormValues({ nome: "", descricao: "" });
+    setFormValues({ codigo: "", nome: "", descricao: "" });
     setSelectedAreas([]);
     setFormOpen(true);
   };
@@ -74,6 +74,7 @@ export default function Modulos() {
   const openEdit = (item: Record<string, unknown>) => {
     setEditItem(item);
     setFormValues({
+      codigo: String(item.codigo || ""),
       nome: String(item.nome || ""),
       descricao: String(item.descricao || ""),
     });
@@ -174,7 +175,8 @@ export default function Modulos() {
           <div className="overflow-x-auto">
             <table className="data-table">
               <thead>
-                <tr>
+                 <tr>
+                  <th>ID</th>
                   <th>Nome</th>
                   <th>Áreas da Empresa</th>
                   <th>Descrição</th>
@@ -187,6 +189,7 @@ export default function Modulos() {
                   const areaNames = getAreaNames(row.id);
                   return (
                     <tr key={row.id}>
+                      <td><span className="font-mono text-xs">{row.codigo || "-"}</span></td>
                       <td><span className="font-medium">{row.nome}</span></td>
                       <td>
                         <div className="flex flex-wrap gap-1">
@@ -229,6 +232,10 @@ export default function Modulos() {
             <DialogTitle>{editItem ? "Editar Departamento" : "Novo Departamento"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="codigo">ID (Código)</Label>
+              <Input id="codigo" value={formValues.codigo} onChange={(e) => setFormValues((v) => ({ ...v, codigo: e.target.value }))} placeholder="Ex: DEPT-001" required />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="nome">Nome</Label>
               <Input id="nome" value={formValues.nome} onChange={(e) => setFormValues((v) => ({ ...v, nome: e.target.value }))} placeholder="Ex: Topografia" required />
