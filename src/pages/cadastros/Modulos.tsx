@@ -64,6 +64,7 @@ export default function Modulos() {
   const filtered = (modulos || []).filter((row: any) =>
     !search || String(row.nome || "").toLowerCase().includes(search.toLowerCase())
   );
+  const { sorted, sortKey, sortDirection, handleSort } = useTableSort(filtered);
 
   const openCreate = () => {
     setEditItem(null);
@@ -177,16 +178,16 @@ export default function Modulos() {
             <table className="data-table">
               <thead>
                  <tr>
-                  <th>ID</th>
-                  <th>Nome</th>
+                  <SortableHeader label="ID" sortKey="codigo" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader label="Nome" sortKey="nome" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
                   <th>Áreas da Empresa</th>
-                  <th>Descrição</th>
-                  <th>Status</th>
+                  <SortableHeader label="Descrição" sortKey="descricao" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader label="Status" sortKey="ativo" currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
                   <th className="text-center">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((row: any) => {
+                {sorted.map((row: any) => {
                   const areaNames = getAreaNames(row.id);
                   return (
                     <tr key={row.id}>
