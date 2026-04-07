@@ -200,17 +200,18 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const isMaterial = tipo === "material";
     const baseParams = tipo === "mao_de_obra" ? paramsMO : tipo === "equipamento" ? paramsEq : paramsMa;
     onSubmit({
       tipo_insumo: tipo,
       insumo_id: insumoId || crypto.randomUUID(),
       descricao,
-      quantidade: 1,
-      coeficiente: coeficienteCalculado,
+      quantidade: isMaterial ? quantidade : 1,
+      coeficiente: isMaterial ? quantidade : coeficienteCalculado,
       unidade,
       observacoes,
-      custo_unitario: resultado.custo_unitario,
-      custo_total: resultado.custo_unitario,
+      custo_unitario: isMaterial ? resultado.custo_unitario : resultado.custo_unitario,
+      custo_total: isMaterial ? resultado.custo_total : resultado.custo_unitario,
       parametros: { ...baseParams, periodo, produtividade: quantidade },
       grupo_custo: "direto",
     });
