@@ -371,20 +371,33 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
 
           {/* Resumo do item */}
           <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="text-xs text-muted-foreground">Produtividade</div>
-                <div className="font-mono font-medium">{fmtBR(quantidade)} {unidade}/{periodo}</div>
+            {tipo === "material" ? (
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div>
+                  <div className="text-xs text-muted-foreground">Quantidade/{unidade} serviço</div>
+                  <div className="font-mono font-medium">{fmtBR(quantidade)}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-semibold">Custo Total (1 un. serviço)</div>
+                  <div className="font-mono font-bold text-lg text-primary">R$ {fmtBR(resultado.custo_total)}</div>
+                </div>
               </div>
-              <div>
-                <div className="text-xs text-muted-foreground">Coeficiente</div>
-                <div className="font-mono font-medium">{fmtBR(coeficienteCalculado)} h/{unidade}</div>
+            ) : (
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <div className="text-xs text-muted-foreground">Produtividade</div>
+                  <div className="font-mono font-medium">{fmtBR(quantidade)} {unidade}/{periodo}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Coeficiente</div>
+                  <div className="font-mono font-medium">{fmtBR(coeficienteCalculado)} h/{unidade}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-semibold">Custo Unitário (1 {unidade})</div>
+                  <div className="font-mono font-bold text-lg text-primary">R$ {fmtBR(resultado.custo_unitario)}</div>
+                </div>
               </div>
-              <div>
-                <div className="text-xs text-muted-foreground font-semibold">Custo Unitário (1 {unidade})</div>
-                <div className="font-mono font-bold text-lg text-primary">R$ {fmtBR(resultado.custo_unitario)}</div>
-              </div>
-            </div>
+            )}
           </div>
 
           <DialogFooter>
