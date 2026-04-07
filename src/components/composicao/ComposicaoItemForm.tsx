@@ -258,38 +258,58 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
             </div>
           </div>
 
-          {/* 3. Quantidade + 4. Unidade + 5. Prazo */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1.5">
-              <Label>Produtividade (qtd/{periodo})</Label>
-              <Input type="number" step="0.0001" value={quantidade} onChange={(e) => setQuantidade(parseFloat(e.target.value) || 0)} />
+          {/* 3. Quantidade/Produtividade + 4. Unidade + 5. Prazo */}
+          {tipo === "material" ? (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Quantidade por unidade de serviço</Label>
+                <Input type="number" step="0.0001" value={quantidade} onChange={(e) => setQuantidade(parseFloat(e.target.value) || 0)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Unidade</Label>
+                <Select value={unidade} onValueChange={setUnidade}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {UNIDADES.map((u) => (
+                      <SelectItem key={u} value={u}>{u}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label>Unidade</Label>
-              <Select value={unidade} onValueChange={setUnidade}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {UNIDADES.map((u) => (
-                    <SelectItem key={u} value={u}>{u}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          ) : (
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label>Produtividade (qtd/{periodo})</Label>
+                <Input type="number" step="0.0001" value={quantidade} onChange={(e) => setQuantidade(parseFloat(e.target.value) || 0)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Unidade</Label>
+                <Select value={unidade} onValueChange={setUnidade}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {UNIDADES.map((u) => (
+                      <SelectItem key={u} value={u}>{u}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Período</Label>
+                <Select value={periodo} onValueChange={(v) => setPeriodo(v as "hora" | "dia" | "mês")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="hora">Hora</SelectItem>
+                    <SelectItem value="dia">Dia</SelectItem>
+                    <SelectItem value="mês">Mês</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label>Período</Label>
-              <Select value={periodo} onValueChange={(v) => setPeriodo(v as "hora" | "dia" | "mês")}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="hora">Hora</SelectItem>
-                  <SelectItem value="dia">Dia</SelectItem>
-                  <SelectItem value="mês">Mês</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          )}
 
-          {/* Productivity summary */}
-          {insumoId && (
+          {/* Productivity summary - only for MO/Equipamento */}
+          {insumoId && tipo !== "material" && (
             <div className="bg-muted/50 rounded-lg p-3 border space-y-1 text-sm">
               <div className="font-semibold text-xs uppercase text-muted-foreground">Cálculo de Produtividade</div>
               <div className="grid grid-cols-2 gap-x-4 gap-y-1">
@@ -307,6 +327,21 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
                 <span className="font-mono">{fmtBR(coeficienteCalculado)} h/{unidade}</span>
                 <span className="text-muted-foreground font-semibold">Custo unitário (1 {unidade}):</span>
                 <span className="font-mono font-semibold text-primary">R$ {fmtBR(resultado.custo_unitario)}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Material summary */}
+          {insumoId && tipo === "material" && (
+            <div className="bg-muted/50 rounded-lg p-3 border space-y-1 text-sm">
+              <div className="font-semibold text-xs uppercase text-muted-foreground">Resumo do Material</div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                <span className="text-muted-foreground">Preço unitário:</span>
+                <span className="font-mono font-medium">R$ {fmtBR(paramsMa.custo_unitario)}</span>
+                <span className="text-muted-foreground">Quantidade por un. serviço:</span>
+                <span className="font-mono">{fmtBR(quantidade)}</span>
+                <span className="text-muted-foreground font-semibold">Custo total por un. serviço:</span>
+                <span className="font-mono font-semibold text-primary">R$ {fmtBR(resultado.custo_total)}</span>
               </div>
             </div>
           )}
