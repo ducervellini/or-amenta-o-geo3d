@@ -191,7 +191,12 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
     try {
       if (tipo === "mao_de_obra") return calcularMaoDeObra(paramsMO, 1, coeficienteCalculado);
       if (tipo === "equipamento") return calcularEquipamento(paramsEq, 1, coeficienteCalculado);
-      return calcularMaterial(paramsMa, quantidade, 1);
+      // Material: only register quantity, cost deferred to project duration
+      return { custo_unitario: paramsMa.custo_unitario, custo_total: 0, memoria: [
+        { descricao: "Preço unitário (cadastro)", formula: `R$ ${paramsMa.custo_unitario.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, valor: paramsMa.custo_unitario },
+        { descricao: "Quantidade por unidade de serviço", formula: `${quantidade}`, valor: quantidade },
+        { descricao: "Custo total", formula: "A calcular (depende da duração do projeto)", valor: 0 },
+      ] };
     } catch {
       return { custo_unitario: 0, custo_total: 0, memoria: [] };
     }
@@ -257,34 +262,62 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
           </div>
 
           {/* 3. Quantidade + 4. Unidade + 5. Prazo */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1.5">
-              <Label>Produtividade (qtd/{periodo})</Label>
-              <Input type="number" step="0.0001" value={quantidade} onChange={(e) => setQuantidade(parseFloat(e.target.value) || 0)} />
+          {tipo === "material" ? (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Quantidade por unidade de serviço</Label>
+                <Input type="number" step="0.0001" value={quantidade} onChange={(e) => setQuantidade(parseFloat(e.target.value) || 0)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Unidade</Label>
+                <Select value={unidade} onValueChange={setUnidade}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {UNIDADES.map((u) => (
+                      <SelectItem key={u} value={u}>{u}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label>Unidade</Label>
-              <Select value={unidade} onValueChange={setUnidade}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {UNIDADES.map((u) => (
-                    <SelectItem key={u} value={u}>{u}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          ) : (
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label>Produtividade (qtd/{periodo})</Label>
+                <Input type="number" step="0.0001" value={quantidade} onChange={(e) => setQuantidade(parseFloat(e.target.value) || 0)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Unidade</Label>
+                <Select value={unidade} onValueChange={setUnidade}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {UNIDADES.map((u) => (
+                      <SelectItem key={u} value={u}>{u}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Período</Label>
+                <Select value={periodo} onValueChange={(v) => setPeriodo(v as "hora" | "dia" | "mês")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="hora">Hora</SelectItem>
+                    <SelectItem value="dia">Dia</SelectItem>
+                    <SelectItem value="mês">Mês</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label>Período</Label>
-              <Select value={periodo} onValueChange={(v) => setPeriodo(v as "hora" | "dia" | "mês")}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="hora">Hora</SelectItem>
-                  <SelectItem value="dia">Dia</SelectItem>
-                  <SelectItem value="mês">Mês</SelectItem>
-                </SelectContent>
-              </Select>
+          )}
+
+          {/* Material info notice */}
+          {tipo === "material" && insumoId && (
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm text-amber-800 dark:text-amber-200">
+              <p className="font-medium">ℹ️ O custo total do material será calculado somente após a definição da duração do projeto.</p>
+              <p className="text-xs mt-1 text-amber-600 dark:text-amber-400">Preço unitário (cadastro): R$ {fmtBR(paramsMa.custo_unitario)}</p>
             </div>
-          </div>
+          )}
 
           {/* Productivity summary for MO and Equipamento */}
           {(tipo === "mao_de_obra" || tipo === "equipamento") && insumoId && (
@@ -334,20 +367,37 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
 
           {/* Resumo do item */}
           <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="text-xs text-muted-foreground">Produtividade</div>
-                <div className="font-mono font-medium">{fmtBR(quantidade)} {unidade}/{periodo}</div>
+            {tipo === "material" ? (
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <div className="text-xs text-muted-foreground">Quantidade</div>
+                  <div className="font-mono font-medium">{fmtBR(quantidade)} {unidade}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Preço Unit. (cadastro)</div>
+                  <div className="font-mono font-medium">R$ {fmtBR(paramsMa.custo_unitario)}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-semibold">Custo Total</div>
+                  <div className="font-mono font-bold text-lg text-amber-600">A calcular</div>
+                </div>
               </div>
-              <div>
-                <div className="text-xs text-muted-foreground">Coeficiente</div>
-                <div className="font-mono font-medium">{fmtBR(coeficienteCalculado)} h/{unidade}</div>
+            ) : (
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <div className="text-xs text-muted-foreground">Produtividade</div>
+                  <div className="font-mono font-medium">{fmtBR(quantidade)} {unidade}/{periodo}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Coeficiente</div>
+                  <div className="font-mono font-medium">{fmtBR(coeficienteCalculado)} h/{unidade}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-semibold">Custo Unitário (1 {unidade})</div>
+                  <div className="font-mono font-bold text-lg text-primary">R$ {fmtBR(resultado.custo_unitario)}</div>
+                </div>
               </div>
-              <div>
-                <div className="text-xs text-muted-foreground font-semibold">Custo Unitário (1 {unidade})</div>
-                <div className="font-mono font-bold text-lg text-primary">R$ {fmtBR(resultado.custo_unitario)}</div>
-              </div>
-            </div>
+            )}
           </div>
 
           <DialogFooter>
