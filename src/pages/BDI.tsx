@@ -15,7 +15,7 @@ interface BDIItem {
 
 const defaultBDI: BDIItem[] = [
   { label: "Administração Central", sigla: "AC", percentual: 4.00, descricao: "Custos indiretos da sede" },
-  { label: "Seguro e Garantia", sigla: "S+G", percentual: 0.80, descricao: "Seguros e garantias contratuais" },
+  { label: "Seguros, Garantias e ART", sigla: "S+G", percentual: 0.80, descricao: "Seguros, garantias e ART contratuais" },
   { label: "Risco", sigla: "R", percentual: 1.27, descricao: "Margem de risco do empreendimento" },
   { label: "Despesas Financeiras", sigla: "DF", percentual: 1.23, descricao: "Custo financeiro do capital" },
   { label: "Comissões", sigla: "COM", percentual: 0.00, descricao: "Comissões sobre venda ou intermediação" },
@@ -259,7 +259,7 @@ export default function BDI() {
             </div>
             <div className="mt-3 space-y-1 text-xs text-muted-foreground">
               <p>AC = Administração Central</p>
-              <p>S+G = Seguros e Garantias</p>
+              <p>S+G = Seguros, Garantias e ART</p>
               <p>R = Risco</p>
               <p>DF = Despesas Financeiras</p>
               <p>COM = Comissões</p>
