@@ -179,12 +179,13 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
   }, [periodo, tipo, paramsMO.horas_diarias, paramsMO.horas_mes]);
 
   // Auto-calculate coeficiente based on productivity
-  // If resource produces `quantidade` units in 1 period,
-  // then hours per unit = periodoEmHoras / quantidade
+  // For MO/Equipamento: hours per unit = periodoEmHoras / quantidade
+  // For Material: coeficiente = quantidade (units per service unit)
   const coeficienteCalculado = useMemo(() => {
+    if (tipo === "material") return quantidade;
     if (quantidade <= 0) return 0;
     return periodoEmHoras / quantidade;
-  }, [periodoEmHoras, quantidade]);
+  }, [tipo, periodoEmHoras, quantidade]);
 
   const resultado: ResultadoCalculo = useMemo(() => {
     try {
