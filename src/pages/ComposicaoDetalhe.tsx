@@ -103,8 +103,12 @@ function ItensTable({ itens, tipoIcons, tipoLabels, fmt, resumo, onEdit, onDelet
                 <td className="font-mono text-sm">{fmt(item._produtividade)}</td>
                 <td className="text-sm">{String(item.unidade || "un")}</td>
                 <td className="text-sm">{item._periodo}</td>
-                <td className="font-mono text-sm">{fmt(Number(item.coeficiente))}</td>
-                <td className="font-mono text-sm">R$ {fmt(item._custo_unitario)}</td>
+                <td className="font-mono text-sm">{String(item.tipo_insumo) === "material" ? "—" : fmt(Number(item.coeficiente))}</td>
+                <td className="font-mono text-sm">
+                  {String(item.tipo_insumo) === "material" 
+                    ? <span className="text-amber-600">A calcular</span>
+                    : `R$ ${fmt(item._custo_unitario)}`}
+                </td>
                 <td className="text-center">
                   <div className="flex items-center justify-center gap-1">
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(item)}>
