@@ -379,9 +379,11 @@ export default function Mobilizacao() {
         setFatorImprod(Number(mob.fator_improdutividade) || 0.15);
         // Restore user-chosen improdutivos: use dias_improdutivos/duracaoMeses if available, else diasChuvaMes
         const savedDuracaoMeses = Number(mob.duracao_meses) || 3;
-        const savedDiasImprodMes = mob.dias_improdutivos && savedDuracaoMeses > 0
+        const savedDiasTrabalho = Number(mob.dias_trabalho) || 24;
+        const rawDiasImprodMes = mob.dias_improdutivos && savedDuracaoMeses > 0
           ? Math.round(Number(mob.dias_improdutivos) / savedDuracaoMeses)
           : Number(mob.dias_chuva_mes) || 5;
+        const savedDiasImprodMes = Math.min(rawDiasImprodMes, savedDiasTrabalho - 1);
         setDiasImprodutivosUsuario(savedDiasImprodMes);
         setDistanciaBase(Number(mob.distancia_base_projeto) || 0);
         setDistanciaMedia(Number(mob.distancia_media_diaria) || 0);
@@ -748,8 +750,11 @@ export default function Mobilizacao() {
       if (data.resumo?.media_dias_chuva_mes) {
         const diasChuva = Math.round(data.resumo.media_dias_chuva_mes);
         setDiasChuvaMes(diasChuva);
-        setDiasImprodutivosUsuario(diasChuva);
-        toast.success(`Dias de chuva/mês atualizado: ${diasChuva} dias`);
+        // Aplicar fator de conversão: nem todo dia de chuva é improdutivo (~50%)
+        const diasImprodEstimado = Math.round(diasChuva * 0.5);
+        const diasImprodCapped = Math.min(diasImprodEstimado, diasTrabalho - 1);
+        setDiasImprodutivosUsuario(diasImprodCapped);
+        toast.success(`Pluviometria: ${diasChuva} dias de chuva/mês → ${diasImprodCapped} dias improdutivos estimados`);
       }
     } catch (err: any) {
       console.error("Erro pluviometria:", err);
@@ -1145,11 +1150,11 @@ export default function Mobilizacao() {
                     type="number"
                     value={diasImprodutivosUsuario}
                     onChange={(e) => {
-                      const v = Math.max(0, Math.min(Number(e.target.value), diasTrabalho));
+                      const v = Math.max(0, Math.min(Number(e.target.value), diasTrabalho - 1));
                       setDiasImprodutivosUsuario(v);
                     }}
                     min={0}
-                    max={diasTrabalho}
+                    max={diasTrabalho - 1}
                   />
                   {diasImprodutivosUsuario < diasChuvaMes && (
                     <p className="text-[10px] text-amber-600 mt-0.5">
