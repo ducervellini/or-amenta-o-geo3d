@@ -191,7 +191,8 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
     try {
       if (tipo === "mao_de_obra") return calcularMaoDeObra(paramsMO, 1, coeficienteCalculado);
       if (tipo === "equipamento") return calcularEquipamento(paramsEq, 1, coeficienteCalculado);
-      return calcularMaterial(paramsMa, 1, coeficienteCalculado);
+      // Material: custo = custo_unitário_corrigido × quantidade
+      return calcularMaterial(paramsMa, quantidade, 1);
     } catch {
       return { custo_unitario: 0, custo_total: 0, memoria: [] };
     }
