@@ -38,7 +38,7 @@ const CATEGORIA_LABELS: Record<string, string> = {
 
 const defaultBDI: BDIItem[] = [
   { label: "Administração Central", sigla: "AC", percentual: 4.00, descricao: "Custos indiretos da sede", categoria: "despesa" },
-  { label: "Seguro e Garantia", sigla: "S+G", percentual: 0.80, descricao: "Seguros e garantias contratuais", categoria: "despesa" },
+  { label: "Seguros, Garantias e ART", sigla: "S+G", percentual: 0.80, descricao: "Seguros e garantias contratuais", categoria: "despesa" },
   { label: "Despesas Financeiras", sigla: "DF", percentual: 1.23, descricao: "Custo financeiro do capital", categoria: "despesa" },
   { label: "Risco", sigla: "R", percentual: 1.27, descricao: "Margem de risco do empreendimento", categoria: "risco" },
   { label: "Comissões", sigla: "COM", percentual: 0.00, descricao: "Comissões sobre venda", categoria: "comissao" },
