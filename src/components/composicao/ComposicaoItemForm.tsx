@@ -179,18 +179,20 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
   }, [periodo, tipo, paramsMO.horas_diarias, paramsMO.horas_mes]);
 
   // Auto-calculate coeficiente based on productivity
-  // If resource produces `quantidade` units in 1 period,
-  // then hours per unit = periodoEmHoras / quantidade
+  // For MO/Equipamento: hours per unit = periodoEmHoras / quantidade
+  // For Material: coeficiente = quantidade (units per service unit)
   const coeficienteCalculado = useMemo(() => {
+    if (tipo === "material") return quantidade;
     if (quantidade <= 0) return 0;
     return periodoEmHoras / quantidade;
-  }, [periodoEmHoras, quantidade]);
+  }, [tipo, periodoEmHoras, quantidade]);
 
   const resultado: ResultadoCalculo = useMemo(() => {
     try {
       if (tipo === "mao_de_obra") return calcularMaoDeObra(paramsMO, 1, coeficienteCalculado);
       if (tipo === "equipamento") return calcularEquipamento(paramsEq, 1, coeficienteCalculado);
-      return calcularMaterial(paramsMa, 1, coeficienteCalculado);
+      // Material: custo = custo_unitário_corrigido × quantidade
+      return calcularMaterial(paramsMa, quantidade, 1);
     } catch {
       return { custo_unitario: 0, custo_total: 0, memoria: [] };
     }
@@ -198,17 +200,18 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const isMaterial = tipo === "material";
     const baseParams = tipo === "mao_de_obra" ? paramsMO : tipo === "equipamento" ? paramsEq : paramsMa;
     onSubmit({
       tipo_insumo: tipo,
       insumo_id: insumoId || crypto.randomUUID(),
       descricao,
-      quantidade: 1,
-      coeficiente: coeficienteCalculado,
+      quantidade: isMaterial ? quantidade : 1,
+      coeficiente: isMaterial ? quantidade : coeficienteCalculado,
       unidade,
       observacoes,
-      custo_unitario: resultado.custo_unitario,
-      custo_total: resultado.custo_unitario,
+      custo_unitario: isMaterial ? resultado.custo_unitario : resultado.custo_unitario,
+      custo_total: isMaterial ? resultado.custo_total : resultado.custo_unitario,
       parametros: { ...baseParams, periodo, produtividade: quantidade },
       grupo_custo: "direto",
     });
@@ -255,38 +258,58 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
             </div>
           </div>
 
-          {/* 3. Quantidade + 4. Unidade + 5. Prazo */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1.5">
-              <Label>Produtividade (qtd/{periodo})</Label>
-              <Input type="number" step="0.0001" value={quantidade} onChange={(e) => setQuantidade(parseFloat(e.target.value) || 0)} />
+          {/* 3. Quantidade/Produtividade + 4. Unidade + 5. Prazo */}
+          {tipo === "material" ? (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Quantidade por unidade de serviço</Label>
+                <Input type="number" step="0.0001" value={quantidade} onChange={(e) => setQuantidade(parseFloat(e.target.value) || 0)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Unidade</Label>
+                <Select value={unidade} onValueChange={setUnidade}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {UNIDADES.map((u) => (
+                      <SelectItem key={u} value={u}>{u}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label>Unidade</Label>
-              <Select value={unidade} onValueChange={setUnidade}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {UNIDADES.map((u) => (
-                    <SelectItem key={u} value={u}>{u}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          ) : (
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label>Produtividade (qtd/{periodo})</Label>
+                <Input type="number" step="0.0001" value={quantidade} onChange={(e) => setQuantidade(parseFloat(e.target.value) || 0)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Unidade</Label>
+                <Select value={unidade} onValueChange={setUnidade}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {UNIDADES.map((u) => (
+                      <SelectItem key={u} value={u}>{u}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Período</Label>
+                <Select value={periodo} onValueChange={(v) => setPeriodo(v as "hora" | "dia" | "mês")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="hora">Hora</SelectItem>
+                    <SelectItem value="dia">Dia</SelectItem>
+                    <SelectItem value="mês">Mês</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label>Período</Label>
-              <Select value={periodo} onValueChange={(v) => setPeriodo(v as "hora" | "dia" | "mês")}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="hora">Hora</SelectItem>
-                  <SelectItem value="dia">Dia</SelectItem>
-                  <SelectItem value="mês">Mês</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          )}
 
-          {/* Productivity summary */}
-          {insumoId && (
+          {/* Productivity summary - only for MO/Equipamento */}
+          {insumoId && tipo !== "material" && (
             <div className="bg-muted/50 rounded-lg p-3 border space-y-1 text-sm">
               <div className="font-semibold text-xs uppercase text-muted-foreground">Cálculo de Produtividade</div>
               <div className="grid grid-cols-2 gap-x-4 gap-y-1">
@@ -304,6 +327,21 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
                 <span className="font-mono">{fmtBR(coeficienteCalculado)} h/{unidade}</span>
                 <span className="text-muted-foreground font-semibold">Custo unitário (1 {unidade}):</span>
                 <span className="font-mono font-semibold text-primary">R$ {fmtBR(resultado.custo_unitario)}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Material summary */}
+          {insumoId && tipo === "material" && (
+            <div className="bg-muted/50 rounded-lg p-3 border space-y-1 text-sm">
+              <div className="font-semibold text-xs uppercase text-muted-foreground">Resumo do Material</div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                <span className="text-muted-foreground">Preço unitário:</span>
+                <span className="font-mono font-medium">R$ {fmtBR(paramsMa.custo_unitario)}</span>
+                <span className="text-muted-foreground">Quantidade por un. serviço:</span>
+                <span className="font-mono">{fmtBR(quantidade)}</span>
+                <span className="text-muted-foreground font-semibold">Custo total por un. serviço:</span>
+                <span className="font-mono font-semibold text-primary">R$ {fmtBR(resultado.custo_total)}</span>
               </div>
             </div>
           )}
@@ -333,20 +371,33 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
 
           {/* Resumo do item */}
           <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="text-xs text-muted-foreground">Produtividade</div>
-                <div className="font-mono font-medium">{fmtBR(quantidade)} {unidade}/{periodo}</div>
+            {tipo === "material" ? (
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div>
+                  <div className="text-xs text-muted-foreground">Quantidade/{unidade} serviço</div>
+                  <div className="font-mono font-medium">{fmtBR(quantidade)}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-semibold">Custo Total (1 un. serviço)</div>
+                  <div className="font-mono font-bold text-lg text-primary">R$ {fmtBR(resultado.custo_total)}</div>
+                </div>
               </div>
-              <div>
-                <div className="text-xs text-muted-foreground">Coeficiente</div>
-                <div className="font-mono font-medium">{fmtBR(coeficienteCalculado)} h/{unidade}</div>
+            ) : (
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <div className="text-xs text-muted-foreground">Produtividade</div>
+                  <div className="font-mono font-medium">{fmtBR(quantidade)} {unidade}/{periodo}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Coeficiente</div>
+                  <div className="font-mono font-medium">{fmtBR(coeficienteCalculado)} h/{unidade}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-semibold">Custo Unitário (1 {unidade})</div>
+                  <div className="font-mono font-bold text-lg text-primary">R$ {fmtBR(resultado.custo_unitario)}</div>
+                </div>
               </div>
-              <div>
-                <div className="text-xs text-muted-foreground font-semibold">Custo Unitário (1 {unidade})</div>
-                <div className="font-mono font-bold text-lg text-primary">R$ {fmtBR(resultado.custo_unitario)}</div>
-              </div>
-            </div>
+            )}
           </div>
 
           <DialogFooter>

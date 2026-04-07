@@ -100,11 +100,11 @@ function ItensTable({ itens, tipoIcons, tipoLabels, fmt, resumo, onEdit, onDelet
                   </span>
                 </td>
                 <td className="font-medium text-sm">{String(item.descricao) || "Sem descrição"}</td>
-                <td className="font-mono text-sm">{fmt(item._produtividade)}</td>
+                <td className="font-mono text-sm">{String(item.tipo_insumo) === "material" ? fmt(Number(item.quantidade)) : fmt(item._produtividade)}</td>
                 <td className="text-sm">{String(item.unidade || "un")}</td>
-                <td className="text-sm">{item._periodo}</td>
-                <td className="font-mono text-sm">{fmt(Number(item.coeficiente))}</td>
-                <td className="font-mono text-sm">{`R$ ${fmt(item._custo_unitario)}`}</td>
+                <td className="text-sm">{String(item.tipo_insumo) === "material" ? "—" : item._periodo}</td>
+                <td className="font-mono text-sm">{String(item.tipo_insumo) === "material" ? fmt(Number(item.quantidade)) : fmt(Number(item.coeficiente))}</td>
+                <td className="font-mono text-sm">{String(item.tipo_insumo) === "material" ? `R$ ${fmt(Number(item.custo_total))}` : `R$ ${fmt(item._custo_unitario)}`}</td>
                 <td className="text-center">
                   <div className="flex items-center justify-center gap-1">
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(item)}>
