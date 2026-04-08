@@ -37,6 +37,7 @@ import ComposicaoDetalhe from "./pages/ComposicaoDetalhe";
 import Orcamentos from "./pages/Orcamentos";
 import OrcamentoDetalhe from "./pages/OrcamentoDetalhe";
 import Oportunidades from "./pages/Oportunidades";
+import CustosServicos from "./pages/CustosServicos";
 import ParametrosAdminLocal from "./pages/parametros/AdminLocal";
 import ParametrosAdminCentral from "./pages/parametros/AdminCentral";
 import ParametrosFinanciamento from "./pages/parametros/Financiamento";
@@ -90,6 +91,7 @@ const App = () => {
               <Route path="/orcamentos" element={<Orcamentos />} />
               <Route path="/orcamentos/:id" element={<OrcamentoDetalhe />} />
               <Route path="/oportunidades" element={<Oportunidades />} />
+              <Route path="/custos-servicos" element={<CustosServicos />} />
               <Route path="/admin-local/equipes" element={<AdminLocalEquipes />} />
               <Route path="/admin-local/veiculos" element={<AdminLocalVeiculos />} />
               <Route path="/admin-local/combustivel" element={<AdminLocalCombustivel />} />

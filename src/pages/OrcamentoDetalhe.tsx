@@ -605,33 +605,21 @@ export default function OrcamentoDetalhe() {
             <CardTitle className="text-base flex items-center gap-2">
               <Package className="w-4 h-4 text-primary" />
               Serviços — {oportunidade.grupos_servicos?.nome || "Todos"}
+              <Badge variant="outline" className="ml-2 text-xs">Somente leitura</Badge>
             </CardTitle>
-            {!grupoId && (
-              <Button size="sm" className="gap-1" onClick={addServico}>
-                <Plus className="w-4 h-4" /> Adicionar
-              </Button>
-            )}
           </CardHeader>
           <CardContent>
-            {!grupoId && servicos.length === 0 ? (
+            {servicos.length === 0 ? (
               <div className="text-center py-10 space-y-3">
                 <Package className="w-10 h-10 mx-auto text-muted-foreground/40" />
-                <p className="text-muted-foreground text-sm">Nenhum grupo de serviços selecionado na oportunidade.</p>
-                <p className="text-muted-foreground text-xs">Edite a oportunidade para vincular um grupo, ou adicione composições manualmente.</p>
-                <Button variant="outline" className="gap-2" onClick={addServico}>
-                  <Plus className="w-4 h-4" /> Adicionar composição
-                </Button>
-              </div>
-            ) : servicos.length === 0 ? (
-              <div className="text-center py-10 space-y-3">
-                <Package className="w-10 h-10 mx-auto text-muted-foreground/40" />
-                <p className="text-muted-foreground text-sm">Nenhuma composição encontrada para este grupo.</p>
+                <p className="text-muted-foreground text-sm">Nenhuma composição com quantidade definida.</p>
+                <p className="text-muted-foreground text-xs">Defina as quantidades no menu <strong>Custos de Serviços</strong>.</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {grupoId && (
                   <div className="bg-muted/40 rounded-lg p-3 text-sm text-muted-foreground">
-                    Informe as quantidades de acordo com a unidade de cada serviço.
+                    As quantidades são definidas no menu <strong>Custos de Serviços</strong>.
                   </div>
                 )}
 
@@ -640,10 +628,10 @@ export default function OrcamentoDetalhe() {
                     <thead>
                       <tr className="border-b text-xs font-medium text-muted-foreground">
                         <th className="text-left py-2 px-2">Composição</th>
-                        <th className="text-left py-2 px-2 w-48">Dados de Entrada</th>
+                        <th className="text-right py-2 px-2 w-24">Qtd</th>
+                        <th className="text-left py-2 px-2 w-16">Und</th>
                         <th className="text-right py-2 px-2">Custo Unit.</th>
                         <th className="text-right py-2 px-2">Subtotal</th>
-                        {!grupoId && <th className="w-10"></th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -654,42 +642,13 @@ export default function OrcamentoDetalhe() {
                         return (
                           <tr key={idx} className="border-b hover:bg-muted/30">
                             <td className="py-2 px-2">
-                              {grupoId ? (
-                                <div>
-                                  <span className="font-medium">{comp?.codigo} — {comp?.nome || "—"}</span>
-                                </div>
-                              ) : (
-                                <Select
-                                  value={s.composicao_id}
-                                  onValueChange={(v) => updateServico(idx, "composicao_id", v)}
-                                >
-                                  <SelectTrigger className="h-9 text-sm">
-                                    <SelectValue placeholder="Selecione..." />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {(composicoes || []).map((c: any) => (
-                                      <SelectItem key={c.id} value={c.id}>
-                                        {c.codigo} — {c.nome}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              )}
+                              <span className="font-medium">{comp?.codigo} — {comp?.nome || "—"}</span>
                             </td>
-                            <td className="py-2 px-2">
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  value={s.quantidade}
-                                  onChange={(e) => updateServico(idx, "quantidade", parseFloat(e.target.value) || 0)}
-                                  placeholder="0"
-                                  className="h-9 text-sm text-right w-24"
-                                />
-                                <span className="text-xs text-muted-foreground font-medium whitespace-nowrap min-w-[60px]">
-                                  {unidade}
-                                </span>
-                              </div>
+                            <td className="py-2 px-2 text-right font-medium tabular-nums">
+                              {s.quantidade.toLocaleString("pt-BR")}
+                            </td>
+                            <td className="py-2 px-2 text-xs text-muted-foreground">
+                              {unidade}
                             </td>
                             <td className="py-2 px-2 text-right font-medium">
                               {fmt(comp?.custo_unitario_total || 0)}
@@ -697,13 +656,6 @@ export default function OrcamentoDetalhe() {
                             <td className="py-2 px-2 text-right font-semibold">
                               {fmt(subtotal)}
                             </td>
-                            {!grupoId && (
-                              <td className="py-2 px-2 text-center">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeServico(idx)}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </td>
-                            )}
                           </tr>
                         );
                       })}
