@@ -154,7 +154,7 @@ function OrderableTable({
 
   return (
     <div>
-      <div className="px-4 py-2 border-b flex items-center gap-2">
+      <div className="px-4 py-2 border-b flex items-center gap-2 sticky top-0 z-10 bg-card">
         {showSubInput ? (
           <div className="flex items-center gap-2">
             <input
