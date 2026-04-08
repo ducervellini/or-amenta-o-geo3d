@@ -416,11 +416,14 @@ function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: 
 
   // Calculate field days per service
   const servicoDuracoes = useMemo(() => {
-    if (!composicoesOp?.length || !servicosData?.length || !orcamentoOp?.orcamento_itens_servico) return [];
+    if (!servicosData?.length) return [];
 
+    // Build qty map from orcamento itens
     const qtdMap: Record<string, number> = {};
-    for (const item of orcamentoOp.orcamento_itens_servico) {
-      qtdMap[item.composicao_id] = Number(item.quantidade || 0);
+    if (orcamentoOp?.orcamento_itens_servico) {
+      for (const item of orcamentoOp.orcamento_itens_servico) {
+        qtdMap[item.composicao_id] = Number(item.quantidade || 0);
+      }
     }
 
     const servicoMap: Record<string, any> = {};
@@ -438,28 +441,40 @@ function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: 
       unidade_tempo: string;
       dias_campo: number;
       meses: number;
+      sem_produtividade: boolean;
+      sem_quantidade: boolean;
     }[] = [];
 
-    for (const comp of composicoesOp) {
-      const qty = qtdMap[comp.id] || 0;
-      if (qty <= 0) continue;
+    // If we have composições, use them; otherwise show services directly
+    const items = composicoesOp?.length ? composicoesOp : servicosData?.map((s: any) => ({
+      id: s.id,
+      codigo: s.codigo,
+      nome: s.nome,
+      unidade: s.unidade_medicao,
+      servico_id: s.id,
+    }));
+
+    for (const comp of items || []) {
       const servico = servicoMap[comp.servico_id];
       if (!servico) continue;
 
+      const qty = qtdMap[comp.id] || 0;
       const prod = Number(servico.produtividade_padrao || 0);
       const unidadeTempo = servico.unidade_tempo_produtividade || "dia";
 
-      if (prod <= 0) {
+      if (prod <= 0 || qty <= 0) {
         result.push({
           composicao_id: comp.id,
           codigo: comp.codigo,
           nome: comp.nome,
-          unidade: comp.unidade,
+          unidade: comp.unidade || servico.unidade_medicao,
           quantidade: qty,
-          produtividade: 0,
+          produtividade: prod,
           unidade_tempo: unidadeTempo,
           dias_campo: 0,
           meses: 0,
+          sem_produtividade: prod <= 0,
+          sem_quantidade: qty <= 0,
         });
         continue;
       }
@@ -479,12 +494,14 @@ function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: 
         composicao_id: comp.id,
         codigo: comp.codigo,
         nome: comp.nome,
-        unidade: comp.unidade,
+        unidade: comp.unidade || servico.unidade_medicao,
         quantidade: qty,
         produtividade: prod,
         unidade_tempo: unidadeTempo,
         dias_campo: diasCampo,
         meses,
+        sem_produtividade: false,
+        sem_quantidade: false,
       });
     }
 
