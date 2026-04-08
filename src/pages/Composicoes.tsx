@@ -184,6 +184,26 @@ export default function Composicoes() {
     r.nome.toLowerCase().includes(search.toLowerCase()) ||
     r.codigo.toLowerCase().includes(search.toLowerCase());
 
+  const { orderedItems: orderedAvulsas, moveItem, insertSubtitle, removeSubtitle, editSubtitle } =
+    useRowOrdering("composicoes", avulsaRows.filter(matchesSearch) as any);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor)
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = orderedAvulsas.findIndex((i) => i._orderingId === active.id);
+    const newIndex = orderedAvulsas.findIndex((i) => i._orderingId === over.id);
+    if (oldIndex !== -1 && newIndex !== -1) moveItem(oldIndex, newIndex);
+  };
+
+  const handleAddSubtitle = () => {
+    if (subText.trim()) { insertSubtitle(subText.trim()); setSubText(""); setShowSubInput(false); }
+  };
+
   const toggleGroup = (id: string) => {
     setExpandedGroups((prev) => {
       const next = new Set(prev);
