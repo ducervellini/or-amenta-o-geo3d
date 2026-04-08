@@ -51,7 +51,35 @@ const tipoLabels: Record<string, string> = {
 };
 const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
-function ItensTable({ itens, tipoIcons, tipoLabels, fmt, resumo, onEdit, onDelete }: {
+function SubtitleInlineRow({ item, colSpan, onEdit, onRemove }: {
+  item: OrderedItem; colSpan: number;
+  onEdit: (id: string, text: string) => void; onRemove: (id: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(item._subtitleText || "");
+  return (
+    <>
+      <td colSpan={colSpan} className="py-2 px-4">
+        {editing ? (
+          <input autoFocus className="text-sm font-semibold bg-transparent border-b border-primary outline-none w-full"
+            value={text} onChange={(e) => setText(e.target.value)}
+            onBlur={() => { onEdit(item._orderingId, text); setEditing(false); }}
+            onKeyDown={(e) => { if (e.key === "Enter") { onEdit(item._orderingId, text); setEditing(false); } }} />
+        ) : (
+          <span className="text-sm font-semibold text-primary uppercase tracking-wide">{item._subtitleText}</span>
+        )}
+      </td>
+      <td className="text-center">
+        <div className="flex items-center justify-center gap-1">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditing(true)}><Pencil className="w-3 h-3" /></Button>
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onRemove(item._orderingId)}><X className="w-3 h-3" /></Button>
+        </div>
+      </td>
+    </>
+  );
+}
+
+function ItensTable({ itens, tipoIcons, tipoLabels, fmt, resumo, onEdit, onDelete, composicaoId }: {
   itens: any[];
   tipoIcons: Record<string, React.ElementType>;
   tipoLabels: Record<string, string>;
@@ -59,6 +87,7 @@ function ItensTable({ itens, tipoIcons, tipoLabels, fmt, resumo, onEdit, onDelet
   resumo: { custo_direto: number };
   onEdit: (item: any) => void;
   onDelete: (id: string) => void;
+  composicaoId?: string;
 }) {
   const flatData = itens.map((item) => {
     const params = (item.parametros || {}) as Record<string, unknown>;
@@ -73,7 +102,31 @@ function ItensTable({ itens, tipoIcons, tipoLabels, fmt, resumo, onEdit, onDelet
       _produtividade: produtividade,
     };
   });
-  const { sorted, sortKey, sortDirection, handleSort } = useTableSort(flatData);
+
+  const tableName = composicaoId ? `composicao_itens_${composicaoId}` : "composicao_itens";
+  const { orderedItems, moveItem, insertSubtitle, removeSubtitle, editSubtitle } =
+    useRowOrdering(tableName, flatData);
+
+  const [showSubInput, setShowSubInput] = useState(false);
+  const [subText, setSubText] = useState("");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor)
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = orderedItems.findIndex((i) => i._orderingId === active.id);
+    const newIndex = orderedItems.findIndex((i) => i._orderingId === over.id);
+    if (oldIndex !== -1 && newIndex !== -1) moveItem(oldIndex, newIndex);
+  };
+
+  const handleAddSubtitle = () => {
+    if (subText.trim()) { insertSubtitle(subText.trim()); setSubText(""); setShowSubInput(false); }
+  };
+
   const cols = [
     { key: "tipo_insumo", label: "Tipo" },
     { key: "descricao", label: "Descrição" },
@@ -83,54 +136,84 @@ function ItensTable({ itens, tipoIcons, tipoLabels, fmt, resumo, onEdit, onDelet
     { key: "coeficiente", label: "Coef. (h)" },
     { key: "_custo_unitario", label: "Custo Unit." },
   ];
+
   return (
-    <div className="overflow-x-auto">
-      <table className="data-table">
-        <thead>
-          <tr>
-            {cols.map((col) => (
-              <SortableHeader key={col.key} label={col.label} sortKey={col.key} currentSort={sortKey} currentDirection={sortDirection} onSort={handleSort} />
-            ))}
-            <th className="text-center">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.map((item: any) => {
-            const Icon = tipoIcons[String(item.tipo_insumo)] || Package;
-            return (
-              <tr key={String(item.id)} className="hover:bg-muted/50">
-                <td>
-                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
-                    <Icon className="w-3 h-3" />
-                    {item._tipo_label}
-                  </span>
-                </td>
-                <td className="font-medium text-sm">{String(item.descricao) || "Sem descrição"}</td>
-                <td className="font-mono text-sm">{String(item.tipo_insumo) === "material" ? fmt(Number(item.quantidade)) : fmt(item._produtividade)}</td>
-                <td className="text-sm">{String(item.unidade || "un")}</td>
-                <td className="text-sm">{String(item.tipo_insumo) === "material" ? "—" : item._periodo}</td>
-                <td className="font-mono text-sm">{String(item.tipo_insumo) === "material" ? fmt(Number(item.quantidade)) : fmt(Number(item.coeficiente))}</td>
-                <td className="font-mono text-sm">{String(item.tipo_insumo) === "material" ? `R$ ${fmt(Number(item.custo_total))}` : `R$ ${fmt(item._custo_unitario)}`}</td>
-                <td className="text-center">
-                  <div className="flex items-center justify-center gap-1">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(item)}>
-                      <Edit className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(String(item.id))}>
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                </td>
+    <div>
+      <div className="px-4 py-2 border-b flex items-center gap-2">
+        {showSubInput ? (
+          <div className="flex items-center gap-2">
+            <input autoFocus placeholder="Texto do subtítulo..." className="text-sm px-2 py-1 bg-muted rounded border-0 outline-none focus:ring-2 focus:ring-ring"
+              value={subText} onChange={(e) => setSubText(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleAddSubtitle(); if (e.key === "Escape") setShowSubInput(false); }} />
+            <Button size="sm" variant="outline" onClick={handleAddSubtitle}>Adicionar</Button>
+            <Button size="sm" variant="ghost" onClick={() => setShowSubInput(false)}>Cancelar</Button>
+          </div>
+        ) : (
+          <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => setShowSubInput(true)}>
+            <Type className="w-3 h-3" /> Inserir subtítulo
+          </Button>
+        )}
+      </div>
+      <div className="overflow-x-auto">
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th className="w-8"></th>
+                {cols.map((col) => (
+                  <th key={col.key}>{col.label}</th>
+                ))}
+                <th className="text-center">Ações</th>
               </tr>
-            );
-          })}
-          <tr className="border-t-2 font-semibold bg-muted/30">
-            <td colSpan={6} className="text-right text-sm">Total da Composição</td>
-            <td className="font-mono text-sm">R$ {fmt(resumo.custo_direto)}</td>
-            <td></td>
-          </tr>
-        </tbody>
-      </table>
+            </thead>
+            <SortableContext items={orderedItems.map((i) => i._orderingId)} strategy={verticalListSortingStrategy}>
+              <tbody>
+                {orderedItems.map((item: any) => {
+                  if (item._isSubtitle) {
+                    return (
+                      <SortableRow key={item._orderingId} id={item._orderingId} isSubtitle>
+                        <SubtitleInlineRow item={item} colSpan={cols.length} onEdit={editSubtitle} onRemove={removeSubtitle} />
+                      </SortableRow>
+                    );
+                  }
+                  const Icon = tipoIcons[String(item.tipo_insumo)] || Package;
+                  return (
+                    <SortableRow key={item._orderingId} id={item._orderingId}>
+                      <td>
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
+                          <Icon className="w-3 h-3" />
+                          {item._tipo_label}
+                        </span>
+                      </td>
+                      <td className="font-medium text-sm">{String(item.descricao) || "Sem descrição"}</td>
+                      <td className="font-mono text-sm">{String(item.tipo_insumo) === "material" ? fmt(Number(item.quantidade)) : fmt(item._produtividade)}</td>
+                      <td className="text-sm">{String(item.unidade || "un")}</td>
+                      <td className="text-sm">{String(item.tipo_insumo) === "material" ? "—" : item._periodo}</td>
+                      <td className="font-mono text-sm">{String(item.tipo_insumo) === "material" ? fmt(Number(item.quantidade)) : fmt(Number(item.coeficiente))}</td>
+                      <td className="font-mono text-sm">{String(item.tipo_insumo) === "material" ? `R$ ${fmt(Number(item.custo_total))}` : `R$ ${fmt(item._custo_unitario)}`}</td>
+                      <td className="text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(item)}>
+                            <Edit className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(String(item.id))}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    </SortableRow>
+                  );
+                })}
+                <tr className="border-t-2 font-semibold bg-muted/30">
+                  <td></td>
+                  <td colSpan={6} className="text-right text-sm">Total da Composição</td>
+                  <td className="font-mono text-sm">R$ {fmt(resumo.custo_direto)}</td>
+                </tr>
+              </tbody>
+            </SortableContext>
+          </table>
+        </DndContext>
+      </div>
     </div>
   );
 }
