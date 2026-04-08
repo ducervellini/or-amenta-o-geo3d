@@ -312,19 +312,14 @@ export default function Composicoes() {
           </div>
         ) : (
           <div className="overflow-x-auto">
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <table className="data-table">
               <thead>
                 <tr>
+                  <th className="w-8"></th>
                   <th className="w-10"></th>
                   {cols.slice(1).filter((col) => visibleCols.has(col.key)).map((col) => (
-                    <SortableHeader
-                      key={col.key}
-                      label={col.label}
-                      sortKey={col.key}
-                      currentSort={sortKey}
-                      currentDirection={sortDirection}
-                      onSort={handleSort}
-                    />
+                    <th key={col.key}>{col.label}</th>
                   ))}
                   <th className="text-center">Ações</th>
                 </tr>
@@ -343,6 +338,7 @@ export default function Composicoes() {
                         className="bg-muted/30 hover:bg-muted/50 cursor-pointer font-medium"
                         onClick={() => toggleGroup(String(grupo.id))}
                       >
+                        <td></td>
                         <td className="w-10">
                           {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                         </td>
@@ -381,34 +377,90 @@ export default function Composicoes() {
                   );
                 })}
 
-                {/* Ungrouped / avulsa rows */}
-                {avulsaRows.filter(matchesSearch).length > 0 && grupoRows.length > 0 && (
+                {/* Ungrouped / avulsa rows with drag-drop */}
+                {orderedAvulsas.length > 0 && grupoRows.length > 0 && (
                   <tr className="bg-muted/20">
-                     <td colSpan={visibleCols.size + 2} className="text-xs font-semibold text-muted-foreground py-2">
+                    <td colSpan={visibleCols.size + 3} className="text-xs font-semibold text-muted-foreground py-2">
                       Sem grupo
                     </td>
                   </tr>
                 )}
-                {avulsaRows.filter(matchesSearch).map((row) => (
-                  <ServiceRow
-                    key={`${row.type}-${row.id}`}
-                    row={row}
-                    navigate={navigate}
-                    setDeletingId={setDeletingId}
-                    getMercadoNome={getMercadoNome}
-                    getAreaNome={getAreaNome}
-                    getModuloNome={getModuloNome}
-                    visibleCols={visibleCols}
-                  />
-                ))}
+                <SortableContext items={orderedAvulsas.map((i) => i._orderingId)} strategy={verticalListSortingStrategy}>
+                  {orderedAvulsas.map((item) => {
+                    if (item._isSubtitle) {
+                      return (
+                        <SortableRow key={item._orderingId} id={item._orderingId} isSubtitle>
+                          <td colSpan={visibleCols.size + 1} className="py-2 px-4">
+                            <span className="text-sm font-semibold text-primary uppercase tracking-wide">{item._subtitleText}</span>
+                          </td>
+                          <td className="text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                                const newText = prompt("Editar subtítulo:", item._subtitleText);
+                                if (newText) editSubtitle(item._orderingId, newText);
+                              }}><Pencil className="w-3 h-3" /></Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeSubtitle(item._orderingId)}><X className="w-3 h-3" /></Button>
+                            </div>
+                          </td>
+                        </SortableRow>
+                      );
+                    }
+                    const row = item as unknown as RowData;
+                    return (
+                      <SortableRow key={item._orderingId} id={item._orderingId}>
+                        {(() => {
+                          const handleClick = () => {
+                            if (row.type === "composicao") navigate(`/composicoes/${row.id}`);
+                            else navigate(`/composicoes/novo?servico_id=${row.id}`);
+                          };
+                          const cellMap: Record<string, React.ReactNode> = {
+                            ordem_id: <td key="ordem_id" className="font-mono text-xs font-semibold">{row.ordem_id || "-"}</td>,
+                            grupo_nome: <td key="grupo_nome" className="text-sm text-muted-foreground">{row.grupo_nome || "-"}</td>,
+                            codigo: <td key="codigo" className="font-medium text-accent cursor-pointer" onClick={handleClick}>{row.codigo}</td>,
+                            nome: <td key="nome" className="font-medium cursor-pointer" onClick={handleClick}>{row.nome}</td>,
+                            mercado_id: <td key="mercado_id" className="text-sm">{getMercadoNome(row.mercado_id as string | null)}</td>,
+                            area_empresa_id: <td key="area_empresa_id"><span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">{getAreaNome(row.area_empresa_id as string | null)}</span></td>,
+                            modulo_id: <td key="modulo_id" className="text-sm">{getModuloNome(row.modulo_id as string | null)}</td>,
+                            descricao: <td key="descricao" className="text-sm text-muted-foreground max-w-[200px] truncate">{row.descricao ? String(row.descricao) : "-"}</td>,
+                            unidade: <td key="unidade" className="text-sm">{row.unidade}</td>,
+                            custo_unitario_total: <td key="custo_unitario_total" className="font-semibold font-mono">{row.type === "composicao" ? `R$ ${fmt(row.custo_unitario_total)}` : <span className="text-xs text-muted-foreground italic">Sem composição</span>}</td>,
+                          };
+                          return (
+                            <>
+                              {["ordem_id", "grupo_nome", "codigo", "nome", "mercado_id", "area_empresa_id", "modulo_id", "descricao", "unidade", "custo_unitario_total"]
+                                .filter((k) => visibleCols.has(k))
+                                .map((k) => cellMap[k])}
+                              <td className="text-center">
+                                <div className="flex items-center justify-center gap-1">
+                                  {row.type === "composicao" ? (
+                                    <>
+                                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/${row.id}`); }}><Eye className="w-4 h-4" /></Button>
+                                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/${row.id}`); }}><Edit className="w-4 h-4" /></Button>
+                                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); setDeletingId(row.id); }}><Trash2 className="w-4 h-4" /></Button>
+                                    </>
+                                  ) : (
+                                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/novo?servico_id=${row.id}`); }}>
+                                      <Plus className="w-3 h-3 mr-1" />Criar
+                                    </Button>
+                                  )}
+                                </div>
+                              </td>
+                            </>
+                          );
+                        })()}
+                      </SortableRow>
+                    );
+                  })}
+                </SortableContext>
 
-                {grupoRows.length === 0 && avulsaRows.filter(matchesSearch).length === 0 && (
+                {grupoRows.length === 0 && orderedAvulsas.length === 0 && (
                   <tr>
-                    <td colSpan={11} className="text-center py-8 text-muted-foreground">Nenhuma composição encontrada</td>
+                    <td colSpan={12} className="text-center py-8 text-muted-foreground">Nenhuma composição encontrada</td>
                   </tr>
                 )}
               </tbody>
             </table>
+          </DndContext>
           </div>
         )}
       </div>
