@@ -436,17 +436,21 @@ export default function OrcamentoDetalhe() {
       deslocamentosPorCategoria,
       custoDeslocamentos,
       custoMobDesmob,
-      composicaoItens: (composicaoItens || []).map((ci: any) => ({
-        composicaoId: ci.composicao_id,
-        composicaoCodigo: "",
-        tipoInsumo: ci.tipo_insumo,
-        descricao: ci.descricao || "",
-        custoUnitario: ci.custo_unitario || 0,
-        quantidade: ci.quantidade || 1,
-        coeficiente: ci.coeficiente || 1,
-        custoTotal: ci.custo_total || 0,
-        unidade: ci.unidade || "un",
-      })),
+      composicaoItens: (composicaoItens || []).map((ci: any) => {
+        const comp = (composicoes || []).find((c: any) => c.id === ci.composicao_id);
+        return {
+          composicaoId: ci.composicao_id,
+          composicaoCodigo: comp?.codigo || "",
+          tipoInsumo: ci.tipo_insumo,
+          descricao: ci.descricao || "",
+          custoUnitario: ci.custo_unitario || 0,
+          quantidade: ci.quantidade || 1,
+          coeficiente: ci.coeficiente || 1,
+          custoTotal: ci.custo_total || 0,
+          unidade: ci.unidade || "un",
+          parametros: ci.parametros || {},
+        };
+      }),
       numEquipes: 4,
     };
 
