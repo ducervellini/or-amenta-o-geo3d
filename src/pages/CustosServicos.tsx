@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,10 +63,19 @@ function SubtitleRow({ item, colSpan, onEdit, onRemove }: {
 }
 
 export default function CustosServicos() {
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const [selectedOportunidadeId, setSelectedOportunidadeId] = useState<string>("");
   const [quantidades, setQuantidades] = useState<Record<string, number>>({});
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-select oportunidade from query param
+  useEffect(() => {
+    const opId = searchParams.get("oportunidade");
+    if (opId && !selectedOportunidadeId) {
+      setSelectedOportunidadeId(opId);
+    }
+  }, [searchParams]);
 
   /* ── Queries ── */
 

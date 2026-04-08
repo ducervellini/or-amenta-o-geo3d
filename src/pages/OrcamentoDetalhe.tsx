@@ -478,9 +478,19 @@ export default function OrcamentoDetalhe() {
           <Button variant="outline" className="gap-2" onClick={() => window.print()}>
             <Printer className="w-4 h-4" /> Imprimir
           </Button>
+          {activeStep === "servicos" && (
+            <Button variant="outline" className="gap-2" onClick={() => navigate(`/custos-servicos?oportunidade=${id}`)}>
+              <ExternalLink className="w-4 h-4" /> Editar Custos
+            </Button>
+          )}
+          {activeStep === "adm-local" && (
+            <Button variant="outline" className="gap-2" onClick={() => navigate(`/mobilizacao?oportunidade=${id}`)}>
+              <ExternalLink className="w-4 h-4" /> Editar ADM Local
+            </Button>
+          )}
           <Button className="gap-2" onClick={handleSalvar} disabled={!podesSalvar || saving}>
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Salvar
+            Salvar Orçamento
           </Button>
         </div>
       </div>
@@ -605,24 +615,32 @@ export default function OrcamentoDetalhe() {
             <CardTitle className="text-base flex items-center gap-2">
               <Package className="w-4 h-4 text-primary" />
               Serviços — {oportunidade.grupos_servicos?.nome || "Todos"}
-              <Badge variant="outline" className="ml-2 text-xs">Somente leitura</Badge>
             </CardTitle>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1"
+              onClick={() => navigate(`/custos-servicos?oportunidade=${id}`)}
+            >
+              <ExternalLink className="w-4 h-4" />
+              Editar Quantidades
+            </Button>
           </CardHeader>
           <CardContent>
-            {servicos.length === 0 ? (
+            {servicos.length === 0 || servicosValidos.length === 0 ? (
               <div className="text-center py-10 space-y-3">
                 <Package className="w-10 h-10 mx-auto text-muted-foreground/40" />
                 <p className="text-muted-foreground text-sm">Nenhuma composição com quantidade definida.</p>
-                <p className="text-muted-foreground text-xs">Defina as quantidades no menu <strong>Custos de Serviços</strong>.</p>
+                <Button
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => navigate(`/custos-servicos?oportunidade=${id}`)}
+                >
+                  <Plus className="w-4 h-4" /> Definir Quantidades
+                </Button>
               </div>
             ) : (
               <div className="space-y-3">
-                {grupoId && (
-                  <div className="bg-muted/40 rounded-lg p-3 text-sm text-muted-foreground">
-                    As quantidades são definidas no menu <strong>Custos de Serviços</strong>.
-                  </div>
-                )}
-
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -639,6 +657,7 @@ export default function OrcamentoDetalhe() {
                         const comp = (composicoes || []).find((c: any) => c.id === s.composicao_id);
                         const subtotal = (comp?.custo_unitario_total || 0) * s.quantidade;
                         const unidade = comp?.unidade || "un";
+                        if (s.quantidade <= 0) return null;
                         return (
                           <tr key={idx} className="border-b hover:bg-muted/30">
                             <td className="py-2 px-2">

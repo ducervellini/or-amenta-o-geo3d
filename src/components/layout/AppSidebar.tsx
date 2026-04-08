@@ -77,10 +77,16 @@ const navigation: NavItem[] = [
   },
   { label: "Composições", path: "/composicoes", icon: Layers },
   { label: "Oportunidades", path: "/oportunidades", icon: Briefcase },
-  { label: "Custos de Serviços", path: "/custos-servicos", icon: DollarSign },
-  { label: "ADM Local", path: "/mobilizacao", icon: Building },
-  { label: "BDI & DRE", path: "/bdi", icon: Calculator },
-  { label: "Orçamentos", path: "/orcamentos", icon: FileText },
+  {
+    label: "Orçamentos",
+    icon: FileText,
+    children: [
+      { label: "Lista de Orçamentos", path: "/orcamentos", icon: FileText },
+      { label: "Custos de Serviços", path: "/custos-servicos", icon: DollarSign },
+      { label: "ADM Local", path: "/mobilizacao", icon: Building },
+      { label: "BDI & DRE", path: "/bdi", icon: Calculator },
+    ],
+  },
   { label: "Configurações", path: "/configuracoes", icon: Settings },
 ];
 
@@ -90,8 +96,18 @@ interface AppSidebarProps {
 }
 
 export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
-  const [openMenus, setOpenMenus] = useState<string[]>(["Hierarquia"]);
   const location = useLocation();
+
+  // Auto-open groups that contain the active route
+  const [openMenus, setOpenMenus] = useState<string[]>(() => {
+    const initial = ["Hierarquia"];
+    for (const item of navigation) {
+      if (item.children?.some(c => location.pathname === c.path || location.pathname.startsWith(c.path + "/"))) {
+        initial.push(item.label);
+      }
+    }
+    return initial;
+  });
 
   const toggleMenu = (label: string) => {
     setOpenMenus((prev) =>
@@ -99,9 +115,9 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
     );
   };
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + "/");
   const isChildActive = (children?: { path: string }[]) =>
-    children?.some((c) => location.pathname === c.path);
+    children?.some((c) => location.pathname === c.path || location.pathname.startsWith(c.path + "/"));
 
   return (
     <aside
