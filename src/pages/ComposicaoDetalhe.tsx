@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   ArrowLeft, Plus, Edit, Trash2, Users, Wrench, Truck, Package,
-  ChevronDown, ChevronUp, Save, BarChart3, History, Layers, Shield,
+  ChevronDown, ChevronUp, Save, BarChart3, History, Layers, Shield, Type, Pencil, X,
 } from "lucide-react";
 import { ComposicaoItemForm } from "@/components/composicao/ComposicaoItemForm";
 import { ResumoComposicao } from "@/components/composicao/ResumoComposicao";
