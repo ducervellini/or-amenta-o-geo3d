@@ -115,9 +115,9 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
     );
   };
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + "/");
   const isChildActive = (children?: { path: string }[]) =>
-    children?.some((c) => location.pathname === c.path);
+    children?.some((c) => location.pathname === c.path || location.pathname.startsWith(c.path + "/"));
 
   return (
     <aside
