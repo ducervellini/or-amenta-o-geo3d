@@ -380,7 +380,7 @@ export default function ComposicaoDetalhe() {
       try {
         if (tipo === "mao_de_obra") return { ...item, resultado: calcularMaoDeObra({ ...getDefaultParamsMaoDeObra(), ...params } as ParametrosMaoDeObra, 1, coef) };
         if (tipo === "equipamento") return { ...item, resultado: calcularEquipamento({ ...getDefaultParamsEquipamento(), ...params } as ParametrosEquipamento, 1, coef) };
-        if (tipo === "veiculo") return { ...item, resultado: calcularMaterial({ ...getDefaultParamsMaterial(), ...params } as ParametrosMaterial, 1, coef) };
+        if (tipo === "veiculo") return { ...item, resultado: calcularVeiculo({ ...getDefaultParamsVeiculo(), ...params } as ParametrosVeiculo, 1, coef) };
         return { ...item, resultado: calcularMaterial({ ...getDefaultParamsMaterial(), ...params } as ParametrosMaterial, 1, coef) };
       } catch {
         return { ...item, resultado: { custo_unitario: Number(item.custo_unitario) || 0, custo_total: Number(item.custo_total) || 0, memoria: [] } };
@@ -716,6 +716,7 @@ export default function ComposicaoDetalhe() {
         onOpenChange={setShowItemForm}
         tipoInicial={tipoNovo}
         initialValues={editingItem || undefined}
+        existingItems={itens}
         onSubmit={handleSaveItem}
         loading={insertItem.isPending || updateItem.isPending}
         servicoUnidade={unidade}
