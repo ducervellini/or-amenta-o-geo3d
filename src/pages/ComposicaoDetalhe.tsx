@@ -5,6 +5,12 @@ import { useSupabaseQuery, useSupabaseInsert, useSupabaseUpdate, useSupabaseDele
 import { Button } from "@/components/ui/button";
 import { SortableHeader, useTableSort } from "@/components/ui/sortable-header";
 import { Input } from "@/components/ui/input";
+import { useRowOrdering, OrderedItem } from "@/hooks/useRowOrdering";
+import { SortableRow } from "@/components/ui/sortable-row";
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent,
+} from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
