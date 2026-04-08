@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft, Plus, Trash2, Save, ExternalLink, Loader2,
-  Users, Wrench, Package, Truck, Route, Calculator, TrendingUp,
+  Users, Wrench, Package, Truck, Route, Calculator, TrendingUp, Target,
   ChevronDown, ChevronUp, Printer, Check, ChevronRight, ChevronLeft,
   Building, FileText, DollarSign,
 } from "lucide-react";
