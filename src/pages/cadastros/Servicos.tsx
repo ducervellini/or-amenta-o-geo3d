@@ -170,6 +170,34 @@ export default function Servicos() {
           ],
           defaultValue: "un",
         },
+        {
+          name: "produtividade_padrao",
+          label: "Produtividade Padrão",
+          type: "number",
+          placeholder: "Ex: 3.5 (unidades por período)",
+        },
+        {
+          name: "unidade_tempo_produtividade",
+          label: "Unidade de Tempo da Produtividade",
+          type: "select",
+          options: [
+            { label: "por hora", value: "hora" },
+            { label: "por dia", value: "dia" },
+            { label: "por mês", value: "mes" },
+          ],
+          defaultValue: "dia",
+        },
+        {
+          name: "tipo_geometria",
+          label: "Tipo de Geometria",
+          type: "select",
+          options: [
+            { label: "Ponto", value: "ponto" },
+            { label: "Linha", value: "linha" },
+            { label: "Área", value: "area" },
+          ],
+          defaultValue: "ponto",
+        },
       ]}
     />
   );
