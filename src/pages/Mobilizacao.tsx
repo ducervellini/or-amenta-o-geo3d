@@ -1919,7 +1919,7 @@ function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: 
 
           {/* ── Coluna Direita: Resumo ── */}
           <div className="space-y-4">
-            <Card className="sticky top-4">
+            <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Calculator className="w-4 h-4 text-primary" />
@@ -2181,10 +2181,16 @@ function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: 
               <span>Oportunidade: <strong>{oportunidadeSelecionada.codigo} — {oportunidadeSelecionada.descricao}</strong></span>
             )}
           </div>
-          <Button size="lg" className="gap-2 px-8" disabled={!formValido || saving} onClick={handleSalvar}>
-            {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-            {saving ? "Salvando..." : "Salvar ADM Local"}
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="lg" className="gap-2" onClick={handleExportarRelatorio} disabled={!servicoDuracoes.length}>
+              <Printer className="w-5 h-5" />
+              Exportar Relatório
+            </Button>
+            <Button size="lg" className="gap-2 px-8" disabled={!formValido || saving} onClick={handleSalvar}>
+              {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+              {saving ? "Salvando..." : "Salvar ADM Local"}
+            </Button>
+          </div>
         </div>
       </div>
     </TooltipProvider>
