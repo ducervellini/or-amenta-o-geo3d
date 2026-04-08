@@ -443,7 +443,7 @@ export default function OrcamentoDetalhe() {
     }
   };
 
-
+  const handleSalvar = async () => {
     if (!podesSalvar) {
       return toast.error("Adicione ao menos uma composição com quantidade válida");
     }
