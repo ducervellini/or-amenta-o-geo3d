@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { OportunidadeGate } from "@/components/orcamento/OportunidadeGate";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -279,6 +280,16 @@ function Section({
 }
 
 export default function Mobilizacao() {
+  return (
+    <OportunidadeGate>
+      {(gateOportunidadeId) => (
+        <MobilizacaoContent initialOportunidadeId={gateOportunidadeId} />
+      )}
+    </OportunidadeGate>
+  );
+}
+
+function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: string }) {
   const [searchParams] = useSearchParams();
   const loadedRef = useRef(false);
   // ── State ──
@@ -328,8 +339,8 @@ export default function Mobilizacao() {
   const [loadingPluv, setLoadingPluv] = useState(false);
 
 
-  // Oportunidade selecionada
-  const [oportunidadeId, setOportunidadeId] = useState<string>("");
+  // Oportunidade selecionada (comes from gate)
+  const [oportunidadeId, setOportunidadeId] = useState<string>(initialOportunidadeId);
   const { data: oportunidades } = useSupabaseQuery("oportunidades");
   const { data: clientes } = useSupabaseQuery("clientes");
   const oportunidadeSelecionada = useMemo(() => {
@@ -501,11 +512,8 @@ export default function Mobilizacao() {
 
   // ── Load existing mobilização from query param ──
   useEffect(() => {
-    const opId = searchParams.get("oportunidade");
+    const opId = initialOportunidadeId;
     if (!opId || loadedRef.current) return;
-    
-    // Set oportunidade
-    setOportunidadeId(opId);
 
     // Load existing mobilização for this oportunidade
     const loadMobilizacao = async () => {
@@ -1058,7 +1066,7 @@ export default function Mobilizacao() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* ── Coluna Esquerda: Entradas ── */}
           <div className="lg:col-span-2 space-y-4">
-            {/* Oportunidade */}
+            {/* Oportunidade (read-only from gate) */}
             <Card>
               <CardHeader className="py-3">
                 <CardTitle className="text-sm flex items-center gap-2">
@@ -1067,20 +1075,8 @@ export default function Mobilizacao() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <Select value={oportunidadeId} onValueChange={setOportunidadeId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma oportunidade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(oportunidades as any[] || []).filter((o: any) => o.ativo !== false).map((o: any) => (
-                      <SelectItem key={o.id} value={o.id}>
-                        {o.codigo} — {o.descricao}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
                 {oportunidadeSelecionada && (
-                  <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                     <div>
                       <span className="text-muted-foreground">Código:</span>
                       <p className="font-medium">{oportunidadeSelecionada.codigo}</p>

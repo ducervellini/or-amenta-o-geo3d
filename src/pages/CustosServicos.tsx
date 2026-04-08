@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { OportunidadeGate } from "@/components/orcamento/OportunidadeGate";
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -63,38 +64,22 @@ function SubtitleRow({ item, colSpan, onEdit, onRemove }: {
 }
 
 export default function CustosServicos() {
-  const [searchParams] = useSearchParams();
+  return (
+    <OportunidadeGate>
+      {(oportunidadeId, oportunidade) => (
+        <CustosServicosContent oportunidadeId={oportunidadeId} oportunidade={oportunidade} />
+      )}
+    </OportunidadeGate>
+  );
+}
+
+function CustosServicosContent({ oportunidadeId, oportunidade }: { oportunidadeId: string; oportunidade: any }) {
   const queryClient = useQueryClient();
-  const [selectedOportunidadeId, setSelectedOportunidadeId] = useState<string>("");
+  const selectedOportunidadeId = oportunidadeId;
   const [quantidades, setQuantidades] = useState<Record<string, number>>({});
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Auto-select oportunidade from query param
-  useEffect(() => {
-    const opId = searchParams.get("oportunidade");
-    if (opId && !selectedOportunidadeId) {
-      setSelectedOportunidadeId(opId);
-    }
-  }, [searchParams]);
-
   /* ── Queries ── */
-
-  const { data: oportunidades } = useQuery({
-    queryKey: ["custos-oportunidades"],
-    queryFn: async () => {
-      const { data, error } = await (supabase.from as any)("oportunidades")
-        .select("id, codigo, descricao, grupo_servicos_id, clientes(nome)")
-        .eq("ativo", true)
-        .order("codigo");
-      if (error) throw error;
-      return data as any[];
-    },
-  });
-
-  const oportunidade = useMemo(
-    () => oportunidades?.find((o: any) => o.id === selectedOportunidadeId),
-    [oportunidades, selectedOportunidadeId]
-  );
 
   const grupoId = oportunidade?.grupo_servicos_id || null;
 
@@ -344,22 +329,16 @@ export default function CustosServicos() {
         </div>
       </div>
 
-      {/* Seletor de Oportunidade */}
+      {/* Info da Oportunidade */}
       <Card>
         <CardContent className="pt-4">
-          <label className="text-sm font-medium text-muted-foreground mb-1 block">Oportunidade</label>
-          <Select value={selectedOportunidadeId} onValueChange={setSelectedOportunidadeId}>
-            <SelectTrigger className="h-10">
-              <SelectValue placeholder="Selecione uma oportunidade..." />
-            </SelectTrigger>
-            <SelectContent>
-              {(oportunidades || []).map((op: any) => (
-                <SelectItem key={op.id} value={op.id}>
-                  {op.codigo} — {op.descricao} {op.clientes?.nome ? `(${op.clientes.nome})` : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-3 text-sm">
+            <Badge variant="outline" className="text-xs font-bold">{oportunidade.codigo}</Badge>
+            <span className="font-medium">{oportunidade.descricao}</span>
+            {oportunidade.clientes?.nome && (
+              <span className="text-muted-foreground">({oportunidade.clientes.nome})</span>
+            )}
+          </div>
         </CardContent>
       </Card>
 
