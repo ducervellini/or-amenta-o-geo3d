@@ -299,25 +299,35 @@ export default function OrcamentoDetalhe() {
   const custoTotal = custoServicos + custoAdmLocal;
 
   // Recalculate price from BDI components using the same inverse formula as BdiDre
-  const { precoTotal, bdiPercentual } = useMemo(() => {
+  const { precoTotal, bdiPercentual, lucroEfetivoPct } = useMemo(() => {
     if (!bdiComponentes.length || custoTotal <= 0) {
       const fallbackBdi = bdiData?.bdi_calculado || 0;
       const vBdi = custoTotal * (fallbackBdi / 100);
-      return { precoTotal: custoTotal + vBdi, bdiPercentual: fallbackBdi };
+      return { precoTotal: custoTotal + vBdi, bdiPercentual: fallbackBdi, lucroEfetivoPct: 0 };
     }
 
     const cat = categorizarComponentes(bdiComponentes);
-
-    // Inverse formula: Receita = (CD + Despesas_sobre_CD) / (1 - tributos% - ir% - lucro%)
     const totalDespSobreCDPct = cat.despesasPct + cat.riscoPct + cat.comissaoPct;
     const totalDespValor = custoTotal * (totalDespSobreCDPct / 100);
+
+    // Se ajuste ativo, back-calculate lucro para bater preço alvo
+    const precoAlvoNum = ajusteAtivo ? parseFloat(precoAlvo) : 0;
+    if (ajusteAtivo && precoAlvoNum > 0 && precoAlvoNum > custoTotal) {
+      // Preço = (CD + Desp) / (1 - trib% - ir% - lucro%)
+      // lucro% = 1 - trib% - ir% - (CD + Desp) / Preço
+      const lucroCalc = (1 - (cat.tributosPct / 100) - (cat.irPct / 100) - (custoTotal + totalDespValor) / precoAlvoNum) * 100;
+      const bdiValor = precoAlvoNum - custoTotal;
+      const bdiPct = custoTotal > 0 ? (bdiValor / custoTotal) * 100 : 0;
+      return { precoTotal: precoAlvoNum, bdiPercentual: bdiPct, lucroEfetivoPct: Math.max(0, lucroCalc) };
+    }
+
     const denominador = 1 - (cat.tributosPct / 100) - (cat.irPct / 100) - (cat.lucroPct / 100);
     const preco = denominador > 0 ? (custoTotal + totalDespValor) / denominador : custoTotal;
     const bdiValor = preco - custoTotal;
     const bdiPct = custoTotal > 0 ? (bdiValor / custoTotal) * 100 : 0;
 
-    return { precoTotal: preco, bdiPercentual: bdiPct };
-  }, [bdiComponentes, custoTotal, bdiData]);
+    return { precoTotal: preco, bdiPercentual: bdiPct, lucroEfetivoPct: cat.lucroPct };
+  }, [bdiComponentes, custoTotal, bdiData, ajusteAtivo, precoAlvo]);
 
   const valorBdi = precoTotal - custoTotal;
 
