@@ -1,24 +1,72 @@
 
 
-## Reverter cálculo de materiais para funcionamento normal na composição
+## Relatório de Exequibilidade com Memória de Cálculo
 
-### Problema
-Atualmente, materiais na composição exibem "A calcular" e não calculam custo, aguardando a duração do projeto. O usuário quer que materiais sejam calculados normalmente, como mão de obra e equipamentos.
+### Situação Atual
 
-### Alterações
+O sistema já possui um relatório imprimível no Orçamento (via `print:block`) que inclui:
+- Dados da oportunidade
+- Serviços com quantidades e subtotais
+- ADM Local
+- BDI e DRE
 
-**1. `src/components/composicao/ComposicaoItemForm.tsx`**
-- Remover o bloco condicional `tipo === "material"` que simplifica o formulário (linhas 266-283). Materiais passam a usar o mesmo layout de produtividade/período que MO e equipamentos
-- Remover o aviso amarelo "custo será calculado após duração do projeto" (linhas 316-321)
-- Alterar o `resultado` memo (linhas 194-199): chamar `calcularMaterial(paramsMa, 1, coeficienteCalculado)` normalmente em vez de retornar custo zero
-- Alterar o `coeficienteCalculado` memo (linha 185): remover o `if (tipo === "material") return 1`
-- Alterar o `handleSubmit` (linhas 208-221): remover as condições `isMaterial` — materiais usam `resultado.custo_unitario` e `coeficienteCalculado` como os demais tipos
-- Alterar o resumo do item (linhas 371-401): remover o bloco condicional para material — usar o mesmo layout de produtividade/coeficiente/custo unitário
-- Mostrar o bloco de "Cálculo de Produtividade" para materiais também (linha 324)
+**O que falta**: o detalhamento das composições com a **memória de cálculo** de cada insumo (mão de obra, equipamentos, materiais), que é essencial para demonstrar exequibilidade.
 
-**2. `src/pages/ComposicaoDetalhe.tsx`**
-- Remover as condições que exibem "A calcular" e "—" para materiais (linhas 106-111). Exibir custo e coeficiente normalmente como os outros tipos
+### O que será criado
 
-### Resultado
-Materiais terão o mesmo fluxo de cálculo: o usuário informa produtividade e período, o sistema calcula o coeficiente e o custo unitário com base nos parâmetros do material (perda, reaproveitamento, reposição).
+Um botão "Relatório de Exequibilidade" na tela de Orçamento que gera uma versão impressa completa, incluindo:
+
+1. **Capa** com dados da oportunidade, cliente, local e data
+2. **Resumo executivo** com preço de venda, custo total e margem
+3. **Para cada composição do orçamento**:
+   - Nome, código e unidade do serviço
+   - Tabela de insumos com tipo, descrição, quantidade, coeficiente, custo unitário e custo total
+   - **Memória de cálculo detalhada** de cada insumo (fórmulas passo a passo como já existe no componente `MemoriaCalculo`)
+   - Resumo por categoria (MO, Equipamentos, Materiais)
+4. **ADM Local** detalhado (hospedagem, veículos, equipes, combustível)
+5. **BDI** com todos os componentes e a fórmula aplicada
+6. **DRE** completo (já existente, será incorporado)
+
+### Alterações técnicas
+
+| Arquivo | Mudança |
+|---------|---------|
+| `src/pages/OrcamentoDetalhe.tsx` | Expandir o bloco `print-report` para incluir seção de composições detalhadas com memória de cálculo. Buscar `composicao_itens` de cada composição e recalcular resultados usando as funções de `composicao-calculo.ts`. Adicionar botão "Relatório de Exequibilidade" |
+| `src/index.css` | Adicionar estilos de impressão para a memória de cálculo (fonte menor, layout compacto) |
+
+### Fluxo
+
+1. Usuário abre o orçamento
+2. Clica em "Relatório de Exequibilidade"
+3. O sistema carrega os itens de todas as composições vinculadas
+4. Recalcula cada insumo usando `calcularMaoDeObra`, `calcularEquipamento`, `calcularMaterial`
+5. Renderiza o relatório completo em `print:block`
+6. Aciona `window.print()` para gerar PDF
+
+### Exemplo do que será exibido por composição
+
+```text
+┌──────────────────────────────────────────────────────┐
+│ COMPOSIÇÃO: LEV-001 — Levantamento Topográfico       │
+│ Unidade: km                                           │
+├──────────────────────────────────────────────────────┤
+│ INSUMO: Topógrafo (Mão de Obra)                      │
+│                                                       │
+│ Salário base mensal (CLT)............ R$ 4.500,00    │
+│ Encargos sociais..................... R$ 3.285,00    │
+│ Custo mensal total................... R$ 8.285,00    │
+│ Horas úteis/mês...................... 176 h          │
+│ Custo por hora....................... R$ 47,07       │
+│ Fator regime operacional............. 1,1667         │
+│ Custo hora c/ regime................. R$ 54,92       │
+│ Custo unitário (1 km)................ R$ 439,34      │
+│                                                       │
+│ INSUMO: Marco de Aço Galvanizado (Material)          │
+│ Custo unitário base.................. R$ 25,00       │
+│ Quantidade por unidade............... 10 un/km       │
+│ Custo total por km................... R$ 250,00      │
+├──────────────────────────────────────────────────────┤
+│ RESUMO: MO R$ 439,34 | Mat R$ 250,00 | Total R$ ... │
+└──────────────────────────────────────────────────────┘
+```
 
