@@ -1066,7 +1066,7 @@ function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* ── Coluna Esquerda: Entradas ── */}
           <div className="lg:col-span-2 space-y-4">
-            {/* Oportunidade */}
+            {/* Oportunidade (read-only from gate) */}
             <Card>
               <CardHeader className="py-3">
                 <CardTitle className="text-sm flex items-center gap-2">
@@ -1075,20 +1075,8 @@ function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: 
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <Select value={oportunidadeId} onValueChange={setOportunidadeId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma oportunidade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(oportunidades as any[] || []).filter((o: any) => o.ativo !== false).map((o: any) => (
-                      <SelectItem key={o.id} value={o.id}>
-                        {o.codigo} — {o.descricao}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
                 {oportunidadeSelecionada && (
-                  <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                     <div>
                       <span className="text-muted-foreground">Código:</span>
                       <p className="font-medium">{oportunidadeSelecionada.codigo}</p>
