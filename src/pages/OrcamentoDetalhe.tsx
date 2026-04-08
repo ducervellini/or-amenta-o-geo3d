@@ -654,42 +654,13 @@ export default function OrcamentoDetalhe() {
                         return (
                           <tr key={idx} className="border-b hover:bg-muted/30">
                             <td className="py-2 px-2">
-                              {grupoId ? (
-                                <div>
-                                  <span className="font-medium">{comp?.codigo} — {comp?.nome || "—"}</span>
-                                </div>
-                              ) : (
-                                <Select
-                                  value={s.composicao_id}
-                                  onValueChange={(v) => updateServico(idx, "composicao_id", v)}
-                                >
-                                  <SelectTrigger className="h-9 text-sm">
-                                    <SelectValue placeholder="Selecione..." />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {(composicoes || []).map((c: any) => (
-                                      <SelectItem key={c.id} value={c.id}>
-                                        {c.codigo} — {c.nome}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              )}
+                              <span className="font-medium">{comp?.codigo} — {comp?.nome || "—"}</span>
                             </td>
-                            <td className="py-2 px-2">
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  value={s.quantidade}
-                                  onChange={(e) => updateServico(idx, "quantidade", parseFloat(e.target.value) || 0)}
-                                  placeholder="0"
-                                  className="h-9 text-sm text-right w-24"
-                                />
-                                <span className="text-xs text-muted-foreground font-medium whitespace-nowrap min-w-[60px]">
-                                  {unidade}
-                                </span>
-                              </div>
+                            <td className="py-2 px-2 text-right font-medium tabular-nums">
+                              {s.quantidade.toLocaleString("pt-BR")}
+                            </td>
+                            <td className="py-2 px-2 text-xs text-muted-foreground">
+                              {unidade}
                             </td>
                             <td className="py-2 px-2 text-right font-medium">
                               {fmt(comp?.custo_unitario_total || 0)}
@@ -697,13 +668,6 @@ export default function OrcamentoDetalhe() {
                             <td className="py-2 px-2 text-right font-semibold">
                               {fmt(subtotal)}
                             </td>
-                            {!grupoId && (
-                              <td className="py-2 px-2 text-center">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeServico(idx)}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </td>
-                            )}
                           </tr>
                         );
                       })}
