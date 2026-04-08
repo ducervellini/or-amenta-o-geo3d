@@ -9,8 +9,9 @@ import {
   ArrowLeft, Plus, Trash2, Save, ExternalLink, Loader2,
   Users, Wrench, Package, Truck, Route, Calculator, TrendingUp, Target,
   ChevronDown, ChevronUp, Printer, Check, ChevronRight, ChevronLeft,
-  Building, FileText, DollarSign,
+  Building, FileText, DollarSign, FileDown,
 } from "lucide-react";
+import { gerarRelatorioPDF, type DadosRelatorio } from "@/lib/relatorio-exequibilidade-pdf";
 import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import {
@@ -375,6 +376,73 @@ export default function OrcamentoDetalhe() {
     "bdi-preco": !!bdiData,
   }), [oportunidade, servicosValidos.length, mobilizacao, bdiData]);
 
+  const handleGerarRelatorio = () => {
+    const dadosRelatorio: DadosRelatorio = {
+      oportunidade: {
+        codigo: oportunidade.codigo,
+        descricao: oportunidade.descricao,
+        cliente: oportunidade.clientes?.nome || "—",
+        cidade: oportunidade.cidade || "—",
+        estado: oportunidade.estado || "—",
+        grupoServicos: oportunidade.grupos_servicos?.nome || "—",
+      },
+      servicos: servicosValidos.map(s => {
+        const comp = (composicoes || []).find((c: any) => c.id === s.composicao_id);
+        return {
+          codigo: comp?.codigo || "",
+          nome: comp?.nome || "",
+          quantidade: s.quantidade,
+          unidade: comp?.unidade || "un",
+          custoUnitario: comp?.custo_unitario_total || 0,
+          subtotal: (comp?.custo_unitario_total || 0) * s.quantidade,
+        };
+      }),
+      custoServicosPorTipo,
+      custoServicos,
+      custoAdmLocal,
+      custoTotal,
+      bdiPercentual,
+      precoTotal,
+      valorBdi,
+      bdiComponentes,
+      bdiNome: bdiData?.nome || "BDI",
+      mobilizacao: mobilizacao ? {
+        nome: mobilizacao.nome,
+        diasProdutivos: mobilizacao.dias_produtivos,
+        custoPorDia: mobilizacao.custo_por_dia,
+        distanciaBaseProjeto: mobilizacao.distancia_base_projeto,
+        diasChuva: mobilizacao.dias_chuva_mes,
+        fatorImprodutividade: mobilizacao.fator_improdutividade,
+        duracaoMeses: mobilizacao.duracao_meses,
+        jornadaDiaria: mobilizacao.jornada_diaria,
+        regimeTrabalho: `${mobilizacao.dias_trabalho || 22} dias/mês, ${mobilizacao.jornada_diaria || 8}h/dia`,
+      } : null,
+      deslocamentosPorCategoria,
+      custoDeslocamentos,
+      custoMobDesmob,
+      composicaoItens: (composicaoItens || []).map((ci: any) => ({
+        composicaoId: ci.composicao_id,
+        composicaoCodigo: "",
+        tipoInsumo: ci.tipo_insumo,
+        descricao: ci.descricao || "",
+        custoUnitario: ci.custo_unitario || 0,
+        quantidade: ci.quantidade || 1,
+        coeficiente: ci.coeficiente || 1,
+        custoTotal: ci.custo_total || 0,
+        unidade: ci.unidade || "un",
+      })),
+      numEquipes: 4,
+    };
+
+    try {
+      const doc = gerarRelatorioPDF(dadosRelatorio);
+      doc.save(`Relatorio_Exequibilidade_${oportunidade.codigo}.pdf`);
+      toast.success("Relatório de Exequibilidade gerado com sucesso!");
+    } catch (e: any) {
+      toast.error("Erro ao gerar relatório: " + e.message);
+    }
+  };
+
   const handleSalvar = async () => {
     if (!podesSalvar) {
       return toast.error("Adicione ao menos uma composição com quantidade válida");
@@ -475,6 +543,9 @@ export default function OrcamentoDetalhe() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" className="gap-2" onClick={handleGerarRelatorio} disabled={servicosValidos.length === 0}>
+            <FileDown className="w-4 h-4" /> Gerar Relatório de Exequibilidade
+          </Button>
           <Button variant="outline" className="gap-2" onClick={() => window.print()}>
             <Printer className="w-4 h-4" /> Imprimir
           </Button>
