@@ -1002,6 +1002,60 @@ export default function OrcamentoDetalhe() {
                 <span className="text-primary text-xl">{fmt(precoTotal)}</span>
               </div>
 
+              {/* Ajuste por Valor Final */}
+              <div className="border rounded-lg p-4 space-y-3 bg-muted/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <Target className="w-4 h-4 text-primary" />
+                    Ajustar Lucro pelo Valor Final
+                  </div>
+                  <Button
+                    variant={ajusteAtivo ? "destructive" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setAjusteAtivo(!ajusteAtivo);
+                      if (ajusteAtivo) setPrecoAlvo("");
+                    }}
+                  >
+                    {ajusteAtivo ? "Desativar" : "Ativar"}
+                  </Button>
+                </div>
+                {ajusteAtivo && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <label className="text-sm text-muted-foreground whitespace-nowrap">Preço Alvo (R$):</label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        className="max-w-xs"
+                        placeholder="Ex: 8778500.00"
+                        value={precoAlvo}
+                        onChange={(e) => setPrecoAlvo(e.target.value)}
+                      />
+                    </div>
+                    {parseFloat(precoAlvo) > 0 && (
+                      <div className="grid grid-cols-3 gap-3 text-center">
+                        <div className="bg-card rounded-md border p-2">
+                          <p className="text-xs text-muted-foreground">Lucro Efetivo</p>
+                          <p className="text-sm font-bold text-primary">{fmtPct(lucroEfetivoPct)}</p>
+                        </div>
+                        <div className="bg-card rounded-md border p-2">
+                          <p className="text-xs text-muted-foreground">BDI Ajustado</p>
+                          <p className="text-sm font-bold">{fmtPct(bdiPercentual)}</p>
+                        </div>
+                        <div className="bg-card rounded-md border p-2">
+                          <p className="text-xs text-muted-foreground">Preço Final</p>
+                          <p className="text-sm font-bold">{fmt(precoTotal)}</p>
+                        </div>
+                      </div>
+                    )}
+                    {parseFloat(precoAlvo) > 0 && lucroEfetivoPct <= 0 && (
+                      <p className="text-xs text-destructive">⚠ Valor alvo resulta em margem negativa. Aumente o preço ou reduza custos.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {!podesSalvar && (
                 <p className="text-xs text-destructive text-center">
                   Adicione ao menos uma composição válida para habilitar o salvamento.
