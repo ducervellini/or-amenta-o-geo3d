@@ -631,7 +631,7 @@ export default function OrcamentoDetalhe() {
               <div className="space-y-3">
                 {grupoId && (
                   <div className="bg-muted/40 rounded-lg p-3 text-sm text-muted-foreground">
-                    Informe as quantidades de acordo com a unidade de cada serviço.
+                    As quantidades são definidas no menu <strong>Custos de Serviços</strong>.
                   </div>
                 )}
 
@@ -640,10 +640,10 @@ export default function OrcamentoDetalhe() {
                     <thead>
                       <tr className="border-b text-xs font-medium text-muted-foreground">
                         <th className="text-left py-2 px-2">Composição</th>
-                        <th className="text-left py-2 px-2 w-48">Dados de Entrada</th>
+                        <th className="text-right py-2 px-2 w-24">Qtd</th>
+                        <th className="text-left py-2 px-2 w-16">Und</th>
                         <th className="text-right py-2 px-2">Custo Unit.</th>
                         <th className="text-right py-2 px-2">Subtotal</th>
-                        {!grupoId && <th className="w-10"></th>}
                       </tr>
                     </thead>
                     <tbody>
