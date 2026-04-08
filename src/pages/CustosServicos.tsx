@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { OportunidadeGate } from "@/components/orcamento/OportunidadeGate";
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -63,19 +64,20 @@ function SubtitleRow({ item, colSpan, onEdit, onRemove }: {
 }
 
 export default function CustosServicos() {
-  const [searchParams] = useSearchParams();
+  return (
+    <OportunidadeGate>
+      {(oportunidadeId, oportunidade) => (
+        <CustosServicosContent oportunidadeId={oportunidadeId} oportunidade={oportunidade} />
+      )}
+    </OportunidadeGate>
+  );
+}
+
+function CustosServicosContent({ oportunidadeId, oportunidade }: { oportunidadeId: string; oportunidade: any }) {
   const queryClient = useQueryClient();
-  const [selectedOportunidadeId, setSelectedOportunidadeId] = useState<string>("");
+  const selectedOportunidadeId = oportunidadeId;
   const [quantidades, setQuantidades] = useState<Record<string, number>>({});
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Auto-select oportunidade from query param
-  useEffect(() => {
-    const opId = searchParams.get("oportunidade");
-    if (opId && !selectedOportunidadeId) {
-      setSelectedOportunidadeId(opId);
-    }
-  }, [searchParams]);
 
   /* ── Queries ── */
 
