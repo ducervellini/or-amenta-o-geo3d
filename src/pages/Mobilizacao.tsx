@@ -792,11 +792,8 @@ export default function Mobilizacao() {
     [diasTrabalho, jornadaDiaria, diasChuvaMes, fatorImprod, distanciaBase, distanciaMedia, duracaoMeses]
   );
 
-  // Dias produtivos calculados pelo usuário (não pelo fator automático)
-  const diasProdutivosMes = Math.max(0, diasTrabalho - diasImprodutivosUsuario);
-  const diasProdutivos = diasProdutivosMes * duracaoMeses;
-  const diasImprodutivosMes = diasImprodutivosUsuario;
-  const diasImprodutivos = diasImprodutivosMes * duracaoMeses;
+  // Dias produtivos - moved up, referenced by servicoDuracoes useMemo above
+  // (actual declaration is earlier, this is just the downstream usage)
 
   // Calculate deslocamento costs
   const calcularCustoDeslocamentoItem = useCallback((item: typeof deslocamentos[0]) => {
