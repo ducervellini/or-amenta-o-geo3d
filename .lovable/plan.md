@@ -1,46 +1,33 @@
 
 
-## Cálculo Automático de Duração de Serviços de Campo
+## Correção da Composição de Processamento GNSS
 
-### Diagnóstico
+### Problema Identificado
 
-A lógica de cálculo já existe no ADM Local (`Mobilizacao.tsx`, linhas 418-498) e o painel "Prazo de Campo por Serviço" (linhas 2042-2109) também. Porém, o sistema depende do campo `produtividade_padrao` na tabela `servicos`, que **não está exposto no formulário de cadastro de Serviços** — logo nunca é preenchido e o painel nunca aparece.
+Os equipamentos da composição "Processamento de dados GNSS" estão com o **coeficiente incorreto**. O sistema não está propagando o coeficiente da Mão de Obra para os equipamentos da mesma composição:
 
-### Abordagem Recomendada
+| Item | Coef. Atual | Coef. Correto |
+|------|-------------|---------------|
+| ANALISTA II (MO) | 1,10 h/un | 1,10 h/un ✓ |
+| NOTEBOOK (Equip.) | 1,00 h/un | 1,10 h/un ✗ |
+| CELULAR (Equip.) | 1,00 h/un | 1,10 h/un ✗ |
 
-A melhor forma é uma abordagem em duas camadas:
+A causa raiz: o `ComposicaoItemForm` declara a prop `existingItems` para herdar o coeficiente da MO, mas essa prop **nunca é passada** pelo `ComposicaoDetalhe.tsx`, e a lógica de herança **não está implementada** no formulário.
 
-1. **Produtividade definida no cadastro do Serviço** (valor padrão da empresa)
-2. **Produtividade ajustável por composição** (override por projeto, já existe parcialmente no `composicao_itens.parametros`)
+### Plano de Correção
 
-O cálculo segue: `Dias de Campo = Quantidade / Produtividade diária`, onde a produtividade diária é convertida da unidade cadastrada (hora, dia ou mês).
+**1. Implementar herança de coeficiente no `ComposicaoItemForm.tsx`**
+- Quando o tipo de insumo for "equipamento", buscar o coeficiente da primeira MO existente na composição
+- Usar esse coeficiente para calcular o custo do equipamento (em vez de usar `periodoEmHoras / quantidade` com horas padrão de 8h)
+- Ajustar o `coeficienteCalculado` para equipamentos: usar `horas_diarias` da MO quando disponível
 
-### Alterações
+**2. Passar `existingItems` do `ComposicaoDetalhe.tsx`**
+- Na chamada ao `ComposicaoItemForm`, adicionar `existingItems={itens}` para que o formulário tenha acesso aos itens existentes
 
-**1. Adicionar campos de produtividade no cadastro de Serviços (`src/pages/cadastros/Servicos.tsx`)**
-- Campo `produtividade_padrao` (numérico) — ex: 3.5
-- Campo `unidade_tempo_produtividade` (select: hora/dia/mês) — ex: "km/dia"
-- Campo `tipo_geometria` (select: area/linha/ponto) — para referência
-- Exibir na tabela de listagem a coluna "Produtividade"
+**3. Recalcular itens existentes**
+- Ao abrir a composição, recalcular automaticamente os equipamentos cujo coeficiente diverge da MO
 
-**2. Melhorar o painel de cálculo no ADM Local (`src/pages/Mobilizacao.tsx`)**
-- Mostrar o painel mesmo quando produtividade é zero, com aviso "Defina a produtividade no cadastro de Serviços"
-- Adicionar coluna "Produtividade (un/dia)" na tabela de breakdown
-- Mostrar fórmula completa: `Quantidade ÷ Produtividade = Dias → Meses`
-- Incluir link direto para o cadastro de Serviços quando faltar produtividade
-
-**3. Usar produtividade da composição como override (se existir)**
-- Na lógica de cálculo, verificar se a composição tem `parametros.produtividade` definido
-- Se sim, usar esse valor ao invés do `produtividade_padrao` do serviço
-- Isso permite ajustar por projeto sem alterar o cadastro mestre
-
-### Fluxo Final
-1. Usuário cadastra serviços com produtividade padrão (ex: Topografia = 3 km/dia)
-2. Em Custos de Serviços, define quantidades (ex: 150 km)
-3. No ADM Local, o sistema calcula automaticamente: 150 ÷ 3 = 50 dias → ~2.5 meses
-4. O painel lateral mostra o breakdown por serviço, e o campo Duração é preenchido automaticamente com o maior prazo
-
-### Detalhes Técnicos
-- Nenhuma migração de banco necessária (campos `produtividade_padrao`, `unidade_tempo_produtividade` e `tipo_geometria` já existem na tabela `servicos`)
-- Arquivos editados: `src/pages/cadastros/Servicos.tsx`, `src/pages/Mobilizacao.tsx`
+### Arquivos Alterados
+- `src/components/composicao/ComposicaoItemForm.tsx` — implementar lógica de herança
+- `src/pages/ComposicaoDetalhe.tsx` — passar prop `existingItems`
 
