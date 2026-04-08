@@ -2057,7 +2057,7 @@ function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: 
             </Card>
 
             {/* Prazo de Campo por Serviço */}
-            {servicoDuracoes.length > 0 && (
+            {grupoServicosId && (
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
@@ -2066,61 +2066,103 @@ function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: 
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="space-y-2">
-                    {servicoDuracoes.map((s) => {
-                      const pct = totalDiasCampo > 0 ? (s.dias_campo / totalDiasCampo) * 100 : 0;
-                      return (
-                        <div key={s.composicao_id} className="space-y-0.5">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium truncate">{s.codigo} — {s.nome}</p>
-                              <p className="text-[10px] text-muted-foreground">
-                                {s.quantidade.toLocaleString("pt-BR")} {s.unidade}
-                                {s.produtividade > 0
-                                  ? ` ÷ ${s.produtividade.toLocaleString("pt-BR")} ${s.unidade}/${s.unidade_tempo}`
-                                  : " (sem produtividade)"}
-                              </p>
-                            </div>
-                            <div className="text-right shrink-0">
-                              <p className="text-xs font-bold text-primary">{s.dias_campo.toFixed(1)} dias</p>
-                              <p className="text-[10px] text-muted-foreground">{s.meses.toFixed(1)} meses</p>
-                            </div>
-                          </div>
-                          {/* Progress bar */}
-                          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                            <div
-                              className="h-full rounded-full bg-primary/60 transition-all"
-                              style={{ width: `${Math.min(pct, 100)}%` }}
-                            />
-                          </div>
+                  {servicoDuracoes.length === 0 ? (
+                    <div className="text-xs text-muted-foreground text-center py-4">
+                      <p>Nenhum serviço encontrado no grupo vinculado.</p>
+                      <p className="mt-1">Verifique se a oportunidade tem um grupo de serviços com serviços cadastrados.</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Warnings summary */}
+                      {servicoDuracoes.some((s) => s.sem_produtividade) && (
+                        <div className="rounded-md bg-amber-500/10 border border-amber-500/20 p-2 text-xs text-amber-700 dark:text-amber-400">
+                          <p className="font-medium">⚠ Serviços sem produtividade definida</p>
+                          <p className="text-[10px] mt-0.5">
+                            Acesse <a href="/cadastros/servicos" className="underline font-medium">Cadastros → Serviços</a> e defina a produtividade padrão.
+                          </p>
                         </div>
-                      );
-                    })}
-                  </div>
+                      )}
+                      {servicoDuracoes.some((s) => s.sem_quantidade && !s.sem_produtividade) && (
+                        <div className="rounded-md bg-blue-500/10 border border-blue-500/20 p-2 text-xs text-blue-700 dark:text-blue-400">
+                          <p className="font-medium">ℹ Serviços sem quantidade definida</p>
+                          <p className="text-[10px] mt-0.5">
+                            Defina as quantidades no menu Custos de Serviços.
+                          </p>
+                        </div>
+                      )}
 
-                  <Separator />
+                      <div className="space-y-2">
+                        {servicoDuracoes.map((s) => {
+                          const pct = totalDiasCampo > 0 ? (s.dias_campo / totalDiasCampo) * 100 : 0;
+                          return (
+                            <div key={s.composicao_id} className="space-y-0.5">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-medium truncate">{s.codigo} — {s.nome}</p>
+                                  {s.sem_produtividade ? (
+                                    <p className="text-[10px] text-amber-600">⚠ Produtividade não definida</p>
+                                  ) : s.sem_quantidade ? (
+                                    <p className="text-[10px] text-muted-foreground">
+                                      Prod: {s.produtividade.toLocaleString("pt-BR")} {s.unidade}/{s.unidade_tempo} — Qtd: pendente
+                                    </p>
+                                  ) : (
+                                    <p className="text-[10px] text-muted-foreground">
+                                      {s.quantidade.toLocaleString("pt-BR")} {s.unidade} ÷ {s.produtividade.toLocaleString("pt-BR")} {s.unidade}/{s.unidade_tempo} = {s.dias_campo.toFixed(1)} dias → {s.meses.toFixed(1)} meses
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="text-right shrink-0">
+                                  {s.dias_campo > 0 ? (
+                                    <>
+                                      <p className="text-xs font-bold text-primary">{s.dias_campo.toFixed(1)} dias</p>
+                                      <p className="text-[10px] text-muted-foreground">{s.meses.toFixed(1)} meses</p>
+                                    </>
+                                  ) : (
+                                    <p className="text-xs text-muted-foreground">—</p>
+                                  )}
+                                </div>
+                              </div>
+                              {s.dias_campo > 0 && (
+                                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                                  <div
+                                    className="h-full rounded-full bg-primary/60 transition-all"
+                                    style={{ width: `${Math.min(pct, 100)}%` }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
 
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">Total dias de campo</span>
-                      <span className="font-bold">{totalDiasCampo.toFixed(0)} dias</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">Serviço mais longo</span>
-                      <span className="font-bold text-primary">
-                        {servicoDuracoes[0]?.dias_campo.toFixed(0)} dias ({servicoDuracoes[0]?.meses.toFixed(1)} meses)
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm font-bold text-primary pt-1 border-t">
-                      <span>Duração calculada</span>
-                      <span>{duracaoCalculada} meses</span>
-                    </div>
-                    {duracaoMeses !== duracaoCalculada && (
-                      <p className="text-[10px] text-amber-600">
-                        ⚠ Duração manual ({duracaoMeses} meses) difere do calculado
-                      </p>
-                    )}
-                  </div>
+                      {totalDiasCampo > 0 && (
+                        <>
+                          <Separator />
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">Total dias de campo</span>
+                              <span className="font-bold">{totalDiasCampo.toFixed(0)} dias</span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">Serviço mais longo</span>
+                              <span className="font-bold text-primary">
+                                {servicoDuracoes.filter(s => s.dias_campo > 0)[0]?.dias_campo.toFixed(0)} dias ({servicoDuracoes.filter(s => s.dias_campo > 0)[0]?.meses.toFixed(1)} meses)
+                              </span>
+                            </div>
+                            <div className="flex justify-between text-sm font-bold text-primary pt-1 border-t">
+                              <span>Duração calculada</span>
+                              <span>{duracaoCalculada} meses</span>
+                            </div>
+                            {duracaoMeses !== duracaoCalculada && (
+                              <p className="text-[10px] text-amber-600">
+                                ⚠ Duração manual ({duracaoMeses} meses) difere do calculado
+                              </p>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )}
                 </CardContent>
               </Card>
             )}
