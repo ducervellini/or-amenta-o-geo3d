@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
+import { GlobalHorizontalScrollbar } from "./GlobalHorizontalScrollbar";
 import { cn } from "@/lib/utils";
 
 export function AppLayout() {
@@ -20,6 +21,7 @@ export function AppLayout() {
         <main className="app-layout-main flex-1">
           <Outlet />
         </main>
+        <GlobalHorizontalScrollbar />
       </div>
     </div>
   );
