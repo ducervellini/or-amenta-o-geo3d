@@ -490,10 +490,10 @@ export default function Mobilizacao() {
     return servicoDuracoes.reduce((acc, s) => acc + s.dias_campo, 0);
   }, [servicoDuracoes]);
 
-  // Auto-update duration when calculated
+  // Auto-update duration when calculated (only if user hasn't manually overridden)
   const [duracaoAutoSync, setDuracaoAutoSync] = useState(true);
   useEffect(() => {
-    if (duracaoCalculada && duracaoCalculada > 0 && duracaoAutoSync && !loadedRef.current) {
+    if (duracaoCalculada && duracaoCalculada > 0 && duracaoAutoSync) {
       setDuracaoMeses(duracaoCalculada);
     }
   }, [duracaoCalculada, duracaoAutoSync]);
