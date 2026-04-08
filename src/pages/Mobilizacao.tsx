@@ -339,8 +339,8 @@ function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: 
   const [loadingPluv, setLoadingPluv] = useState(false);
 
 
-  // Oportunidade selecionada
-  const [oportunidadeId, setOportunidadeId] = useState<string>("");
+  // Oportunidade selecionada (comes from gate)
+  const [oportunidadeId, setOportunidadeId] = useState<string>(initialOportunidadeId);
   const { data: oportunidades } = useSupabaseQuery("oportunidades");
   const { data: clientes } = useSupabaseQuery("clientes");
   const oportunidadeSelecionada = useMemo(() => {
