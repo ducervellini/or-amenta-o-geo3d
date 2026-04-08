@@ -202,7 +202,7 @@ export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blo
     pedagios: "Pedágios", passagens: "Passagens", diversos: "Diversos",
   };
 
-  const children: Paragraph[] = [];
+  const children: (Paragraph | Table)[] = [];
 
   // ════════════════════════════════════════
   // CAPA
