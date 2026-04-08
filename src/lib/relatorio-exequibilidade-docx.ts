@@ -1,6 +1,6 @@
 /**
  * Gerador de Relatório de Exequibilidade em DOCX
- * Usa docx-js para layout profissional
+ * Demonstra cálculo completo por composição: MO, Equipamento, Material, ADM Local, BDI e DRE
  */
 import {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
@@ -19,6 +19,19 @@ export interface ServicoRelatorio {
   subtotal: number;
   produtividadePadrao: number | null;
   unidadeTempoProdutividade: string;
+}
+
+export interface ComposicaoItemRelatorio {
+  composicaoId: string;
+  composicaoCodigo: string;
+  tipoInsumo: string;
+  descricao: string;
+  custoUnitario: number;
+  quantidade: number;
+  coeficiente: number;
+  custoTotal: number;
+  unidade: string;
+  parametros: Record<string, any>;
 }
 
 export interface DadosRelatorioDocx {
@@ -54,24 +67,15 @@ export interface DadosRelatorioDocx {
   deslocamentosPorCategoria: Record<string, number>;
   custoDeslocamentos: number;
   custoMobDesmob: number;
-  composicaoItens: Array<{
-    composicaoId: string;
-    composicaoCodigo: string;
-    tipoInsumo: string;
-    descricao: string;
-    custoUnitario: number;
-    quantidade: number;
-    coeficiente: number;
-    custoTotal: number;
-    unidade: string;
-  }>;
+  composicaoItens: ComposicaoItemRelatorio[];
   numEquipes: number;
 }
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const fmtPct = (v: number) => `${v.toFixed(2)}%`;
-const fmtNum = (v: number) => v.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+const fmtNum = (v: number) => v.toLocaleString("pt-BR", { maximumFractionDigits: 4 });
+const fmtNum2 = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const PRIMARY = "1E40AF";
 const PRIMARY_LIGHT = "DBEAFE";
@@ -81,22 +85,25 @@ const LIGHT_GRAY = "F1F5F9";
 const ACCENT = "4F46E5";
 const SUCCESS_BG = "DCFCE7";
 const DANGER_BG = "FEE2E2";
+const MO_COLOR = "1D4ED8";
+const EQUIP_COLOR = "7C3AED";
+const MAT_COLOR = "059669";
 
 const cellBorder = { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" };
 const borders = { top: cellBorder, bottom: cellBorder, left: cellBorder, right: cellBorder };
 const cellMargins = { top: 60, bottom: 60, left: 100, right: 100 };
 
-function headerCell(text: string, width: number): TableCell {
+function headerCell(text: string, width: number, fill = PRIMARY): TableCell {
   return new TableCell({
     borders,
     width: { size: width, type: WidthType.DXA },
-    shading: { fill: PRIMARY, type: ShadingType.CLEAR },
+    shading: { fill, type: ShadingType.CLEAR },
     margins: cellMargins,
-    children: [new Paragraph({ children: [new TextRun({ text, bold: true, color: "FFFFFF", font: "Arial", size: 18 })] })],
+    children: [new Paragraph({ children: [new TextRun({ text, bold: true, color: "FFFFFF", font: "Arial", size: 16 })] })],
   });
 }
 
-function dataCell(text: string, width: number, opts?: { bold?: boolean; align?: typeof AlignmentType[keyof typeof AlignmentType]; fill?: string }): TableCell {
+function dataCell(text: string, width: number, opts?: { bold?: boolean; align?: typeof AlignmentType[keyof typeof AlignmentType]; fill?: string; color?: string; size?: number }): TableCell {
   return new TableCell({
     borders,
     width: { size: width, type: WidthType.DXA },
@@ -104,7 +111,7 @@ function dataCell(text: string, width: number, opts?: { bold?: boolean; align?: 
     margins: cellMargins,
     children: [new Paragraph({
       alignment: opts?.align || AlignmentType.LEFT,
-      children: [new TextRun({ text, bold: opts?.bold, font: "Arial", size: 18 })],
+      children: [new TextRun({ text, bold: opts?.bold, font: "Arial", size: opts?.size || 16, color: opts?.color })],
     })],
   });
 }
@@ -125,6 +132,13 @@ function subTitle(title: string): Paragraph {
   });
 }
 
+function subSubTitle(title: string, color = DARK): Paragraph {
+  return new Paragraph({
+    spacing: { before: 140, after: 60 },
+    children: [new TextRun({ text: title, bold: true, font: "Arial", size: 18, color })],
+  });
+}
+
 function para(text: string): Paragraph {
   return new Paragraph({
     spacing: { after: 100 },
@@ -142,32 +156,175 @@ function keyValuePara(key: string, value: string): Paragraph {
   });
 }
 
+function calcRow(desc: string, formula: string, valor: string, fill?: string): TableRow {
+  const cols = [3200, 4800, 1640];
+  return new TableRow({
+    children: [
+      dataCell(desc, cols[0], { fill, size: 15 }),
+      dataCell(formula, cols[1], { fill, size: 15, color: GRAY }),
+      dataCell(valor, cols[2], { align: AlignmentType.RIGHT, bold: true, fill, size: 15 }),
+    ],
+  });
+}
+
+function calcTable(rows: Array<{ desc: string; formula: string; valor: string; highlight?: boolean }>): Table {
+  const cols = [3200, 4800, 1640];
+  const tw = cols.reduce((a, b) => a + b, 0);
+  return new Table({
+    width: { size: tw, type: WidthType.DXA },
+    columnWidths: cols,
+    rows: [
+      new TableRow({ children: [headerCell("Etapa", cols[0]), headerCell("Fórmula / Memória", cols[1]), headerCell("Valor", cols[2])] }),
+      ...rows.map((r, i) =>
+        calcRow(r.desc, r.formula, r.valor, r.highlight ? SUCCESS_BG : (i % 2 === 1 ? LIGHT_GRAY : undefined))
+      ),
+    ],
+  });
+}
+
+// ── Build MO calculation rows ──
+function buildMOCalcRows(p: Record<string, any>, coef: number): Array<{ desc: string; formula: string; valor: string; highlight?: boolean }> {
+  const salario = Number(p.salario_base || 0);
+  const encPct = Number(p.encargos_percentual || 0);
+  const benVal = Number(p.beneficios_valor || 0);
+  const horasMes = Number(p.horas_mes || 176);
+  const horasDia = Number(p.horas_diarias || 8);
+  const regTrab = Number(p.regime_dias_trabalho || 0);
+  const regFolga = Number(p.regime_dias_folga || 0);
+  const isPJ = p.regime_contratacao === "pj";
+
+  const encVal = isPJ ? 0 : salario * (encPct / 100);
+  const custoMensal = salario + encVal + (isPJ ? 0 : benVal);
+  const custoHora = horasMes > 0 ? custoMensal / horasMes : 0;
+  const custoDia = custoHora * horasDia;
+  let fatorRegime = 1;
+  if (regTrab > 0 && regFolga > 0) fatorRegime = (regTrab + regFolga) / regTrab;
+  const custoHoraFinal = custoHora * fatorRegime;
+  const custoUnit = custoHoraFinal * coef;
+
+  const rows: Array<{ desc: string; formula: string; valor: string; highlight?: boolean }> = [];
+  rows.push({ desc: `Salário Base (${isPJ ? "PJ" : "CLT"})`, formula: "", valor: fmt(salario) });
+  if (!isPJ) {
+    rows.push({ desc: "Encargos Sociais (K)", formula: `${fmtNum2(salario)} × ${fmtNum2(encPct)}%`, valor: fmt(encVal) });
+    rows.push({ desc: "Benefícios", formula: "", valor: fmt(benVal) });
+  }
+  rows.push({ desc: "Custo Mensal Total", formula: `${fmtNum2(salario)} + ${fmtNum2(encVal)} + ${fmtNum2(isPJ ? 0 : benVal)}`, valor: fmt(custoMensal) });
+  rows.push({ desc: "Horas Úteis/Mês", formula: "", valor: `${fmtNum2(horasMes)} h` });
+  rows.push({ desc: "Custo H/H", formula: `${fmtNum2(custoMensal)} ÷ ${fmtNum2(horasMes)}`, valor: fmt(custoHora) });
+  rows.push({ desc: "Custo/Dia", formula: `${fmtNum2(custoHora)} × ${fmtNum2(horasDia)}h`, valor: fmt(custoDia) });
+  if (fatorRegime !== 1) {
+    rows.push({ desc: "Fator Regime Operacional", formula: `(${regTrab}+${regFolga})/${regTrab}`, valor: fmtNum(fatorRegime) });
+    rows.push({ desc: "Custo H/H c/ Regime", formula: `${fmtNum2(custoHora)} × ${fmtNum(fatorRegime)}`, valor: fmt(custoHoraFinal) });
+  }
+  rows.push({ desc: "Coeficiente (h/un)", formula: `${fmtNum2(horasDia)}h ÷ prod`, valor: fmtNum(coef) });
+  rows.push({ desc: "CUSTO UNITÁRIO/UN", formula: `${fmtNum2(custoHoraFinal)} × ${fmtNum(coef)}`, valor: fmt(custoUnit), highlight: true });
+  return rows;
+}
+
+// ── Build Equipment calculation rows ──
+function buildEquipCalcRows(p: Record<string, any>, coef: number): Array<{ desc: string; formula: string; valor: string; highlight?: boolean }> {
+  const dep = Number(p.depreciacao_hora || 0);
+  const man = Number(p.manutencao_hora || 0);
+  const combConsumo = Number(p.combustivel_consumo_hora || 0);
+  const combPreco = Number(p.combustivel_preco_litro || 0);
+  const fator = Number(p.fator_utilizacao || 1);
+  const oper = Number(p.operador_custo_hora || 0);
+  const valAq = Number(p.valor_aquisicao || 0);
+  const valRes = Number(p.valor_residual || 0);
+  const vidaUtil = Number(p.vida_util_horas || 0);
+
+  const combHora = combConsumo * combPreco;
+  const custoHoraProd = dep + man + combHora + oper;
+  const custoHoraFator = custoHoraProd * fator;
+  const custoUnit = custoHoraFator * coef;
+
+  const rows: Array<{ desc: string; formula: string; valor: string; highlight?: boolean }> = [];
+  if (valAq > 0 && vidaUtil > 0) {
+    rows.push({ desc: "Valor Aquisição", formula: "", valor: fmt(valAq) });
+    rows.push({ desc: "Valor Residual", formula: "", valor: fmt(valRes) });
+    rows.push({ desc: "Vida Útil", formula: "", valor: `${fmtNum2(vidaUtil)} h` });
+    rows.push({ desc: "Depreciação/hora", formula: `(${fmtNum2(valAq)} - ${fmtNum2(valRes)}) ÷ ${fmtNum2(vidaUtil)}`, valor: fmt(dep) });
+  } else {
+    rows.push({ desc: "Depreciação/hora (aluguel)", formula: "", valor: fmt(dep) });
+  }
+  rows.push({ desc: "Manutenção/hora", formula: "", valor: fmt(man) });
+  if (combConsumo > 0) {
+    rows.push({ desc: "Combustível/hora", formula: `${fmtNum(combConsumo)} L × ${fmtNum2(combPreco)}`, valor: fmt(combHora) });
+  }
+  if (oper > 0) {
+    rows.push({ desc: "Operador/hora", formula: "", valor: fmt(oper) });
+  }
+  rows.push({ desc: "Custo Hora Produtiva", formula: `dep + man + comb + oper`, valor: fmt(custoHoraProd) });
+  if (fator !== 1) {
+    rows.push({ desc: "Fator Utilização", formula: "", valor: fmtNum(fator) });
+    rows.push({ desc: "Custo Hora c/ Fator", formula: `${fmtNum2(custoHoraProd)} × ${fmtNum(fator)}`, valor: fmt(custoHoraFator) });
+  }
+  rows.push({ desc: "Coeficiente (h/un)", formula: "", valor: fmtNum(coef) });
+  rows.push({ desc: "CUSTO UNITÁRIO/UN", formula: `${fmtNum2(custoHoraFator)} × ${fmtNum(coef)}`, valor: fmt(custoUnit), highlight: true });
+  return rows;
+}
+
+// ── Build Material calculation rows ──
+function buildMatCalcRows(p: Record<string, any>, coef: number): Array<{ desc: string; formula: string; valor: string; highlight?: boolean }> {
+  const custoBase = Number(p.custo_unitario || 0);
+  const perda = Number(p.perda_percentual || 0);
+  const reapr = Number(p.reaproveitamento_percentual || 0);
+  const vidaUtil = Number(p.vida_util_estimada || 0);
+  const custoRepo = Number(p.custo_reposicao || 0);
+
+  const fatorPerda = 1 + (perda / 100);
+  const fatorReapr = 1 - (reapr / 100);
+  const custoCorrigido = custoBase * fatorPerda * fatorReapr;
+  const repoUso = vidaUtil > 0 && custoRepo > 0 ? custoRepo / vidaUtil : 0;
+  const custoFinal = custoCorrigido + repoUso;
+  const custoUnit = custoFinal * coef;
+
+  const rows: Array<{ desc: string; formula: string; valor: string; highlight?: boolean }> = [];
+  rows.push({ desc: "Custo Unitário Base", formula: "", valor: fmt(custoBase) });
+  if (perda > 0) rows.push({ desc: "Fator de Perda", formula: `1 + ${fmtNum2(perda)}%`, valor: fmtNum(fatorPerda) });
+  if (reapr > 0) rows.push({ desc: "Fator Reaproveitamento", formula: `1 - ${fmtNum2(reapr)}%`, valor: fmtNum(fatorReapr) });
+  rows.push({ desc: "Custo Corrigido", formula: `${fmtNum2(custoBase)} × fatores`, valor: fmt(custoCorrigido) });
+  if (repoUso > 0) rows.push({ desc: "Reposição/uso", formula: `${fmtNum2(custoRepo)} ÷ ${fmtNum2(vidaUtil)}`, valor: fmt(repoUso) });
+  rows.push({ desc: "Coeficiente (un/un)", formula: "", valor: fmtNum(coef) });
+  rows.push({ desc: "CUSTO UNITÁRIO/UN", formula: `${fmtNum2(custoFinal)} × ${fmtNum(coef)}`, valor: fmt(custoUnit), highlight: true });
+  return rows;
+}
+
 export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blob> {
   const numEquipes = dados.numEquipes || 4;
   const prazoEstimado = dados.mobilizacao?.duracaoMeses || 12;
   const diasProdutivosMes = dados.mobilizacao?.diasProdutivos || 22;
 
-  // ── Compute productivity schedule per service ──
+  const TIPO_LABELS: Record<string, string> = {
+    mao_de_obra: "Mão de Obra", equipamento: "Equipamentos",
+    veiculo: "Veículos", material: "Materiais", combustivel: "Combustível",
+  };
+  const TIPO_COLORS: Record<string, string> = {
+    mao_de_obra: MO_COLOR, equipamento: EQUIP_COLOR,
+    veiculo: EQUIP_COLOR, material: MAT_COLOR, combustivel: MAT_COLOR,
+  };
+  const CATEGORIAS: Record<string, string> = {
+    hospedagem: "Hospedagem", combustivel: "Veículo + Combustível",
+    pedagios: "Pedágios", passagens: "Passagens", diversos: "Diversos",
+  };
+
+  // ── Compute productivity schedule ──
   interface CronogramaItem {
     s: ServicoRelatorio;
     prodDia: number;
     diasTotais: number;
     diasPorEquipe: number;
     meses: number;
-    equipesNecessarias: number;
   }
   const cronograma: CronogramaItem[] = dados.servicos.map(s => {
     let prodDia = s.produtividadePadrao || 0;
-    if (s.unidadeTempoProdutividade === "hora") {
-      prodDia = prodDia * (dados.mobilizacao?.jornadaDiaria || 8);
-    } else if (s.unidadeTempoProdutividade === "mes") {
-      prodDia = prodDia / diasProdutivosMes;
-    }
+    if (s.unidadeTempoProdutividade === "hora") prodDia *= (dados.mobilizacao?.jornadaDiaria || 8);
+    else if (s.unidadeTempoProdutividade === "mes") prodDia /= diasProdutivosMes;
     if (prodDia <= 0) prodDia = 1;
     const diasTotais = Math.ceil(s.quantidade / prodDia);
     const diasPorEquipe = Math.ceil(diasTotais / numEquipes);
     const meses = Math.max(1, Math.ceil(diasPorEquipe / diasProdutivosMes));
-    return { s, prodDia, diasTotais, diasPorEquipe, meses, equipesNecessarias: numEquipes };
+    return { s, prodDia, diasTotais, diasPorEquipe, meses };
   });
 
   // ── Financial calcs ──
@@ -184,23 +341,21 @@ export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blo
   });
   const totalDespPct = despesasIndiretas.reduce((s, c) => s + c.percentual, 0);
   const totalDesp = dados.custoTotal * (totalDespPct / 100);
-  let irPct = 0;
   const irComponents = dados.bdiComponentes.filter(c => ["IRPJ", "CSLL"].some(t => c.nome.toUpperCase().includes(t)));
-  irPct = irComponents.length > 0 ? irComponents.reduce((s, c) => s + c.percentual, 0) : 7.68;
+  const irPct = irComponents.length > 0 ? irComponents.reduce((s, c) => s + c.percentual, 0) : 7.68;
   const totalIR = dados.precoTotal * (irPct / 100);
   const lucroLiquido = dados.precoTotal - totalTributos - dados.custoTotal - totalDesp - totalIR;
   const margemContrib = dados.precoTotal - totalTributos - dados.custoServicos;
   const ebitda = dados.precoTotal - totalTributos - dados.custoTotal;
   const margemLiqPct = dados.precoTotal > 0 ? (lucroLiquido / dados.precoTotal) * 100 : 0;
 
-  const TIPO_LABELS: Record<string, string> = {
-    mao_de_obra: "Mão de Obra", equipamento: "Equipamentos",
-    veiculo: "Veículos", material: "Materiais", combustivel: "Combustível",
-  };
-  const CATEGORIAS: Record<string, string> = {
-    hospedagem: "Hospedagem", combustivel: "Veículo + Combustível",
-    pedagios: "Pedágios", passagens: "Passagens", diversos: "Diversos",
-  };
+  // Group composicaoItens by composicao
+  const itensPorComposicao = new Map<string, ComposicaoItemRelatorio[]>();
+  for (const ci of dados.composicaoItens) {
+    const key = ci.composicaoId;
+    if (!itensPorComposicao.has(key)) itensPorComposicao.set(key, []);
+    itensPorComposicao.get(key)!.push(ci);
+  }
 
   const children: (Paragraph | Table)[] = [];
 
@@ -242,7 +397,6 @@ export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blo
   children.push(new Paragraph({ spacing: { before: 600, after: 100 }, children: [] }));
   children.push(new Paragraph({
     shading: { fill: PRIMARY, type: ShadingType.CLEAR },
-    spacing: { after: 0 },
     children: [new TextRun({ text: `  VALOR DA PROPOSTA: ${fmt(dados.precoTotal)}`, bold: true, font: "Arial", size: 28, color: "FFFFFF" })],
   }));
 
@@ -258,19 +412,19 @@ export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blo
     `a ser executado em ${dados.oportunidade.cidade}/${dados.oportunidade.estado}.`
   ));
 
-  // Summary table
-  const summaryData = [
-    ["Valor Total da Proposta", fmt(dados.precoTotal)],
-    ["Custo Direto Total", fmt(dados.custoTotal)],
-    ["BDI Aplicado", fmtPct(dados.bdiPercentual)],
-    ["Prazo Estimado", `${prazoEstimado} meses`],
-    ["Número de Equipes", `${numEquipes} equipes`],
-    ["Composições de Custo", `${dados.servicos.length} serviços`],
-  ];
   const COL_LABEL = 5400;
   const COL_VALUE = 3960;
   const TABLE_W = COL_LABEL + COL_VALUE;
-  children.push(new Paragraph({ spacing: { before: 100 }, children: [] }));
+
+  const summaryData = [
+    ["Valor Total da Proposta", fmt(dados.precoTotal)],
+    ["Custo Direto (Serviços)", fmt(dados.custoServicos)],
+    ["Custo ADM Local", fmt(dados.custoAdmLocal)],
+    ["Custo Total", fmt(dados.custoTotal)],
+    ["BDI Aplicado", fmtPct(dados.bdiPercentual)],
+    ["Prazo Estimado", `${prazoEstimado} meses`],
+    ["Número de Equipes", `${numEquipes} equipes`],
+  ];
 
   children.push(new Table({
     width: { size: TABLE_W, type: WidthType.DXA },
@@ -286,94 +440,22 @@ export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blo
     ],
   }));
 
-  children.push(subTitle("Principais Serviços"));
-  for (const s of dados.servicos.slice(0, 10)) {
-    children.push(new Paragraph({
-      spacing: { after: 40 },
-      numbering: { reference: "bullets", level: 0 },
-      children: [new TextRun({ text: `${s.codigo} — ${s.nome}: ${fmtNum(s.quantidade)} ${s.unidade} (${fmt(s.subtotal)})`, font: "Arial", size: 16 })],
-    }));
-  }
-
   children.push(para(
-    `Com base nas composições de custos unitários, nos parâmetros de BDI adotados e no dimensionamento operacional ` +
-    `detalhado nas seções seguintes, declara-se que os preços propostos são EXEQUÍVEIS, ` +
-    `sustentados por metodologia técnica comprovada, produtividades reais e estrutura financeira adequada.`
+    `Com base nas composições de custos unitários detalhadas nas seções seguintes, nos parâmetros de BDI adotados e no dimensionamento operacional, ` +
+    `declara-se que os preços propostos são EXEQUÍVEIS, sustentados por metodologia técnica comprovada e estrutura financeira adequada.`
   ));
 
   // ════════════════════════════════════════
-  // 2. ÍNDICES DE PRODUTIVIDADE (substitui metodologia)
+  // 2. ÍNDICES DE PRODUTIVIDADE E CRONOGRAMA
   // ════════════════════════════════════════
   children.push(new Paragraph({ children: [new PageBreak()] }));
-  children.push(sectionTitle(2, "ÍNDICES DE PRODUTIVIDADE"));
+  children.push(sectionTitle(2, "ÍNDICES DE PRODUTIVIDADE E CRONOGRAMA"));
 
   children.push(para(
-    `As produtividades adotadas foram definidas com base no histórico de projetos executados pela empresa, ` +
-    `considerando o regime de trabalho de ${dados.mobilizacao?.jornadaDiaria || 8}h diárias, ` +
-    `${diasProdutivosMes} dias produtivos/mês e condições regionais de acesso e clima. ` +
-    `O fator de improdutividade aplicado é de ${fmtPct((dados.mobilizacao?.fatorImprodutividade || 0.15) * 100)}, ` +
-    `que contempla dias de chuva (${dados.mobilizacao?.diasChuva || 5} dias/mês) e paradas operacionais.`
+    `As produtividades foram definidas com base no histórico de projetos executados, considerando regime de ` +
+    `${dados.mobilizacao?.jornadaDiaria || 8}h diárias, ${diasProdutivosMes} dias produtivos/mês e fator de improdutividade de ` +
+    `${fmtPct((dados.mobilizacao?.fatorImprodutividade || 0.15) * 100)} (${dados.mobilizacao?.diasChuva || 5} dias de chuva/mês).`
   ));
-
-  children.push(subTitle("Detalhamento por Serviço"));
-
-  // Productivity table
-  const prodCols = [1800, 2400, 1200, 1600, 1200, 1160];
-  const prodTableW = prodCols.reduce((a, b) => a + b, 0);
-
-  children.push(new Table({
-    width: { size: prodTableW, type: WidthType.DXA },
-    columnWidths: prodCols,
-    rows: [
-      new TableRow({
-        children: [
-          headerCell("Código", prodCols[0]),
-          headerCell("Serviço", prodCols[1]),
-          headerCell("Unidade", prodCols[2]),
-          headerCell("Produtividade", prodCols[3]),
-          headerCell("Und. Tempo", prodCols[4]),
-          headerCell("Prod./Dia", prodCols[5]),
-        ],
-      }),
-      ...cronograma.map((c, i) => {
-        const fill = i % 2 === 1 ? LIGHT_GRAY : undefined;
-        const unTempo = c.s.unidadeTempoProdutividade === "hora" ? "por hora" :
-          c.s.unidadeTempoProdutividade === "mes" ? "por mês" : "por dia";
-        return new TableRow({
-          children: [
-            dataCell(c.s.codigo, prodCols[0], { fill }),
-            dataCell(c.s.nome.substring(0, 30), prodCols[1], { fill }),
-            dataCell(c.s.unidade, prodCols[2], { fill }),
-            dataCell(c.s.produtividadePadrao ? fmtNum(c.s.produtividadePadrao) : "—", prodCols[3], { align: AlignmentType.RIGHT, fill }),
-            dataCell(unTempo, prodCols[4], { fill }),
-            dataCell(fmtNum(c.prodDia), prodCols[5], { bold: true, align: AlignmentType.RIGHT, fill }),
-          ],
-        });
-      }),
-    ],
-  }));
-
-  children.push(new Paragraph({ spacing: { before: 200 }, children: [] }));
-  children.push(subTitle("Justificativa Técnica"));
-  children.push(para(
-    `Os índices de produtividade adotados são conservadores em relação ao histórico real de execução, ` +
-    `o que proporciona margem de segurança ao cronograma. As produtividades por dia consideram ` +
-    `a jornada de ${dados.mobilizacao?.jornadaDiaria || 8}h diárias e foram validadas em projetos anteriores de escopo similar.`
-  ));
-
-  // ════════════════════════════════════════
-  // 3. DIMENSIONAMENTO OPERACIONAL E CRONOGRAMA DE RECURSOS
-  // ════════════════════════════════════════
-  children.push(new Paragraph({ children: [new PageBreak()] }));
-  children.push(sectionTitle(3, "DIMENSIONAMENTO OPERACIONAL E CRONOGRAMA DE RECURSOS"));
-
-  children.push(keyValuePara("Quantidade de Equipes", `${numEquipes} equipes simultâneas`));
-  children.push(keyValuePara("Regime de Trabalho", dados.mobilizacao?.regimeTrabalho || "Jornada regular 8h/dia, 5x2"));
-  children.push(keyValuePara("Jornada Diária", `${dados.mobilizacao?.jornadaDiaria || 8} horas`));
-  children.push(keyValuePara("Duração Estimada", `${prazoEstimado} meses`));
-  children.push(keyValuePara("Dias Produtivos/Mês", `${diasProdutivosMes} dias`));
-
-  children.push(subTitle("Cronograma de Recursos por Serviço"));
 
   const cronCols = [1400, 2000, 1100, 1000, 1000, 1000, 860];
   const cronTableW = cronCols.reduce((a, b) => a + b, 0);
@@ -384,12 +466,9 @@ export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blo
     rows: [
       new TableRow({
         children: [
-          headerCell("Código", cronCols[0]),
-          headerCell("Serviço", cronCols[1]),
-          headerCell("Quantidade", cronCols[2]),
-          headerCell("Prod./Dia", cronCols[3]),
-          headerCell("Dias Total", cronCols[4]),
-          headerCell("Dias/Equipe", cronCols[5]),
+          headerCell("Código", cronCols[0]), headerCell("Serviço", cronCols[1]),
+          headerCell("Qtd", cronCols[2]), headerCell("Prod/Dia", cronCols[3]),
+          headerCell("Dias Tot", cronCols[4]), headerCell("Dias/Eq", cronCols[5]),
           headerCell("Meses", cronCols[6]),
         ],
       }),
@@ -399,8 +478,8 @@ export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blo
           children: [
             dataCell(c.s.codigo, cronCols[0], { fill }),
             dataCell(c.s.nome.substring(0, 25), cronCols[1], { fill }),
-            dataCell(`${fmtNum(c.s.quantidade)} ${c.s.unidade}`, cronCols[2], { align: AlignmentType.RIGHT, fill }),
-            dataCell(fmtNum(c.prodDia), cronCols[3], { align: AlignmentType.RIGHT, fill }),
+            dataCell(`${fmtNum2(c.s.quantidade)} ${c.s.unidade}`, cronCols[2], { align: AlignmentType.RIGHT, fill }),
+            dataCell(fmtNum2(c.prodDia), cronCols[3], { align: AlignmentType.RIGHT, fill }),
             dataCell(`${c.diasTotais}`, cronCols[4], { align: AlignmentType.RIGHT, fill }),
             dataCell(`${c.diasPorEquipe}`, cronCols[5], { align: AlignmentType.RIGHT, bold: true, fill }),
             dataCell(`${c.meses}`, cronCols[6], { align: AlignmentType.RIGHT, bold: true, fill }),
@@ -410,38 +489,197 @@ export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blo
     ],
   }));
 
-  // Cronograma visual (Gantt simplificado)
-  const maxMeses = Math.max(...cronograma.map(c => c.meses), 1);
-  children.push(new Paragraph({ spacing: { before: 200 }, children: [] }));
-  children.push(subTitle("Cronograma Físico Estimado (Linha do Tempo)"));
+  // ════════════════════════════════════════
+  // 3. COMPOSIÇÕES DE CUSTO UNITÁRIO (CCU) — DETALHAMENTO COMPLETO
+  // ════════════════════════════════════════
+  children.push(new Paragraph({ children: [new PageBreak()] }));
+  children.push(sectionTitle(3, "COMPOSIÇÕES DE CUSTO UNITÁRIO — MEMÓRIA DE CÁLCULO"));
 
-  for (const c of cronograma) {
-    const bar = "█".repeat(Math.max(1, Math.round((c.meses / maxMeses) * 20)));
-    const spaces = " ".repeat(Math.max(0, 20 - bar.length));
-    children.push(new Paragraph({
-      spacing: { after: 30 },
-      children: [
-        new TextRun({ text: `${c.s.codigo.padEnd(12)} `, font: "Courier New", size: 16, bold: true }),
-        new TextRun({ text: bar, font: "Courier New", size: 16, color: PRIMARY }),
-        new TextRun({ text: `${spaces} ${c.meses}m`, font: "Courier New", size: 16, color: GRAY }),
+  children.push(para(
+    `A seguir, apresenta-se o detalhamento completo de cada composição de custo unitário, demonstrando ` +
+    `os parâmetros utilizados no cálculo de cada insumo (mão de obra, equipamentos e materiais), ` +
+    `incluindo encargos sociais, depreciação, produtividades e coeficientes.`
+  ));
+
+  // For each service/composition, show detailed calculations
+  for (const svc of dados.servicos) {
+    // Find composição
+    const comp = dados.composicaoItens.find(ci => ci.composicaoId);
+    const itens = itensPorComposicao.get(
+      dados.composicaoItens.find(ci => {
+        // Match by composicaoCodigo or find any item whose composicaoId matches a service
+        return true;
+      })?.composicaoId || ""
+    );
+
+    // Get items for this service's composition
+    const compId = dados.composicaoItens.length > 0
+      ? [...new Set(dados.composicaoItens.map(ci => ci.composicaoId))]
+      : [];
+
+    // Find the composition matching this service
+    const matchingCompId = compId.find(cid => {
+      const svcItens = dados.composicaoItens.filter(ci => ci.composicaoId === cid);
+      return svcItens.length > 0;
+    });
+
+    // We need to match services to their composition items
+    // Since composicaoItens have composicaoId but servicos don't directly link,
+    // we iterate through unique compositions instead
+  }
+
+  // Better approach: iterate by unique composition
+  const uniqueCompIds = [...new Set(dados.composicaoItens.map(ci => ci.composicaoId))];
+
+  for (const compId of uniqueCompIds) {
+    const compItens = dados.composicaoItens.filter(ci => ci.composicaoId === compId);
+    if (compItens.length === 0) continue;
+
+    // Find matching service
+    const matchingSvc = dados.servicos.find(s => {
+      // Match by code in composicaoCodigo
+      return compItens[0].composicaoCodigo && s.codigo === compItens[0].composicaoCodigo;
+    }) || dados.servicos[uniqueCompIds.indexOf(compId)] || null;
+
+    const compCodigo = compItens[0].composicaoCodigo || matchingSvc?.codigo || `COMP-${uniqueCompIds.indexOf(compId) + 1}`;
+    const compNome = matchingSvc?.nome || compItens[0].descricao || "Composição";
+
+    // Composition header
+    children.push(new Paragraph({ children: [new PageBreak()] }));
+    children.push(subTitle(`${compCodigo} — ${compNome}`));
+
+    if (matchingSvc) {
+      children.push(keyValuePara("Unidade", matchingSvc.unidade));
+      children.push(keyValuePara("Custo Unitário Total", fmt(matchingSvc.custoUnitario)));
+      if (matchingSvc.produtividadePadrao) {
+        const unTempo = matchingSvc.unidadeTempoProdutividade === "hora" ? "h" : matchingSvc.unidadeTempoProdutividade === "mes" ? "mês" : "dia";
+        children.push(keyValuePara("Produtividade", `${fmtNum2(matchingSvc.produtividadePadrao)} ${matchingSvc.unidade}/${unTempo}`));
+      }
+    }
+
+    // Group items by type
+    const moItens = compItens.filter(ci => ci.tipoInsumo === "mao_de_obra");
+    const eqItens = compItens.filter(ci => ci.tipoInsumo === "equipamento");
+    const veItens = compItens.filter(ci => ci.tipoInsumo === "veiculo");
+    const matItens = compItens.filter(ci => ci.tipoInsumo === "material" || ci.tipoInsumo === "combustivel");
+
+    // ── MÃO DE OBRA ──
+    if (moItens.length > 0) {
+      children.push(subSubTitle("▸ Mão de Obra", MO_COLOR));
+      for (const item of moItens) {
+        children.push(new Paragraph({
+          spacing: { before: 80, after: 40 },
+          children: [
+            new TextRun({ text: `${item.descricao}`, bold: true, font: "Arial", size: 17, color: DARK }),
+            new TextRun({ text: ` (Qtd: ${fmtNum2(item.quantidade)}, Coef: ${fmtNum(item.coeficiente)} h/un)`, font: "Arial", size: 15, color: GRAY }),
+          ],
+        }));
+        const p = item.parametros || {};
+        const calcRows = buildMOCalcRows(p, item.coeficiente);
+        children.push(calcTable(calcRows));
+      }
+    }
+
+    // ── EQUIPAMENTOS ──
+    if (eqItens.length > 0) {
+      children.push(subSubTitle("▸ Equipamentos", EQUIP_COLOR));
+      for (const item of eqItens) {
+        children.push(new Paragraph({
+          spacing: { before: 80, after: 40 },
+          children: [
+            new TextRun({ text: `${item.descricao}`, bold: true, font: "Arial", size: 17, color: DARK }),
+            new TextRun({ text: ` (Qtd: ${fmtNum2(item.quantidade)}, Coef: ${fmtNum(item.coeficiente)} h/un)`, font: "Arial", size: 15, color: GRAY }),
+          ],
+        }));
+        const p = item.parametros || {};
+        const calcRows = buildEquipCalcRows(p, item.coeficiente);
+        children.push(calcTable(calcRows));
+      }
+    }
+
+    // ── VEÍCULOS ──
+    if (veItens.length > 0) {
+      children.push(subSubTitle("▸ Veículos", EQUIP_COLOR));
+      for (const item of veItens) {
+        children.push(new Paragraph({
+          spacing: { before: 80, after: 40 },
+          children: [
+            new TextRun({ text: `${item.descricao}`, bold: true, font: "Arial", size: 17, color: DARK }),
+            new TextRun({ text: ` (Qtd: ${fmtNum2(item.quantidade)}, Coef: ${fmtNum(item.coeficiente)})`, font: "Arial", size: 15, color: GRAY }),
+          ],
+        }));
+        // Vehicles use equipment-like calc
+        const p = item.parametros || {};
+        const calcRows = buildEquipCalcRows(p, item.coeficiente);
+        children.push(calcTable(calcRows));
+      }
+    }
+
+    // ── MATERIAIS ──
+    if (matItens.length > 0) {
+      children.push(subSubTitle("▸ Materiais", MAT_COLOR));
+      for (const item of matItens) {
+        children.push(new Paragraph({
+          spacing: { before: 80, after: 40 },
+          children: [
+            new TextRun({ text: `${item.descricao}`, bold: true, font: "Arial", size: 17, color: DARK }),
+            new TextRun({ text: ` (Qtd: ${fmtNum2(item.quantidade)}, Coef: ${fmtNum(item.coeficiente)})`, font: "Arial", size: 15, color: GRAY }),
+          ],
+        }));
+        const p = item.parametros || {};
+        const calcRows = buildMatCalcRows(p, item.coeficiente);
+        children.push(calcTable(calcRows));
+      }
+    }
+
+    // ── Resumo da composição ──
+    const totalMO = moItens.reduce((s, i) => s + i.custoTotal, 0);
+    const totalEq = eqItens.reduce((s, i) => s + i.custoTotal, 0);
+    const totalVe = veItens.reduce((s, i) => s + i.custoTotal, 0);
+    const totalMat = matItens.reduce((s, i) => s + i.custoTotal, 0);
+    const totalComp = totalMO + totalEq + totalVe + totalMat;
+
+    children.push(new Paragraph({ spacing: { before: 100 }, children: [] }));
+    const resumoCols = [5000, 4360];
+    const resumoTableW = resumoCols.reduce((a, b) => a + b, 0);
+    const resumoRows: Array<[string, string, string?]> = [];
+    if (totalMO > 0) resumoRows.push(["Mão de Obra", fmt(totalMO)]);
+    if (totalEq > 0) resumoRows.push(["Equipamentos", fmt(totalEq)]);
+    if (totalVe > 0) resumoRows.push(["Veículos", fmt(totalVe)]);
+    if (totalMat > 0) resumoRows.push(["Materiais", fmt(totalMat)]);
+    resumoRows.push(["CUSTO UNITÁRIO TOTAL", fmt(totalComp), PRIMARY_LIGHT]);
+
+    children.push(new Table({
+      width: { size: resumoTableW, type: WidthType.DXA },
+      columnWidths: resumoCols,
+      rows: [
+        new TableRow({ children: [headerCell("Categoria", resumoCols[0]), headerCell("Subtotal", resumoCols[1])] }),
+        ...resumoRows.map((row, i) => new TableRow({
+          children: [
+            dataCell(row[0], resumoCols[0], { bold: !!row[2], fill: row[2] || (i % 2 === 1 ? LIGHT_GRAY : undefined) }),
+            dataCell(row[1], resumoCols[1], { bold: true, align: AlignmentType.RIGHT, fill: row[2] || (i % 2 === 1 ? LIGHT_GRAY : undefined) }),
+          ],
+        })),
       ],
     }));
   }
 
   // ════════════════════════════════════════
-  // 4. LOGÍSTICA E MOBILIZAÇÃO
+  // 4. LOGÍSTICA E ADM LOCAL
   // ════════════════════════════════════════
   children.push(new Paragraph({ children: [new PageBreak()] }));
-  children.push(sectionTitle(4, "LOGÍSTICA E MOBILIZAÇÃO"));
+  children.push(sectionTitle(4, "ADMINISTRAÇÃO LOCAL E LOGÍSTICA"));
 
   if (dados.mobilizacao) {
     children.push(keyValuePara("Base Operacional", dados.mobilizacao.nome));
-    children.push(keyValuePara("Distância Base-Projeto", `${fmtNum(dados.mobilizacao.distanciaBaseProjeto)} km`));
+    children.push(keyValuePara("Distância Base-Projeto", `${fmtNum2(dados.mobilizacao.distanciaBaseProjeto)} km`));
     children.push(keyValuePara("Dias de Chuva/Mês", `${dados.mobilizacao.diasChuva} dias`));
     children.push(keyValuePara("Fator Improdutividade", fmtPct(dados.mobilizacao.fatorImprodutividade * 100)));
+    children.push(keyValuePara("Duração", `${dados.mobilizacao.duracaoMeses} meses`));
+    children.push(keyValuePara("Regime", dados.mobilizacao.regimeTrabalho));
   }
 
-  children.push(subTitle("Custos Logísticos"));
+  children.push(subTitle("Custos de Administração Local"));
   const logRows: string[][] = [];
   for (const [cat, valor] of Object.entries(dados.deslocamentosPorCategoria)) {
     if (valor > 0) logRows.push([CATEGORIAS[cat] || cat, fmt(valor)]);
@@ -454,7 +692,7 @@ export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blo
       width: { size: TABLE_W, type: WidthType.DXA },
       columnWidths: [COL_LABEL, COL_VALUE],
       rows: [
-        new TableRow({ children: [headerCell("Categoria", COL_LABEL), headerCell("Valor", COL_VALUE)] }),
+        new TableRow({ children: [headerCell("Categoria", COL_LABEL), headerCell("Valor Mensal", COL_VALUE)] }),
         ...logRows.map((row, i) => {
           const isTotal = i === logRows.length - 1;
           return new TableRow({
@@ -470,136 +708,117 @@ export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blo
 
   children.push(para(
     `O impacto pluviométrico foi considerado através do fator de improdutividade de ` +
-    `${fmtPct((dados.mobilizacao?.fatorImprodutividade || 0.15) * 100)}, reduzindo os dias úteis de trabalho. ` +
-    `O critério de mudança de base ocorre quando a distância ao local de trabalho excede 100 km.`
+    `${fmtPct((dados.mobilizacao?.fatorImprodutividade || 0.15) * 100)}, reduzindo os dias úteis de trabalho.`
   ));
 
   // ════════════════════════════════════════
-  // 5. COMPOSIÇÃO DE CUSTOS (CCU)
+  // 5. FORMAÇÃO DO BDI
   // ════════════════════════════════════════
   children.push(new Paragraph({ children: [new PageBreak()] }));
-  children.push(sectionTitle(5, "COMPOSIÇÃO DE CUSTOS (CCU)"));
+  children.push(sectionTitle(5, "FORMAÇÃO DO BDI"));
 
-  children.push(subTitle("Resumo por Tipo de Insumo"));
-  const tipoCols = [4000, 3000, 2360];
-  const tipoTableW = tipoCols.reduce((a, b) => a + b, 0);
-  const tipoRows: Array<{ label: string; valor: number; pct: number }> = [];
-  for (const [tipo, valor] of Object.entries(dados.custoServicosPorTipo)) {
-    if (valor > 0) tipoRows.push({ label: TIPO_LABELS[tipo] || tipo, valor, pct: dados.custoServicos > 0 ? (valor / dados.custoServicos) * 100 : 0 });
+  children.push(para(
+    `O BDI (Benefícios e Despesas Indiretas) foi calculado pelo método da fórmula inversa (markup), ` +
+    `onde o preço de venda é determinado pela relação: Preço = Custo / (1 - Tributos% - Margem%). ` +
+    `O perfil "${dados.bdiNome}" resulta em BDI efetivo de ${fmtPct(dados.bdiPercentual)}.`
+  ));
+
+  children.push(subTitle("Componentes do BDI"));
+
+  // BDI components table
+  const bdiCompCols = [4000, 2400, 2960];
+  const bdiCompW = bdiCompCols.reduce((a, b) => a + b, 0);
+
+  const bdiCategories = new Map<string, Array<{ nome: string; percentual: number }>>();
+  for (const c of dados.bdiComponentes) {
+    const cat = c.categoria || "outros";
+    if (!bdiCategories.has(cat)) bdiCategories.set(cat, []);
+    bdiCategories.get(cat)!.push(c);
   }
 
-  children.push(new Table({
-    width: { size: tipoTableW, type: WidthType.DXA },
-    columnWidths: tipoCols,
-    rows: [
-      new TableRow({ children: [headerCell("Tipo de Insumo", tipoCols[0]), headerCell("Valor", tipoCols[1]), headerCell("% do CD", tipoCols[2])] }),
-      ...tipoRows.map((row, i) => new TableRow({
-        children: [
-          dataCell(row.label, tipoCols[0], { fill: i % 2 === 1 ? LIGHT_GRAY : undefined }),
-          dataCell(fmt(row.valor), tipoCols[1], { align: AlignmentType.RIGHT, fill: i % 2 === 1 ? LIGHT_GRAY : undefined }),
-          dataCell(fmtPct(row.pct), tipoCols[2], { align: AlignmentType.RIGHT, fill: i % 2 === 1 ? LIGHT_GRAY : undefined }),
-        ],
-      })),
-      new TableRow({
-        children: [
-          dataCell("TOTAL SERVIÇOS", tipoCols[0], { bold: true, fill: PRIMARY_LIGHT }),
-          dataCell(fmt(dados.custoServicos), tipoCols[1], { bold: true, align: AlignmentType.RIGHT, fill: PRIMARY_LIGHT }),
-          dataCell("100,00%", tipoCols[2], { bold: true, align: AlignmentType.RIGHT, fill: PRIMARY_LIGHT }),
-        ],
-      }),
+  const bdiRows: TableRow[] = [];
+  bdiRows.push(new TableRow({ children: [headerCell("Componente", bdiCompCols[0]), headerCell("Percentual", bdiCompCols[1]), headerCell("Valor s/ CD", bdiCompCols[2])] }));
+
+  let rowIdx = 0;
+  for (const comp of dados.bdiComponentes) {
+    const valorSobreCd = dados.custoTotal * (comp.percentual / 100);
+    const fill = rowIdx % 2 === 1 ? LIGHT_GRAY : undefined;
+    bdiRows.push(new TableRow({
+      children: [
+        dataCell(comp.nome, bdiCompCols[0], { fill }),
+        dataCell(fmtPct(comp.percentual), bdiCompCols[1], { align: AlignmentType.RIGHT, fill }),
+        dataCell(fmt(valorSobreCd), bdiCompCols[2], { align: AlignmentType.RIGHT, fill }),
+      ],
+    }));
+    rowIdx++;
+  }
+
+  // BDI total row
+  bdiRows.push(new TableRow({
+    children: [
+      dataCell("BDI EFETIVO (MARKUP)", bdiCompCols[0], { bold: true, fill: PRIMARY_LIGHT }),
+      dataCell(fmtPct(dados.bdiPercentual), bdiCompCols[1], { bold: true, align: AlignmentType.RIGHT, fill: PRIMARY_LIGHT }),
+      dataCell(fmt(dados.valorBdi), bdiCompCols[2], { bold: true, align: AlignmentType.RIGHT, fill: PRIMARY_LIGHT }),
     ],
   }));
 
-  children.push(subTitle("Detalhamento por Composição"));
-  const ccuCols = [1400, 2300, 1500, 1800, 2360];
-  const ccuTableW = ccuCols.reduce((a, b) => a + b, 0);
-
   children.push(new Table({
-    width: { size: ccuTableW, type: WidthType.DXA },
-    columnWidths: ccuCols,
-    rows: [
-      new TableRow({
-        children: [
-          headerCell("Código", ccuCols[0]), headerCell("Composição", ccuCols[1]),
-          headerCell("Quantidade", ccuCols[2]), headerCell("Custo Unit.", ccuCols[3]),
-          headerCell("Subtotal", ccuCols[4]),
-        ],
-      }),
-      ...dados.servicos.map((s, i) => new TableRow({
-        children: [
-          dataCell(s.codigo, ccuCols[0], { fill: i % 2 === 1 ? LIGHT_GRAY : undefined }),
-          dataCell(s.nome.substring(0, 30), ccuCols[1], { fill: i % 2 === 1 ? LIGHT_GRAY : undefined }),
-          dataCell(`${fmtNum(s.quantidade)} ${s.unidade}`, ccuCols[2], { align: AlignmentType.RIGHT, fill: i % 2 === 1 ? LIGHT_GRAY : undefined }),
-          dataCell(fmt(s.custoUnitario), ccuCols[3], { align: AlignmentType.RIGHT, fill: i % 2 === 1 ? LIGHT_GRAY : undefined }),
-          dataCell(fmt(s.subtotal), ccuCols[4], { bold: true, align: AlignmentType.RIGHT, fill: i % 2 === 1 ? LIGHT_GRAY : undefined }),
-        ],
-      })),
-      new TableRow({
-        children: [
-          dataCell("", ccuCols[0], { fill: PRIMARY_LIGHT }),
-          dataCell("TOTAL", ccuCols[1], { bold: true, fill: PRIMARY_LIGHT }),
-          dataCell("", ccuCols[2], { fill: PRIMARY_LIGHT }),
-          dataCell("", ccuCols[3], { fill: PRIMARY_LIGHT }),
-          dataCell(fmt(dados.custoServicos), ccuCols[4], { bold: true, align: AlignmentType.RIGHT, fill: PRIMARY_LIGHT }),
-        ],
-      }),
-    ],
+    width: { size: bdiCompW, type: WidthType.DXA },
+    columnWidths: bdiCompCols,
+    rows: bdiRows,
   }));
 
-  // BDI
-  children.push(subTitle("Administração Central (BDI)"));
-  children.push(keyValuePara("Perfil BDI", `${dados.bdiNome} — ${fmtPct(dados.bdiPercentual)}`));
-
-  children.push(new Table({
-    width: { size: TABLE_W, type: WidthType.DXA },
-    columnWidths: [COL_LABEL, COL_VALUE],
-    rows: [
-      new TableRow({ children: [
-        headerCell("Componente BDI", COL_LABEL),
-        headerCell("%", COL_VALUE),
-      ].map((c, ci) => {
-        if (ci === 0) return c;
-        return new TableCell({
-          borders, width: { size: COL_VALUE, type: WidthType.DXA },
-          shading: { fill: ACCENT, type: ShadingType.CLEAR }, margins: cellMargins,
-          children: [new Paragraph({ children: [new TextRun({ text: "%", bold: true, color: "FFFFFF", font: "Arial", size: 18 })] })],
-        });
-      }) }),
-      ...dados.bdiComponentes.map((c, i) => new TableRow({
-        children: [
-          dataCell(c.nome, COL_LABEL, { fill: i % 2 === 1 ? LIGHT_GRAY : undefined }),
-          dataCell(fmtPct(c.percentual), COL_VALUE, { align: AlignmentType.RIGHT, fill: i % 2 === 1 ? LIGHT_GRAY : undefined }),
-        ],
-      })),
-      new TableRow({
-        children: [
-          dataCell("BDI EFETIVO", COL_LABEL, { bold: true, fill: PRIMARY_LIGHT }),
-          dataCell(fmtPct(dados.bdiPercentual), COL_VALUE, { bold: true, align: AlignmentType.RIGHT, fill: PRIMARY_LIGHT }),
-        ],
-      }),
-    ],
-  }));
+  // BDI calculation memory
+  children.push(subTitle("Memória de Cálculo do BDI"));
+  const bdiCalcRows = [
+    { desc: "Custo Direto (CD)", formula: "Serviços + ADM Local", valor: fmt(dados.custoTotal) },
+    { desc: "Custo Serviços", formula: "", valor: fmt(dados.custoServicos) },
+    { desc: "Custo ADM Local", formula: "", valor: fmt(dados.custoAdmLocal) },
+    { desc: "BDI (valor)", formula: `Preço - CD`, valor: fmt(dados.valorBdi) },
+    { desc: "BDI (%)", formula: `${fmtNum2(dados.valorBdi)} ÷ ${fmtNum2(dados.custoTotal)} × 100`, valor: fmtPct(dados.bdiPercentual) },
+    { desc: "PREÇO DE VENDA", formula: `CD + BDI`, valor: fmt(dados.precoTotal), highlight: true },
+  ];
+  children.push(calcTable(bdiCalcRows));
 
   // ════════════════════════════════════════
-  // 6. ANÁLISE FINANCEIRA
+  // 6. DEMONSTRATIVO DE RESULTADO (DRE)
   // ════════════════════════════════════════
   children.push(new Paragraph({ children: [new PageBreak()] }));
-  children.push(sectionTitle(6, "ANÁLISE FINANCEIRA"));
+  children.push(sectionTitle(6, "DEMONSTRATIVO DE RESULTADO PROJETADO (DRE)"));
 
-  children.push(subTitle("Demonstrativo de Resultado (DRE)"));
+  children.push(para(
+    `O DRE projetado demonstra a viabilidade financeira do contrato, apresentando a margem de contribuição, ` +
+    `EBITDA e lucro líquido estimados após a incidência de todos os tributos e despesas operacionais.`
+  ));
+
   const dreData: Array<[string, string, string?]> = [
     ["Receita Bruta (Preço de Venda)", fmt(dados.precoTotal)],
     ["(-) Tributos sobre Receita", `-${fmt(totalTributos)}`],
-    ["= Receita Líquida", fmt(dados.precoTotal - totalTributos), SUCCESS_BG],
-    ["(-) Custo Direto Total", `-${fmt(dados.custoTotal)}`],
-    ["   • Serviços", `-${fmt(dados.custoServicos)}`],
-    ["   • ADM Local", `-${fmt(dados.custoAdmLocal)}`],
-    ["= Margem de Contribuição", fmt(margemContrib), SUCCESS_BG],
-    ["(-) Despesas Indiretas (BDI)", `-${fmt(totalDesp)}`],
-    ["= EBITDA Estimado", fmt(ebitda), SUCCESS_BG],
-    ["(-) IRPJ + CSLL", `-${fmt(totalIR)}`],
-    ["= LUCRO LÍQUIDO", fmt(lucroLiquido), lucroLiquido >= 0 ? SUCCESS_BG : DANGER_BG],
   ];
+
+  // Detail each tax
+  for (const trib of tributosReceita) {
+    const val = dados.precoTotal * (trib.percentual / 100);
+    dreData.push([`   • ${trib.nome} (${fmtPct(trib.percentual)})`, `-${fmt(val)}`]);
+  }
+
+  dreData.push(["= Receita Líquida", fmt(dados.precoTotal - totalTributos), SUCCESS_BG]);
+  dreData.push(["(-) Custo Direto Total", `-${fmt(dados.custoTotal)}`]);
+  dreData.push([`   • Serviços`, `-${fmt(dados.custoServicos)}`]);
+  dreData.push([`   • ADM Local`, `-${fmt(dados.custoAdmLocal)}`]);
+  dreData.push(["= Margem de Contribuição", fmt(margemContrib), SUCCESS_BG]);
+  
+  if (totalDesp > 0) {
+    dreData.push(["(-) Despesas Indiretas (BDI)", `-${fmt(totalDesp)}`]);
+    for (const desp of despesasIndiretas) {
+      const val = dados.custoTotal * (desp.percentual / 100);
+      dreData.push([`   • ${desp.nome} (${fmtPct(desp.percentual)})`, `-${fmt(val)}`]);
+    }
+  }
+
+  dreData.push(["= EBITDA Estimado", fmt(ebitda), SUCCESS_BG]);
+  dreData.push([`(-) IRPJ + CSLL (${fmtPct(irPct)})`, `-${fmt(totalIR)}`]);
+  dreData.push(["= LUCRO LÍQUIDO", fmt(lucroLiquido), lucroLiquido >= 0 ? SUCCESS_BG : DANGER_BG]);
 
   children.push(new Table({
     width: { size: TABLE_W, type: WidthType.DXA },
@@ -612,6 +831,7 @@ export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blo
     })),
   }));
 
+  // Indicators
   children.push(subTitle("Indicadores Financeiros"));
   const margemContribPct = dados.precoTotal > 0 ? (margemContrib / dados.precoTotal) * 100 : 0;
   const ebitdaPct = dados.precoTotal > 0 ? (ebitda / dados.precoTotal) * 100 : 0;
@@ -650,60 +870,14 @@ export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blo
   }));
 
   // ════════════════════════════════════════
-  // 7. CURVA DE EXECUÇÃO
+  // 7. ANÁLISE DE RISCOS
   // ════════════════════════════════════════
   children.push(new Paragraph({ children: [new PageBreak()] }));
-  children.push(sectionTitle(7, "CURVA DE EXECUÇÃO"));
-
-  children.push(subTitle("Evolução Física Estimada (Curva S)"));
-  const totalMeses = prazoEstimado;
-  const curvaCols = [1400, 1800, 2200, 3960];
-  const curvaTableW = curvaCols.reduce((a, b) => a + b, 0);
-
-  const curvaRows: Array<[string, string, string, string]> = [];
-  for (let m = 1; m <= Math.min(totalMeses, 18); m++) {
-    const t = m / totalMeses;
-    const pctAcum = Math.round((3 * t * t - 2 * t * t * t) * 100);
-    const pctMes = m === 1 ? pctAcum : pctAcum - Math.round((3 * ((m - 1) / totalMeses) ** 2 - 2 * ((m - 1) / totalMeses) ** 3) * 100);
-    const bar = "█".repeat(Math.max(1, Math.round(pctMes / 3)));
-    curvaRows.push([`Mês ${m}`, `${pctMes}%`, `${pctAcum}%`, bar]);
-  }
-
-  children.push(new Table({
-    width: { size: curvaTableW, type: WidthType.DXA },
-    columnWidths: curvaCols,
-    rows: [
-      new TableRow({
-        children: [
-          headerCell("Período", curvaCols[0]), headerCell("% Mês", curvaCols[1]),
-          headerCell("% Acumulado", curvaCols[2]), headerCell("Evolução", curvaCols[3]),
-        ],
-      }),
-      ...curvaRows.map((row, i) => new TableRow({
-        children: [
-          dataCell(row[0], curvaCols[0], { fill: i % 2 === 1 ? LIGHT_GRAY : undefined }),
-          dataCell(row[1], curvaCols[1], { align: AlignmentType.RIGHT, fill: i % 2 === 1 ? LIGHT_GRAY : undefined }),
-          dataCell(row[2], curvaCols[2], { bold: true, align: AlignmentType.RIGHT, fill: i % 2 === 1 ? LIGHT_GRAY : undefined }),
-          new TableCell({
-            borders, width: { size: curvaCols[3], type: WidthType.DXA },
-            shading: i % 2 === 1 ? { fill: LIGHT_GRAY, type: ShadingType.CLEAR } : undefined,
-            margins: cellMargins,
-            children: [new Paragraph({ children: [new TextRun({ text: row[3], font: "Courier New", size: 16, color: PRIMARY })] })],
-          }),
-        ],
-      })),
-    ],
-  }));
-
-  // ════════════════════════════════════════
-  // 8. ANÁLISE DE RISCOS
-  // ════════════════════════════════════════
-  children.push(new Paragraph({ children: [new PageBreak()] }));
-  children.push(sectionTitle(8, "ANÁLISE DE RISCOS"));
+  children.push(sectionTitle(7, "ANÁLISE DE RISCOS"));
 
   const riscos = [
     { risco: "Clima (Precipitação)", impacto: "Alto", prob: "Média",
-      mitigacao: `Fator de improdutividade de ${fmtPct((dados.mobilizacao?.fatorImprodutividade || 0.15) * 100)} já aplicado. Monitoramento pluviométrico contínuo.` },
+      mitigacao: `Fator de improdutividade de ${fmtPct((dados.mobilizacao?.fatorImprodutividade || 0.15) * 100)} já aplicado.` },
     { risco: "Logística e Acesso", impacto: "Médio", prob: "Baixa",
       mitigacao: "Reconhecimento prévio das áreas. Veículos 4x4. Bases estrategicamente posicionadas." },
     { risco: "Produtividade Abaixo do Esperado", impacto: "Alto", prob: "Baixa",
@@ -743,10 +917,10 @@ export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blo
   }));
 
   // ════════════════════════════════════════
-  // 9. CONCLUSÃO
+  // 8. CONCLUSÃO
   // ════════════════════════════════════════
   children.push(new Paragraph({ children: [new PageBreak()] }));
-  children.push(sectionTitle(9, "CONCLUSÃO"));
+  children.push(sectionTitle(8, "CONCLUSÃO"));
 
   children.push(para(
     `Diante do exposto ao longo deste relatório, conclui-se que a proposta no valor de ${fmt(dados.precoTotal)} ` +
@@ -754,11 +928,11 @@ export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blo
   ));
 
   const conclusoes = [
-    `Os custos diretos foram compostos insumo a insumo, utilizando salários de mercado, custos de equipamentos reais e materiais com preços atualizados.`,
-    `O BDI de ${fmtPct(dados.bdiPercentual)} (${dados.bdiNome}) contempla administração central, tributos, seguros e margem de lucro compatíveis com o porte do projeto.`,
+    `Os custos diretos foram compostos insumo a insumo, com memória de cálculo detalhada para cada item de mão de obra, equipamento e material.`,
+    `O BDI de ${fmtPct(dados.bdiPercentual)} (${dados.bdiNome}) contempla administração, tributos, seguros e margem compatíveis com o porte do projeto.`,
     `A margem líquida projetada de ${fmtPct(margemLiqPct)} demonstra sustentabilidade financeira sem comprometer a qualidade dos serviços.`,
-    `O dimensionamento de ${numEquipes} equipes simultâneas, no regime operacional adotado, permite a execução dentro do prazo contratual de ${prazoEstimado} meses.`,
-    `Os riscos foram identificados e mitigados através de fatores de improdutividade, reservas de contingência e planejamento logístico adequado.`,
+    `O dimensionamento de ${numEquipes} equipes simultâneas permite a execução dentro do prazo contratual de ${prazoEstimado} meses.`,
+    `Os riscos foram identificados e mitigados através de fatores de improdutividade, reservas de contingência e planejamento logístico.`,
   ];
 
   for (const conc of conclusoes) {
@@ -782,7 +956,6 @@ export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blo
     spacing: { after: 200 },
     children: [new TextRun({ text: "CREA/CAU: ___________", font: "Arial", size: 16, color: GRAY })],
   }));
-
   children.push(new Paragraph({
     spacing: { before: 400, after: 40 },
     border: { top: { style: BorderStyle.SINGLE, size: 1, color: GRAY, space: 4 } },
@@ -824,7 +997,7 @@ export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blo
     sections: [{
       properties: {
         page: {
-          size: { width: 11906, height: 16838 }, // A4
+          size: { width: 11906, height: 16838 },
           margin: { top: 1440, right: 1134, bottom: 1440, left: 1134 },
         },
       },
