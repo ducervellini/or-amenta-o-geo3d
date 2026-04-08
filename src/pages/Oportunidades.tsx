@@ -57,6 +57,33 @@ function SubtitleInlineRow({ item, colSpan, onEdit, onRemove }: {
   );
 }
 
+function OportunidadeActions({ item, onEdit, onDelete }: { item: any; onEdit: () => void; onDelete: () => void }) {
+  const navigate = useNavigate();
+  const opId = String(item.id);
+  return (
+    <div className="flex items-center justify-center gap-0.5">
+      <Button variant="ghost" size="icon" className="h-7 w-7" title="Custos de Serviços"
+        onClick={() => navigate(`/custos-servicos?oportunidade=${opId}`)}>
+        <DollarSign className="w-3.5 h-3.5" />
+      </Button>
+      <Button variant="ghost" size="icon" className="h-7 w-7" title="ADM Local"
+        onClick={() => navigate(`/mobilizacao?oportunidade=${opId}`)}>
+        <Building className="w-3.5 h-3.5" />
+      </Button>
+      <Button variant="ghost" size="icon" className="h-7 w-7" title="BDI & DRE"
+        onClick={() => navigate(`/bdi?oportunidade=${opId}`)}>
+        <Calculator className="w-3.5 h-3.5" />
+      </Button>
+      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit}>
+        <Edit className="w-3.5 h-3.5" />
+      </Button>
+      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={onDelete}>
+        <Trash2 className="w-3.5 h-3.5" />
+      </Button>
+    </div>
+  );
+}
+
 export default function Oportunidades() {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
