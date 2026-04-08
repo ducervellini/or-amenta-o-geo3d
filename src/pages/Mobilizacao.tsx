@@ -908,6 +908,194 @@ function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: 
     return result;
   }, [deslocamentos, veiculosCadastrados, diasProdutivosMes, duracaoMeses]);
 
+  // ── Exportar Relatório de Cálculo de Duração ──
+  const handleExportarRelatorio = () => {
+    const opp = oportunidadeSelecionada;
+    const cliente = clienteOportunidade?.nome || "—";
+    const totalCustoDesl = custoDeslocamentosTotal + custoMobDesmobTotal;
+
+    const servicosRows = servicoDuracoes.map((s) => {
+      if (s.sem_produtividade) {
+        return `<tr>
+          <td>${s.codigo}</td>
+          <td>${s.nome}</td>
+          <td>${s.unidade}</td>
+          <td>—</td>
+          <td colspan="2" style="color:#b45309;text-align:center">⚠ Produtividade não definida</td>
+          <td>—</td>
+          <td>—</td>
+        </tr>`;
+      }
+      if (s.sem_quantidade) {
+        return `<tr>
+          <td>${s.codigo}</td>
+          <td>${s.nome}</td>
+          <td>${s.unidade}</td>
+          <td>${s.produtividade.toLocaleString("pt-BR")} ${s.unidade}/${s.unidade_tempo}</td>
+          <td colspan="2" style="color:#2563eb;text-align:center">ℹ Quantidade pendente</td>
+          <td>—</td>
+          <td>—</td>
+        </tr>`;
+      }
+      return `<tr>
+        <td>${s.codigo}</td>
+        <td>${s.nome}</td>
+        <td>${s.unidade}</td>
+        <td>${s.produtividade.toLocaleString("pt-BR")} ${s.unidade}/${s.unidade_tempo}</td>
+        <td style="text-align:right">${s.quantidade.toLocaleString("pt-BR")}</td>
+        <td style="text-align:center">${s.quantidade.toLocaleString("pt-BR")} ÷ ${s.produtividade.toLocaleString("pt-BR")} = ${s.dias_campo.toFixed(1)}</td>
+        <td style="text-align:right;font-weight:600">${s.dias_campo.toFixed(1)}</td>
+        <td style="text-align:right;font-weight:600">${s.meses.toFixed(2)}</td>
+      </tr>`;
+    }).join("");
+
+    const custosRows = deslocamentos.map((d) => {
+      const custo = calcularCustoDeslocamentoItem(d);
+      const cat = CATEGORIAS_DESLOCAMENTO.find(c => c.value === d.categoria);
+      return `<tr>
+        <td>${cat?.label || d.categoria}</td>
+        <td>${d.descricao || "—"}</td>
+        <td style="text-align:right">${d.quantidade}</td>
+        <td style="text-align:right">${fmt(d.valor_unitario)}</td>
+        <td>${d.frequencia}</td>
+        <td style="text-align:right;font-weight:600">${fmt(custo)}</td>
+      </tr>`;
+    }).join("");
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório ADM Local — ${opp?.codigo || ""}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; font-size: 11px; color: #1a1a1a; padding: 20px; }
+    h1 { font-size: 16px; margin-bottom: 4px; }
+    h2 { font-size: 13px; margin: 18px 0 8px; padding-bottom: 4px; border-bottom: 2px solid #2563eb; color: #2563eb; }
+    h3 { font-size: 11px; margin: 12px 0 6px; color: #374151; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #ddd; }
+    .meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+    .meta-item { background: #f3f4f6; padding: 6px 8px; border-radius: 4px; }
+    .meta-item label { font-size: 9px; color: #6b7280; text-transform: uppercase; display: block; }
+    .meta-item span { font-weight: 600; font-size: 12px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+    th, td { padding: 5px 8px; border: 1px solid #d1d5db; text-align: left; }
+    th { background: #2563eb; color: white; font-size: 10px; text-transform: uppercase; }
+    tr:nth-child(even) { background: #f9fafb; }
+    .formula-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 10px; margin: 8px 0; }
+    .formula-box code { font-family: monospace; font-size: 11px; color: #1e40af; }
+    .totals { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 10px; margin-top: 12px; }
+    .totals .row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .totals .row.total { font-size: 13px; font-weight: 700; border-top: 2px solid #16a34a; padding-top: 6px; margin-top: 6px; }
+    .params-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .warn { color: #b45309; font-style: italic; }
+    @media print { body { padding: 10px; } @page { margin: 15mm; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>Relatório de Cálculo — ADM Local</h1>
+      <p style="color:#6b7280">Duração dos Serviços de Campo e Custos Operacionais</p>
+    </div>
+    <div style="text-align:right;font-size:10px;color:#6b7280">
+      <p>Gerado em: ${new Date().toLocaleDateString("pt-BR")} ${new Date().toLocaleTimeString("pt-BR")}</p>
+      <p>Oportunidade: <strong>${opp?.codigo || "—"}</strong></p>
+    </div>
+  </div>
+
+  <div class="meta">
+    <div class="meta-item"><label>Oportunidade</label><span>${opp?.codigo || "—"} — ${opp?.descricao || ""}</span></div>
+    <div class="meta-item"><label>Cliente</label><span>${cliente}</span></div>
+    <div class="meta-item"><label>Local</label><span>${municipio || "—"}${estado ? " - " + estado : ""}</span></div>
+    <div class="meta-item"><label>Duração</label><span>${duracaoMeses} meses</span></div>
+  </div>
+
+  <h2>1. Parâmetros Operacionais</h2>
+  <div class="params-grid">
+    <div class="meta-item"><label>Dias Trabalho/Mês</label><span>${diasTrabalho}</span></div>
+    <div class="meta-item"><label>Jornada Diária</label><span>${jornadaDiaria}h</span></div>
+    <div class="meta-item"><label>Dias Chuva/Mês</label><span>${diasChuvaMes}</span></div>
+    <div class="meta-item"><label>Dias Improdutivos/Mês</label><span>${diasImprodutivosUsuario}</span></div>
+    <div class="meta-item"><label>Dias Produtivos/Mês</label><span>${diasProdutivosMes}</span></div>
+    <div class="meta-item"><label>Total Dias Produtivos</label><span>${diasProdutivos}</span></div>
+    <div class="meta-item"><label>Distância Base→Projeto</label><span>${distanciaBase} km</span></div>
+    <div class="meta-item"><label>Distância Média Diária</label><span>${distanciaMedia} km</span></div>
+    <div class="meta-item"><label>Duração Calculada</label><span>${duracaoCalculada || "—"} meses</span></div>
+  </div>
+
+  <div class="formula-box">
+    <h3>Fórmula de Dias Produtivos</h3>
+    <code>Dias Produtivos/Mês = Dias Trabalho (${diasTrabalho}) − Dias Improdutivos (${diasImprodutivosUsuario}) = ${diasProdutivosMes}</code><br/>
+    <code>Total Dias Produtivos = ${diasProdutivosMes} × ${duracaoMeses} meses = ${diasProdutivos}</code>
+  </div>
+
+  <h2>2. Cálculo de Duração por Serviço</h2>
+  <div class="formula-box">
+    <h3>Fórmula</h3>
+    <code>Dias de Campo = Quantidade ÷ Produtividade Diária</code><br/>
+    <code>Meses = Dias de Campo ÷ Dias Produtivos/Mês (${diasProdutivosMes})</code><br/>
+    <code>Duração do Projeto = Maior prazo entre todos os serviços</code>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Serviço</th>
+        <th>Unidade</th>
+        <th>Produtividade</th>
+        <th>Quantidade</th>
+        <th>Cálculo</th>
+        <th>Dias Campo</th>
+        <th>Meses</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${servicosRows || '<tr><td colspan="8" style="text-align:center;color:#6b7280">Nenhum serviço vinculado</td></tr>'}
+    </tbody>
+  </table>
+  ${totalDiasCampo > 0 ? `
+  <div class="totals">
+    <div class="row"><span>Total dias de campo (soma)</span><span>${totalDiasCampo.toFixed(0)} dias</span></div>
+    <div class="row"><span>Serviço mais longo</span><span>${servicoDuracoes.filter(s => s.dias_campo > 0)[0]?.dias_campo.toFixed(1) || "—"} dias (${servicoDuracoes.filter(s => s.dias_campo > 0)[0]?.meses.toFixed(1) || "—"} meses)</span></div>
+    <div class="row total"><span>Duração Calculada do Projeto</span><span>${duracaoCalculada} meses</span></div>
+  </div>` : ""}
+
+  <h2>3. Custos de Deslocamento e Logística</h2>
+  ${deslocamentos.length > 0 ? `
+  <table>
+    <thead>
+      <tr>
+        <th>Categoria</th>
+        <th>Descrição</th>
+        <th>Qtd</th>
+        <th>Valor Unit.</th>
+        <th>Frequência</th>
+        <th>Custo Total</th>
+      </tr>
+    </thead>
+    <tbody>${custosRows}</tbody>
+  </table>` : '<p style="color:#6b7280">Nenhum custo de deslocamento cadastrado.</p>'}
+
+  <div class="totals">
+    <div class="row"><span>Custos de Deslocamento</span><span>${fmt(custoDeslocamentosTotal)}</span></div>
+    <div class="row"><span>Mob/Desmob (ida+volta)</span><span>${fmt(custoMobDesmobTotal)}</span></div>
+    <div class="row"><span>Custo Mensal Estimado</span><span>${fmt(duracaoMeses > 0 ? totalCustoDesl / duracaoMeses : 0)}</span></div>
+    <div class="row total"><span>Custo Total ADM Local</span><span>${fmt(totalCustoDesl)}</span></div>
+    <div class="row"><span>Custo/Dia Produtivo</span><span>${fmt(diasProdutivos > 0 ? totalCustoDesl / diasProdutivos : 0)}</span></div>
+  </div>
+
+</body>
+</html>`;
+
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => win.print(), 500);
+    }
+  };
+
 
   const buscarPluviometria = async () => {
     if (!lat || !lng) {
