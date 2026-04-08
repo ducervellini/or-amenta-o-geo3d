@@ -654,7 +654,7 @@ function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: 
   );
 
   // Dias produtivos calculados pelo usuário (não pelo fator automático)
-  // Note: diasProdutivosMes is declared earlier (before servicoDuracoes useMemo)
+  // Dias produtivos calculados
   const diasProdutivos = diasProdutivosMes * duracaoMeses;
   const diasImprodutivosMes = diasImprodutivosUsuario;
   const diasImprodutivos = diasImprodutivosMes * duracaoMeses;
