@@ -9,8 +9,9 @@ import {
   ArrowLeft, Plus, Trash2, Save, ExternalLink, Loader2,
   Users, Wrench, Package, Truck, Route, Calculator, TrendingUp, Target,
   ChevronDown, ChevronUp, Printer, Check, ChevronRight, ChevronLeft,
-  Building, FileText, DollarSign,
+  Building, FileText, DollarSign, FileDown,
 } from "lucide-react";
+import { gerarRelatorioPDF, type DadosRelatorio } from "@/lib/relatorio-exequibilidade-pdf";
 import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import {
