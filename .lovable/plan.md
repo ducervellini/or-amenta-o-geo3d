@@ -1,87 +1,45 @@
 
 
-## Regenerar DOCX e XLSX com Vinculação Direta e Ajuste de Planialtimétrico
+## Criar Menu "Custos de Serviços"
 
-### Problema Atual
-Os arquivos anteriores distribuíam valores proporcionalmente sem vínculo direto entre as composições do DOCX e os itens do XLSX. Além disso, o preço unitário do Levantamento Planialtimétrico (R$ 757/km com BDI) fica abaixo da referência CREA-SP Classe I N (R$ 1.067,96/km).
+### Objetivo
+Novo menu entre "Oportunidades" e "ADM Local" na sidebar. Permite selecionar uma oportunidade, definir quantidades para cada composição vinculada, calcular custos de serviços (MO + Equip + Material) e organizar com drag-and-drop e subtítulos.
 
-### Dados do Orçamento (banco atual)
+### Arquitetura
 
-| Dado | Valor |
-|------|-------|
-| Custo Serviços | R$ 4.538.260,87 |
-| ADM Local | R$ 974.220,00 |
-| Custo Total (CD) | R$ 5.512.480,87 |
-| BDI | 59,18% |
-| Preço Total | R$ 8.775.000 |
+A tabela `orcamento_itens_servico` já armazena `composicao_id`, `quantidade`, `custo_unitario` e `custo_total` vinculados a um `orcamento_id`. Vamos reutilizar essa estrutura, criando/atualizando o orçamento automaticamente ao selecionar a oportunidade.
 
-### Agrupamento das 14 Composições em 6 Itens do Edital
+### Alterações
 
-```text
-ITEM 1 - Topografia e Georreferenciamento
-  → Lev. Planialtimétrico (5.000 km × R$ 475,67)    = R$ 2.378.358
-  → Coleta Pontos Apoio (200 pts × R$ 218,46)        = R$    43.692
-  → Processamento GNSS (150 un × R$ 379,40)          = R$    56.910
-                                              Subtotal = R$ 2.478.960
+**1. Nova página `src/pages/CustosServicos.tsx`**
+- Seletor de oportunidade no topo (dropdown com código + descrição)
+- Ao selecionar, carrega composições do grupo de serviços da oportunidade
+- Tabela com colunas: Código, Nome, Unidade, Qtd (input editável), Custo Unit., Custo Total
+- Breakdown por tipo de insumo (MO, Equipamento, Material) usando `composicao_itens`
+- Suporte a drag-and-drop (reordenação) e inserção de subtítulos usando `useRowOrdering` com tabela "custos_servicos"
+- Salva automaticamente (debounced) em `orcamento_itens_servico` criando/atualizando o orçamento associado
+- Totalizador no rodapé
 
-ITEM 2 - Plantas e SIGEF
-  → Planta Geral (7 un × R$ 991,50)                  = R$     6.941
-  → Planta/Memorial SIGEF (1.000 un × R$ 376,04)     = R$   376.038
-  → Cadastro SIGEF (1.000 prop × R$ 278,99)          = R$   278.998
-                                              Subtotal = R$   661.977
+**2. Atualizar `src/App.tsx`**
+- Importar `CustosServicos` e adicionar rota `/custos-servicos`
 
-ITEM 3 - Aerolevantamento
-  → Drone Asa Fixa (35.500 ha × R$ 4,36)             = R$   154.627
-  → Processamento Imagens (35.500 ha × R$ 0,54)      = R$    19.071
-                                              Subtotal = R$   173.698
+**3. Atualizar `src/components/layout/AppSidebar.tsx`**
+- Adicionar item "Custos de Serviços" com ícone `DollarSign` entre "Oportunidades" e "ADM Local"
 
-ITEM 4 - Cadastro Fundiário
-  → Análises Matrículas (1.220 prop × R$ 74,05)      = R$    90.343
-  → Coleta Assinaturas (1.220 un × R$ 557,99)        = R$   680.755
-  → Retificação/Desmembramento (1.000 prop × R$ 376,04) = R$ 376.038
-                                              Subtotal = R$ 1.147.136
+**4. Atualizar `src/pages/OrcamentoDetalhe.tsx`**
+- Step "Serviços": exibir composições e quantidades como read-only (sem inputs editáveis), puxando dados de `orcamento_itens_servico`
 
-ITEM 5 - Base Cartográfica
-  → Download Base (7 un × R$ 316,68)                 = R$     2.217
-  → Vetorização Uso Solo (35.500 ha × R$ 1,83)       = R$    64.823
-                                              Subtotal = R$    67.040
+### Fluxo do Usuário
+1. Acessa "Custos de Serviços"
+2. Seleciona oportunidade
+3. Sistema carrega composições do grupo de serviços vinculado
+4. Usuário insere quantidades, organiza linhas com drag-and-drop, cria subtítulos
+5. Custos são calculados em tempo real e salvos automaticamente
+6. No menu "Orçamentos", os serviços aparecem somente leitura
 
-ITEM 6 - Assistência Técnica em Perícias
-  → Perícias (10 un × R$ 945,00)                     = R$     9.450
-```
-
-### Lógica de Vinculação e Ajuste
-
-**Fórmula base (sem ajuste):**
-```text
-Preço Item = (Custo Composições do Grupo + Rateio ADM Local) × (1 + BDI%)
-ADM rateado = 974.220 × (custo do grupo / custo total serviços)
-```
-
-**Problema**: Com rateio proporcional, o Planialtimétrico fica com preço/km ≈ R$ 920 — ainda abaixo de R$ 1.067,96.
-
-**Solução**: Redistribuir o rateio de ADM Local com peso maior para o grupo de Topografia, até que o preço unitário do Planialtimétrico alcance ≥ R$ 1.070/km. A diferença é compensada reduzindo proporcionalmente o rateio dos demais grupos. O total global permanece R$ 8.775.000.
-
-### Execução
-
-1. **Script Python** — Consulta dados do banco e calcula:
-   - Agrupamento das 14 composições nos 6 itens
-   - Rateio de ADM Local ajustado (peso extra para Topografia)
-   - Verificação: preço planialtimétrico/km > R$ 1.067,96
-   - Total = preço alvo do orçamento
-
-2. **DOCX (docx-js/Node.js)** — Relatório de Exequibilidade:
-   - Composições na ordem do sistema (ordem_id)
-   - Memória de cálculo com fórmulas e parâmetros
-   - ADM Local detalhado com rateio explícito
-   - BDI e DRE
-   - Quadro demonstrando que planialtimétrico > Classe I N
-
-3. **XLSX (openpyxl/Python)** — Planilha de Custos:
-   - Aba 1: 6 itens + Reembolso R$ 120.000 = Total geral
-   - Aba 2: Composições detalhadas (MO + Equipamentos + Materiais)
-   - Cada valor da Aba 1 rastreável às composições do DOCX
-   - Fórmulas Excel para verificação
-
-4. **QA visual** — Converter DOCX para imagens e verificar layout
+### Detalhes Técnicos
+- Queries: reutilizar padrão existente com `useQuery` para oportunidades, composições e `composicao_itens`
+- Cálculo: `custo_total = quantidade × custo_unitario_total` por composição; breakdown por `tipo_insumo` dos `composicao_itens`
+- Persistência: upsert em `orcamento_itens_servico` via debounce de 500ms
+- Ordenação: `useRowOrdering("custos_servicos_<oportunidade_id>", data)`
 
