@@ -170,22 +170,45 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
     }
   };
 
+  // Get MO coefficient from existing items (for equipment inheritance)
+  const moCoeficiente = useMemo(() => {
+    if (!existingItems || existingItems.length === 0) return null;
+    const moItem = existingItems.find((i) => String(i.tipo_insumo) === "mao_de_obra");
+    if (!moItem) return null;
+    return {
+      coeficiente: Number(moItem.coeficiente) || 1,
+      horas_diarias: Number((moItem.parametros as Record<string, unknown>)?.horas_diarias) || 8,
+      periodo: String((moItem.parametros as Record<string, unknown>)?.periodo || "dia"),
+      produtividade: Number((moItem.parametros as Record<string, unknown>)?.produtividade) || 1,
+    };
+  }, [existingItems]);
+
   // Convert periodo to hours (used for MO and Equipamento)
   const periodoEmHoras = useMemo(() => {
+    if (tipo === "equipamento" && moCoeficiente) {
+      // Equipment inherits MO hours: use the same horas_diarias
+      if (periodo === "hora") return 1;
+      if (periodo === "dia") return moCoeficiente.horas_diarias;
+      return moCoeficiente.horas_diarias * 22; // approx monthly
+    }
     if (periodo === "hora") return 1;
     if (periodo === "dia") return tipo === "mao_de_obra" ? paramsMO.horas_diarias : 8;
     // mês
     return tipo === "mao_de_obra" ? paramsMO.horas_mes : 176;
-  }, [periodo, tipo, paramsMO.horas_diarias, paramsMO.horas_mes]);
+  }, [periodo, tipo, paramsMO.horas_diarias, paramsMO.horas_mes, moCoeficiente]);
 
   // Auto-calculate coeficiente based on productivity
   // For MO/Equipamento: hours per unit = periodoEmHoras / quantidade
   // For Material: coeficiente = quantidade (units per service unit)
   const coeficienteCalculado = useMemo(() => {
     if (tipo === "material") return quantidade;
+    // Equipment inherits MO coeficiente when available
+    if (tipo === "equipamento" && moCoeficiente && quantidade > 0) {
+      return periodoEmHoras / quantidade;
+    }
     if (quantidade <= 0) return 0;
     return periodoEmHoras / quantidade;
-  }, [tipo, periodoEmHoras, quantidade]);
+  }, [tipo, periodoEmHoras, quantidade, moCoeficiente]);
 
   const resultado: ResultadoCalculo = useMemo(() => {
     try {
