@@ -88,6 +88,21 @@ export default function Servicos() {
         },
         { key: "descricao", label: "Descrição", render: (v) => <span className="text-sm text-muted-foreground">{v ? String(v) : "-"}</span> },
         { key: "unidade_medicao", label: "Unidade", render: (v) => <span className="text-sm">{v ? String(v) : "-"}</span> },
+        {
+          key: "produtividade_padrao",
+          label: "Produtividade",
+          render: (v, row) => {
+            if (!v || Number(v) === 0) return <span className="text-xs text-amber-600">⚠ Não definida</span>;
+            const unTempo = (row as any)?.unidade_tempo_produtividade || "dia";
+            const unMed = (row as any)?.unidade_medicao || "un";
+            return <span className="text-sm font-medium">{Number(v).toLocaleString("pt-BR")} {unMed}/{unTempo}</span>;
+          },
+        },
+        {
+          key: "tipo_geometria",
+          label: "Geometria",
+          render: (v) => <span className="text-sm">{v ? String(v) : "-"}</span>,
+        },
       ]}
       formFields={[
         { name: "ordem_id", label: "ID (ordem de execução)", type: "text", placeholder: "Ex: 01, 01.1, 02, A1" },
