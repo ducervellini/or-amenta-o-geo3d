@@ -647,6 +647,7 @@ export default function ComposicaoDetalhe() {
                 </div>
               ) : (
                 <ItensTable itens={itensComCalculo} tipoIcons={tipoIcons} tipoLabels={tipoLabels} fmt={fmt} resumo={resumo}
+                  composicaoId={composicao?.id ? String(composicao.id) : undefined}
                   onEdit={(item) => { setEditingItem(item); setTipoNovo(String(item.tipo_insumo) as TipoInsumo); setShowItemForm(true); }}
                   onDelete={(id) => setDeletingItemId(id)}
                 />
