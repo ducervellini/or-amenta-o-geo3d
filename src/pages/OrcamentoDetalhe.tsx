@@ -543,6 +543,9 @@ export default function OrcamentoDetalhe() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" className="gap-2" onClick={handleGerarRelatorio} disabled={servicosValidos.length === 0}>
+            <FileDown className="w-4 h-4" /> Gerar Relatório de Exequibilidade
+          </Button>
           <Button variant="outline" className="gap-2" onClick={() => window.print()}>
             <Printer className="w-4 h-4" /> Imprimir
           </Button>
