@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft, Plus, Trash2, Save, ExternalLink, Loader2,
-  Users, Wrench, Package, Truck, Route, Calculator, TrendingUp,
+  Users, Wrench, Package, Truck, Route, Calculator, TrendingUp, Target,
   ChevronDown, ChevronUp, Printer, Check, ChevronRight, ChevronLeft,
   Building, FileText, DollarSign,
 } from "lucide-react";
@@ -59,6 +59,8 @@ export default function OrcamentoDetalhe() {
   const [orcamentoId, setOrcamentoId] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState<StepKey>("oportunidade");
   const [selectedBdiId, setSelectedBdiId] = useState<string>("");
+  const [precoAlvo, setPrecoAlvo] = useState<string>("");
+  const [ajusteAtivo, setAjusteAtivo] = useState(false);
 
   // ── Queries ──
 
@@ -297,25 +299,35 @@ export default function OrcamentoDetalhe() {
   const custoTotal = custoServicos + custoAdmLocal;
 
   // Recalculate price from BDI components using the same inverse formula as BdiDre
-  const { precoTotal, bdiPercentual } = useMemo(() => {
+  const { precoTotal, bdiPercentual, lucroEfetivoPct } = useMemo(() => {
     if (!bdiComponentes.length || custoTotal <= 0) {
       const fallbackBdi = bdiData?.bdi_calculado || 0;
       const vBdi = custoTotal * (fallbackBdi / 100);
-      return { precoTotal: custoTotal + vBdi, bdiPercentual: fallbackBdi };
+      return { precoTotal: custoTotal + vBdi, bdiPercentual: fallbackBdi, lucroEfetivoPct: 0 };
     }
 
     const cat = categorizarComponentes(bdiComponentes);
-
-    // Inverse formula: Receita = (CD + Despesas_sobre_CD) / (1 - tributos% - ir% - lucro%)
     const totalDespSobreCDPct = cat.despesasPct + cat.riscoPct + cat.comissaoPct;
     const totalDespValor = custoTotal * (totalDespSobreCDPct / 100);
+
+    // Se ajuste ativo, back-calculate lucro para bater preço alvo
+    const precoAlvoNum = ajusteAtivo ? parseFloat(precoAlvo) : 0;
+    if (ajusteAtivo && precoAlvoNum > 0 && precoAlvoNum > custoTotal) {
+      // Preço = (CD + Desp) / (1 - trib% - ir% - lucro%)
+      // lucro% = 1 - trib% - ir% - (CD + Desp) / Preço
+      const lucroCalc = (1 - (cat.tributosPct / 100) - (cat.irPct / 100) - (custoTotal + totalDespValor) / precoAlvoNum) * 100;
+      const bdiValor = precoAlvoNum - custoTotal;
+      const bdiPct = custoTotal > 0 ? (bdiValor / custoTotal) * 100 : 0;
+      return { precoTotal: precoAlvoNum, bdiPercentual: bdiPct, lucroEfetivoPct: Math.max(0, lucroCalc) };
+    }
+
     const denominador = 1 - (cat.tributosPct / 100) - (cat.irPct / 100) - (cat.lucroPct / 100);
     const preco = denominador > 0 ? (custoTotal + totalDespValor) / denominador : custoTotal;
     const bdiValor = preco - custoTotal;
     const bdiPct = custoTotal > 0 ? (bdiValor / custoTotal) * 100 : 0;
 
-    return { precoTotal: preco, bdiPercentual: bdiPct };
-  }, [bdiComponentes, custoTotal, bdiData]);
+    return { precoTotal: preco, bdiPercentual: bdiPct, lucroEfetivoPct: cat.lucroPct };
+  }, [bdiComponentes, custoTotal, bdiData, ajusteAtivo, precoAlvo]);
 
   const valorBdi = precoTotal - custoTotal;
 
@@ -988,6 +1000,60 @@ export default function OrcamentoDetalhe() {
               <div className="flex justify-between items-center text-lg font-bold bg-primary/10 p-4 rounded-lg">
                 <span>Preço de Venda</span>
                 <span className="text-primary text-xl">{fmt(precoTotal)}</span>
+              </div>
+
+              {/* Ajuste por Valor Final */}
+              <div className="border rounded-lg p-4 space-y-3 bg-muted/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <Target className="w-4 h-4 text-primary" />
+                    Ajustar Lucro pelo Valor Final
+                  </div>
+                  <Button
+                    variant={ajusteAtivo ? "destructive" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setAjusteAtivo(!ajusteAtivo);
+                      if (ajusteAtivo) setPrecoAlvo("");
+                    }}
+                  >
+                    {ajusteAtivo ? "Desativar" : "Ativar"}
+                  </Button>
+                </div>
+                {ajusteAtivo && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <label className="text-sm text-muted-foreground whitespace-nowrap">Preço Alvo (R$):</label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        className="max-w-xs"
+                        placeholder="Ex: 8778500.00"
+                        value={precoAlvo}
+                        onChange={(e) => setPrecoAlvo(e.target.value)}
+                      />
+                    </div>
+                    {parseFloat(precoAlvo) > 0 && (
+                      <div className="grid grid-cols-3 gap-3 text-center">
+                        <div className="bg-card rounded-md border p-2">
+                          <p className="text-xs text-muted-foreground">Lucro Efetivo</p>
+                          <p className="text-sm font-bold text-primary">{fmtPct(lucroEfetivoPct)}</p>
+                        </div>
+                        <div className="bg-card rounded-md border p-2">
+                          <p className="text-xs text-muted-foreground">BDI Ajustado</p>
+                          <p className="text-sm font-bold">{fmtPct(bdiPercentual)}</p>
+                        </div>
+                        <div className="bg-card rounded-md border p-2">
+                          <p className="text-xs text-muted-foreground">Preço Final</p>
+                          <p className="text-sm font-bold">{fmt(precoTotal)}</p>
+                        </div>
+                      </div>
+                    )}
+                    {parseFloat(precoAlvo) > 0 && lucroEfetivoPct <= 0 && (
+                      <p className="text-xs text-destructive">⚠ Valor alvo resulta em margem negativa. Aumente o preço ou reduza custos.</p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {!podesSalvar && (
