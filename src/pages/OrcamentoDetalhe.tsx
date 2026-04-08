@@ -108,6 +108,19 @@ export default function OrcamentoDetalhe() {
     enabled: grupoServicoIds !== undefined,
   });
 
+  const { data: servicosCadastro } = useQuery({
+    queryKey: ["orcamento-servicos-cadastro", grupoServicoIds],
+    queryFn: async () => {
+      if (!grupoServicoIds?.length) return [];
+      const { data, error } = await (supabase.from as any)("servicos")
+        .select("id, produtividade_padrao, unidade_tempo_produtividade")
+        .in("id", grupoServicoIds);
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!grupoServicoIds?.length,
+  });
+
   const { data: composicaoItens } = useQuery({
     queryKey: ["orcamento-composicao-itens", servicos.map(s => s.composicao_id).filter(Boolean).join(",")],
     queryFn: async () => {
