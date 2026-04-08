@@ -127,7 +127,7 @@ export default function OrcamentoDetalhe() {
       const ids = servicos.map(s => s.composicao_id).filter(Boolean);
       if (ids.length === 0) return [];
       const { data, error } = await (supabase.from as any)("composicao_itens")
-        .select("composicao_id, tipo_insumo, custo_total")
+        .select("composicao_id, tipo_insumo, descricao, custo_unitario, quantidade, coeficiente, custo_total, unidade, parametros")
         .in("composicao_id", ids);
       if (error) throw error;
       return data as any[];
