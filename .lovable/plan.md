@@ -1,58 +1,54 @@
 
 
-## Reordenação de Linhas e Subtítulos em Todas as Tabelas
+## Geração Direta dos Relatórios de Exequibilidade — CEMIG 500-H21610
 
-### O que será feito
+### Contexto
 
-Duas funcionalidades novas aplicadas globalmente em todas as tabelas do sistema:
+Gerar dois arquivos diretamente via script, sem alterar o código do sistema:
+1. **Relatório de Exequibilidade (DOCX)** — memória de cálculo detalhada
+2. **Planilha de Custos (XLSX)** — no formato do modelo do edital, preenchida
 
-1. **Arrastar para reordenar (drag & drop)**: Cada linha terá um ícone de "grip" (⠿) à esquerda que permite arrastar a linha para cima ou para baixo, definindo a ordem desejada. Botões de seta (↑↓) também estarão disponíveis para mover sem arrastar.
+### Dados coletados do banco
 
-2. **Inserção de subtítulos agrupadores**: Um botão "Inserir subtítulo" permitirá criar linhas de cabeçalho intermediárias (ex: "Fase 1", "Equipamentos pesados") que agrupam visualmente as linhas abaixo delas. Subtítulos podem ser editados, removidos e reposicionados como qualquer linha.
+- **Orçamento**: 04083d93 vinculado à oportunidade CEMIG-FUND-MG (Irapé/MG)
+- **Custo Serviços**: R$ 5.352.439,87
+- **Custo ADM Local**: R$ 974.220,00 (36 meses × R$ 27.061,67/mês)
+- **Custo Total (CD)**: R$ 6.326.659,87
+- **Preço alvo (sem reembolso)**: R$ 8.778.500,00
+- **BDI efetivo a recalcular**: ~38,75%
+- **14 composições** com insumos detalhados (mão de obra, equipamentos, materiais)
+- **BDI componentes**: AC 14%, S+G 0,5%, ISS 5%, PIS 0,65%, COFINS 3%, CSLL 2,88%, IRPJ 8%, Lucro ~5%
+- **Mobilização**: hospedagem R$ 6.000/mês, 3 veículos, pedágios R$ 1.500/mês, diversos R$ 3.500/mês
 
-### Como funciona
+### Estrutura do DOCX
 
-**Banco de dados**: Uma nova tabela `row_ordering` armazenará a posição e os subtítulos:
-
-```sql
-create table public.row_ordering (
-  id uuid primary key default gen_random_uuid(),
-  tabela text not null,           -- ex: 'servicos', 'materiais', 'cargos'
-  registro_id uuid,               -- null para subtítulos
-  posicao integer not null,
-  subtitulo text,                  -- preenchido apenas para linhas de subtítulo
-  user_id uuid references auth.users(id) on delete cascade,
-  created_at timestamptz default now()
-);
+```text
+CAPA
+1. APRESENTAÇÃO
+2. OBJETO DA CONTRATAÇÃO
+3. COMPOSIÇÃO DE CUSTOS POR SERVIÇO
+   - Para cada composição: tabela com insumos, parâmetros, fórmulas
+4. CUSTOS INDIRETOS - ADM LOCAL
+   - Hospedagem, Veículos/Combustível, Pedágios, Diversos
+   - Total mensal × 36 meses
+5. FORMAÇÃO DO BDI (MARKUP)
+   - Componentes e fórmula
+   - BDI ajustado para o preço de R$ 8.778.500,00
+6. DRE - DEMONSTRATIVO DE RESULTADO
+7. QUADRO COMPARATIVO COM REFERÊNCIAS DE MERCADO
+8. CONCLUSÃO
 ```
 
-Isso permite que cada usuário tenha sua própria ordenação por tabela.
+### Estrutura do XLSX
 
-**Frontend**: 
+- **Página 1**: 6 serviços do edital + Reembolso R$ 120.000 = Total R$ 8.898.500
+- **Página 2**: Mão de Obra e Equipamentos detalhados (formato do modelo)
+- Valores estratificados por faixa de hectares (item 13.1)
 
-- O componente `CrudPage` (usado por ~20 telas: Materiais, Serviços, Mercados, Áreas, Tributos, etc.) será atualizado para suportar reordenação e subtítulos de forma centralizada, beneficiando todas as telas automaticamente.
-- As telas com tabelas customizadas (Composições, Cargos, Equipamentos, Orçamento, Dashboard) receberão a mesma lógica individualmente.
-- Será usado `@dnd-kit/core` para drag & drop acessível e performático.
+### Execução
 
-### Alterações por arquivo
-
-| Arquivo | Mudança |
-|---------|---------|
-| Migração SQL | Criar tabela `row_ordering` com RLS por `user_id` |
-| `src/hooks/useRowOrdering.ts` | Novo hook: carrega/salva posições e subtítulos de `row_ordering`, fornece funções `moveUp`, `moveDown`, `insertSubtitle`, `removeSubtitle`, `reorder` |
-| `src/components/crud/CrudPage.tsx` | Integrar `useRowOrdering` — adicionar coluna de grip/setas, intercalar subtítulos, botão "Inserir subtítulo" na toolbar |
-| `src/components/ui/sortable-row.tsx` | Novo componente de linha arrastável com `@dnd-kit` |
-| `src/pages/Composicoes.tsx` | Integrar reordenação nas linhas dentro de cada grupo |
-| `src/pages/ComposicaoDetalhe.tsx` | Reordenação dos itens da composição |
-| `src/pages/cadastros/Cargos.tsx` | Integrar reordenação (tabela customizada) |
-| `src/pages/cadastros/Equipamentos.tsx` | Integrar reordenação (tabela customizada) |
-| `src/pages/OrcamentoDetalhe.tsx` | Reordenação dos serviços no orçamento |
-| `package.json` | Adicionar `@dnd-kit/core` e `@dnd-kit/sortable` |
-
-### Fluxo do usuário
-
-1. Abre qualquer tela com tabela (ex: Materiais, Serviços)
-2. Arrasta linhas pelo ícone ⠿ ou usa setas ↑↓ para reposicionar
-3. Clica "Inserir subtítulo" na barra de ferramentas → digita o texto → subtítulo aparece como linha de destaque
-4. A ordem e subtítulos são salvos automaticamente no banco e persistem entre sessões
+1. Script Python usando `docx` (npm) para DOCX e `openpyxl` para XLSX
+2. Dados hardcoded extraídos do banco (já coletados)
+3. Arquivos gerados em `/mnt/documents/`
+4. QA visual obrigatório
 
