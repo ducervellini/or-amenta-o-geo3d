@@ -59,6 +59,8 @@ export default function OrcamentoDetalhe() {
   const [orcamentoId, setOrcamentoId] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState<StepKey>("oportunidade");
   const [selectedBdiId, setSelectedBdiId] = useState<string>("");
+  const [precoAlvo, setPrecoAlvo] = useState<string>("");
+  const [ajusteAtivo, setAjusteAtivo] = useState(false);
 
   // ── Queries ──
 
