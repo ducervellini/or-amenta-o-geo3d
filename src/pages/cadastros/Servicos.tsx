@@ -98,11 +98,6 @@ export default function Servicos() {
             return <span className="text-sm font-medium">{Number(v).toLocaleString("pt-BR")} {unMed}/{unTempo}</span>;
           },
         },
-        {
-          key: "tipo_geometria",
-          label: "Geometria",
-          render: (v) => <span className="text-sm">{v ? String(v) : "-"}</span>,
-        },
       ]}
       formFields={[
         { name: "ordem_id", label: "ID (ordem de execução)", type: "text", placeholder: "Ex: 01, 01.1, 02, A1" },
@@ -186,17 +181,6 @@ export default function Servicos() {
             { label: "por mês", value: "mes" },
           ],
           defaultValue: "dia",
-        },
-        {
-          name: "tipo_geometria",
-          label: "Tipo de Geometria",
-          type: "select",
-          options: [
-            { label: "Ponto", value: "ponto" },
-            { label: "Linha", value: "linha" },
-            { label: "Área", value: "area" },
-          ],
-          defaultValue: "ponto",
         },
       ]}
     />
