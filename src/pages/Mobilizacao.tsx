@@ -512,11 +512,8 @@ function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: 
 
   // ── Load existing mobilização from query param ──
   useEffect(() => {
-    const opId = searchParams.get("oportunidade");
+    const opId = initialOportunidadeId;
     if (!opId || loadedRef.current) return;
-    
-    // Set oportunidade
-    setOportunidadeId(opId);
 
     // Load existing mobilização for this oportunidade
     const loadMobilizacao = async () => {
