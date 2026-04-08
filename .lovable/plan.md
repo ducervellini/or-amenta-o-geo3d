@@ -1,72 +1,58 @@
 
 
-## Relatório de Exequibilidade com Memória de Cálculo
+## Reordenação de Linhas e Subtítulos em Todas as Tabelas
 
-### Situação Atual
+### O que será feito
 
-O sistema já possui um relatório imprimível no Orçamento (via `print:block`) que inclui:
-- Dados da oportunidade
-- Serviços com quantidades e subtotais
-- ADM Local
-- BDI e DRE
+Duas funcionalidades novas aplicadas globalmente em todas as tabelas do sistema:
 
-**O que falta**: o detalhamento das composições com a **memória de cálculo** de cada insumo (mão de obra, equipamentos, materiais), que é essencial para demonstrar exequibilidade.
+1. **Arrastar para reordenar (drag & drop)**: Cada linha terá um ícone de "grip" (⠿) à esquerda que permite arrastar a linha para cima ou para baixo, definindo a ordem desejada. Botões de seta (↑↓) também estarão disponíveis para mover sem arrastar.
 
-### O que será criado
+2. **Inserção de subtítulos agrupadores**: Um botão "Inserir subtítulo" permitirá criar linhas de cabeçalho intermediárias (ex: "Fase 1", "Equipamentos pesados") que agrupam visualmente as linhas abaixo delas. Subtítulos podem ser editados, removidos e reposicionados como qualquer linha.
 
-Um botão "Relatório de Exequibilidade" na tela de Orçamento que gera uma versão impressa completa, incluindo:
+### Como funciona
 
-1. **Capa** com dados da oportunidade, cliente, local e data
-2. **Resumo executivo** com preço de venda, custo total e margem
-3. **Para cada composição do orçamento**:
-   - Nome, código e unidade do serviço
-   - Tabela de insumos com tipo, descrição, quantidade, coeficiente, custo unitário e custo total
-   - **Memória de cálculo detalhada** de cada insumo (fórmulas passo a passo como já existe no componente `MemoriaCalculo`)
-   - Resumo por categoria (MO, Equipamentos, Materiais)
-4. **ADM Local** detalhado (hospedagem, veículos, equipes, combustível)
-5. **BDI** com todos os componentes e a fórmula aplicada
-6. **DRE** completo (já existente, será incorporado)
+**Banco de dados**: Uma nova tabela `row_ordering` armazenará a posição e os subtítulos:
 
-### Alterações técnicas
+```sql
+create table public.row_ordering (
+  id uuid primary key default gen_random_uuid(),
+  tabela text not null,           -- ex: 'servicos', 'materiais', 'cargos'
+  registro_id uuid,               -- null para subtítulos
+  posicao integer not null,
+  subtitulo text,                  -- preenchido apenas para linhas de subtítulo
+  user_id uuid references auth.users(id) on delete cascade,
+  created_at timestamptz default now()
+);
+```
+
+Isso permite que cada usuário tenha sua própria ordenação por tabela.
+
+**Frontend**: 
+
+- O componente `CrudPage` (usado por ~20 telas: Materiais, Serviços, Mercados, Áreas, Tributos, etc.) será atualizado para suportar reordenação e subtítulos de forma centralizada, beneficiando todas as telas automaticamente.
+- As telas com tabelas customizadas (Composições, Cargos, Equipamentos, Orçamento, Dashboard) receberão a mesma lógica individualmente.
+- Será usado `@dnd-kit/core` para drag & drop acessível e performático.
+
+### Alterações por arquivo
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/pages/OrcamentoDetalhe.tsx` | Expandir o bloco `print-report` para incluir seção de composições detalhadas com memória de cálculo. Buscar `composicao_itens` de cada composição e recalcular resultados usando as funções de `composicao-calculo.ts`. Adicionar botão "Relatório de Exequibilidade" |
-| `src/index.css` | Adicionar estilos de impressão para a memória de cálculo (fonte menor, layout compacto) |
+| Migração SQL | Criar tabela `row_ordering` com RLS por `user_id` |
+| `src/hooks/useRowOrdering.ts` | Novo hook: carrega/salva posições e subtítulos de `row_ordering`, fornece funções `moveUp`, `moveDown`, `insertSubtitle`, `removeSubtitle`, `reorder` |
+| `src/components/crud/CrudPage.tsx` | Integrar `useRowOrdering` — adicionar coluna de grip/setas, intercalar subtítulos, botão "Inserir subtítulo" na toolbar |
+| `src/components/ui/sortable-row.tsx` | Novo componente de linha arrastável com `@dnd-kit` |
+| `src/pages/Composicoes.tsx` | Integrar reordenação nas linhas dentro de cada grupo |
+| `src/pages/ComposicaoDetalhe.tsx` | Reordenação dos itens da composição |
+| `src/pages/cadastros/Cargos.tsx` | Integrar reordenação (tabela customizada) |
+| `src/pages/cadastros/Equipamentos.tsx` | Integrar reordenação (tabela customizada) |
+| `src/pages/OrcamentoDetalhe.tsx` | Reordenação dos serviços no orçamento |
+| `package.json` | Adicionar `@dnd-kit/core` e `@dnd-kit/sortable` |
 
-### Fluxo
+### Fluxo do usuário
 
-1. Usuário abre o orçamento
-2. Clica em "Relatório de Exequibilidade"
-3. O sistema carrega os itens de todas as composições vinculadas
-4. Recalcula cada insumo usando `calcularMaoDeObra`, `calcularEquipamento`, `calcularMaterial`
-5. Renderiza o relatório completo em `print:block`
-6. Aciona `window.print()` para gerar PDF
-
-### Exemplo do que será exibido por composição
-
-```text
-┌──────────────────────────────────────────────────────┐
-│ COMPOSIÇÃO: LEV-001 — Levantamento Topográfico       │
-│ Unidade: km                                           │
-├──────────────────────────────────────────────────────┤
-│ INSUMO: Topógrafo (Mão de Obra)                      │
-│                                                       │
-│ Salário base mensal (CLT)............ R$ 4.500,00    │
-│ Encargos sociais..................... R$ 3.285,00    │
-│ Custo mensal total................... R$ 8.285,00    │
-│ Horas úteis/mês...................... 176 h          │
-│ Custo por hora....................... R$ 47,07       │
-│ Fator regime operacional............. 1,1667         │
-│ Custo hora c/ regime................. R$ 54,92       │
-│ Custo unitário (1 km)................ R$ 439,34      │
-│                                                       │
-│ INSUMO: Marco de Aço Galvanizado (Material)          │
-│ Custo unitário base.................. R$ 25,00       │
-│ Quantidade por unidade............... 10 un/km       │
-│ Custo total por km................... R$ 250,00      │
-├──────────────────────────────────────────────────────┤
-│ RESUMO: MO R$ 439,34 | Mat R$ 250,00 | Total R$ ... │
-└──────────────────────────────────────────────────────┘
-```
+1. Abre qualquer tela com tabela (ex: Materiais, Serviços)
+2. Arrasta linhas pelo ícone ⠿ ou usa setas ↑↓ para reposicionar
+3. Clica "Inserir subtítulo" na barra de ferramentas → digita o texto → subtítulo aparece como linha de destaque
+4. A ordem e subtítulos são salvos automaticamente no banco e persistem entre sessões
 
