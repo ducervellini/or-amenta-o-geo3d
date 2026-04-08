@@ -478,9 +478,19 @@ export default function OrcamentoDetalhe() {
           <Button variant="outline" className="gap-2" onClick={() => window.print()}>
             <Printer className="w-4 h-4" /> Imprimir
           </Button>
+          {activeStep === "servicos" && (
+            <Button variant="outline" className="gap-2" onClick={() => navigate(`/custos-servicos?oportunidade=${id}`)}>
+              <ExternalLink className="w-4 h-4" /> Editar Custos
+            </Button>
+          )}
+          {activeStep === "adm-local" && (
+            <Button variant="outline" className="gap-2" onClick={() => navigate(`/mobilizacao?oportunidade=${id}`)}>
+              <ExternalLink className="w-4 h-4" /> Editar ADM Local
+            </Button>
+          )}
           <Button className="gap-2" onClick={handleSalvar} disabled={!podesSalvar || saving}>
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Salvar
+            Salvar Orçamento
           </Button>
         </div>
       </div>
