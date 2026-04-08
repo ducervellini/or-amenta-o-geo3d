@@ -1641,6 +1641,36 @@ export type Database = {
         }
         Relationships: []
       }
+      row_ordering: {
+        Row: {
+          created_at: string
+          id: string
+          posicao: number
+          registro_id: string | null
+          subtitulo: string | null
+          tabela: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          posicao?: number
+          registro_id?: string | null
+          subtitulo?: string | null
+          tabela: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          posicao?: number
+          registro_id?: string | null
+          subtitulo?: string | null
+          tabela?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       servicos: {
         Row: {
           area_empresa_id: string | null
