@@ -280,6 +280,16 @@ function Section({
 }
 
 export default function Mobilizacao() {
+  return (
+    <OportunidadeGate>
+      {(gateOportunidadeId) => (
+        <MobilizacaoContent initialOportunidadeId={gateOportunidadeId} />
+      )}
+    </OportunidadeGate>
+  );
+}
+
+function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: string }) {
   const [searchParams] = useSearchParams();
   const loadedRef = useRef(false);
   // ── State ──
