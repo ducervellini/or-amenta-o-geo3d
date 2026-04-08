@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus, Search, Edit, Trash2, Columns3, GripVertical, Type, Pencil, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Search, Edit, Trash2, Columns3, GripVertical, Type, Pencil, X, DollarSign, Building, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -250,14 +251,11 @@ export default function Oportunidades() {
                             {visibleCols.has("cidade") && <td>{String(item.cidade || "—")}</td>}
                             {visibleCols.has("estado") && <td>{String(item.estado || "—")}</td>}
                             <td className="text-center">
-                              <div className="flex items-center justify-center gap-1">
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditItem(item); setDialogOpen(true); }}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(String(item.id))}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
+                              <OportunidadeActions
+                                item={item}
+                                onEdit={() => { setEditItem(item); setDialogOpen(true); }}
+                                onDelete={() => handleDelete(String(item.id))}
+                              />
                             </td>
                           </>
                         )}
