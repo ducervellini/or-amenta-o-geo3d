@@ -101,6 +101,8 @@ export default function Composicoes() {
     return next;
   });
   const colLabels: Record<string, string> = { ordem_id: "ID", grupo_nome: "Grupo", codigo: "Código", nome: "Nome", mercado_id: "Mercado", area_empresa_id: "Área da Empresa", modulo_id: "Departamento", descricao: "Descrição", unidade: "Unidade", custo_unitario_total: "Custo Unitário" };
+  const [showSubInput, setShowSubInput] = useState(false);
+  const [subText, setSubText] = useState("");
 
   const { data: composicoes, isLoading } = useSupabaseQuery("composicoes");
   const { data: servicos } = useSupabaseQuery("servicos");
