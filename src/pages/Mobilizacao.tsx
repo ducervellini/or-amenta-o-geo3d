@@ -344,6 +344,9 @@ export default function Mobilizacao() {
   // Veículos cadastrados
   const { data: veiculosCadastrados } = useSupabaseQuery("veiculos");
 
+  // Dias produtivos por mês (declarado cedo para uso em cálculos de duração)
+  const diasProdutivosMes = Math.max(0, diasTrabalho - diasImprodutivosUsuario);
+
   // ── Cálculo automático de duração baseado em Custos de Serviços ──
   const grupoServicosId = oportunidadeSelecionada?.grupo_servicos_id || null;
 
