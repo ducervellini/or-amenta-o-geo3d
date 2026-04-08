@@ -36,55 +36,153 @@ type RowData = {
   grupo_nome?: string;
 };
 
-function ServiceRow({ row, navigate, setDeletingId, getMercadoNome, getAreaNome, getModuloNome, visibleCols }: {
-  row: RowData;
+function SubtitleInlineRow({ item, colSpan, onEdit, onRemove }: {
+  item: OrderedItem; colSpan: number;
+  onEdit: (id: string, text: string) => void; onRemove: (id: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(item._subtitleText || "");
+  return (
+    <>
+      <td colSpan={colSpan} className="py-2 px-4">
+        {editing ? (
+          <input autoFocus className="text-sm font-semibold bg-transparent border-b border-primary outline-none w-full"
+            value={text} onChange={(e) => setText(e.target.value)}
+            onBlur={() => { onEdit(item._orderingId, text); setEditing(false); }}
+            onKeyDown={(e) => { if (e.key === "Enter") { onEdit(item._orderingId, text); setEditing(false); } }} />
+        ) : (
+          <span className="text-sm font-semibold text-primary uppercase tracking-wide">{item._subtitleText}</span>
+        )}
+      </td>
+      <td className="text-center">
+        <div className="flex items-center justify-center gap-1">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditing(true)}><Pencil className="w-3 h-3" /></Button>
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onRemove(item._orderingId)}><X className="w-3 h-3" /></Button>
+        </div>
+      </td>
+    </>
+  );
+}
+
+function OrderedRowGroup({
+  tableName,
+  rows,
+  visibleCols,
+  navigate,
+  setDeletingId,
+  getMercadoNome,
+  getAreaNome,
+  getModuloNome,
+}: {
+  tableName: string;
+  rows: RowData[];
+  visibleCols: Set<string>;
   navigate: (path: string) => void;
   setDeletingId: (id: string) => void;
   getMercadoNome: (id: string | null | undefined) => string;
   getAreaNome: (id: string | null | undefined) => string;
   getModuloNome: (id: string | null | undefined) => string;
-  visibleCols: Set<string>;
 }) {
-  const handleClick = () => {
-    if (row.type === "composicao") navigate(`/composicoes/${row.id}`);
-    else navigate(`/composicoes/novo?servico_id=${row.id}`);
+  const { orderedItems, moveItem, insertSubtitle, removeSubtitle, editSubtitle } =
+    useRowOrdering(tableName, rows as any);
+
+  const [showSubInput, setShowSubInput] = useState(false);
+  const [subText, setSubText] = useState("");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor)
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = orderedItems.findIndex((i) => i._orderingId === active.id);
+    const newIndex = orderedItems.findIndex((i) => i._orderingId === over.id);
+    if (oldIndex !== -1 && newIndex !== -1) moveItem(oldIndex, newIndex);
   };
 
-  const cellMap: Record<string, React.ReactNode> = {
-    ordem_id: <td key="ordem_id" className="font-mono text-xs font-semibold">{row.ordem_id || "-"}</td>,
-    grupo_nome: <td key="grupo_nome" className="text-sm text-muted-foreground">{row.grupo_nome || "-"}</td>,
-    codigo: <td key="codigo" className="font-medium text-accent">{row.codigo}</td>,
-    nome: <td key="nome" className="font-medium">{row.nome}</td>,
-    mercado_id: <td key="mercado_id" className="text-sm">{getMercadoNome(row.mercado_id as string | null)}</td>,
-    area_empresa_id: <td key="area_empresa_id"><span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">{getAreaNome(row.area_empresa_id as string | null)}</span></td>,
-    modulo_id: <td key="modulo_id" className="text-sm">{getModuloNome(row.modulo_id as string | null)}</td>,
-    descricao: <td key="descricao" className="text-sm text-muted-foreground max-w-[200px] truncate">{row.descricao ? String(row.descricao) : "-"}</td>,
-    unidade: <td key="unidade" className="text-sm">{row.unidade}</td>,
-    custo_unitario_total: <td key="custo_unitario_total" className="font-semibold font-mono">{row.type === "composicao" ? `R$ ${fmt(row.custo_unitario_total)}` : <span className="text-xs text-muted-foreground italic">Sem composição</span>}</td>,
+  const handleAddSubtitle = () => {
+    if (subText.trim()) { insertSubtitle(subText.trim()); setSubText(""); setShowSubInput(false); }
   };
 
   return (
-    <tr className="cursor-pointer hover:bg-muted/50" onClick={handleClick}>
-      <td></td>
-      {["ordem_id", "grupo_nome", "codigo", "nome", "mercado_id", "area_empresa_id", "modulo_id", "descricao", "unidade", "custo_unitario_total"]
-        .filter((k) => visibleCols.has(k))
-        .map((k) => cellMap[k])}
-      <td className="text-center">
-        <div className="flex items-center justify-center gap-1">
-          {row.type === "composicao" ? (
-            <>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/${row.id}`); }}><Eye className="w-4 h-4" /></Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/${row.id}`); }}><Edit className="w-4 h-4" /></Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); setDeletingId(row.id); }}><Trash2 className="w-4 h-4" /></Button>
-            </>
-          ) : (
-            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/novo?servico_id=${row.id}`); }}>
-              <Plus className="w-3 h-3 mr-1" />Criar
-            </Button>
-          )}
-        </div>
-      </td>
-    </tr>
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={orderedItems.map((i) => i._orderingId)} strategy={verticalListSortingStrategy}>
+        {orderedItems.map((item) => {
+          if (item._isSubtitle) {
+            return (
+              <SortableRow key={item._orderingId} id={item._orderingId} isSubtitle>
+                <SubtitleInlineRow item={item} colSpan={visibleCols.size + 1} onEdit={editSubtitle} onRemove={removeSubtitle} />
+              </SortableRow>
+            );
+          }
+          const row = item as unknown as RowData;
+          const handleClick = () => {
+            if (row.type === "composicao") navigate(`/composicoes/${row.id}`);
+            else navigate(`/composicoes/novo?servico_id=${row.id}`);
+          };
+          const cellMap: Record<string, React.ReactNode> = {
+            ordem_id: <td key="ordem_id" className="font-mono text-xs font-semibold">{row.ordem_id || "-"}</td>,
+            grupo_nome: <td key="grupo_nome" className="text-sm text-muted-foreground">{row.grupo_nome || "-"}</td>,
+            codigo: <td key="codigo" className="font-medium text-accent cursor-pointer" onClick={handleClick}>{row.codigo}</td>,
+            nome: <td key="nome" className="font-medium cursor-pointer" onClick={handleClick}>{row.nome}</td>,
+            mercado_id: <td key="mercado_id" className="text-sm">{getMercadoNome(row.mercado_id as string | null)}</td>,
+            area_empresa_id: <td key="area_empresa_id"><span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">{getAreaNome(row.area_empresa_id as string | null)}</span></td>,
+            modulo_id: <td key="modulo_id" className="text-sm">{getModuloNome(row.modulo_id as string | null)}</td>,
+            descricao: <td key="descricao" className="text-sm text-muted-foreground max-w-[200px] truncate">{row.descricao ? String(row.descricao) : "-"}</td>,
+            unidade: <td key="unidade" className="text-sm">{row.unidade}</td>,
+            custo_unitario_total: <td key="custo_unitario_total" className="font-semibold font-mono">{row.type === "composicao" ? `R$ ${fmt(row.custo_unitario_total)}` : <span className="text-xs text-muted-foreground italic">Sem composição</span>}</td>,
+          };
+          return (
+            <SortableRow key={item._orderingId} id={item._orderingId}>
+              {["ordem_id", "grupo_nome", "codigo", "nome", "mercado_id", "area_empresa_id", "modulo_id", "descricao", "unidade", "custo_unitario_total"]
+                .filter((k) => visibleCols.has(k))
+                .map((k) => cellMap[k])}
+              <td className="text-center">
+                <div className="flex items-center justify-center gap-1">
+                  {row.type === "composicao" ? (
+                    <>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/${row.id}`); }}><Eye className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/${row.id}`); }}><Edit className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); setDeletingId(row.id); }}><Trash2 className="w-4 h-4" /></Button>
+                    </>
+                  ) : (
+                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/novo?servico_id=${row.id}`); }}>
+                      <Plus className="w-3 h-3 mr-1" />Criar
+                    </Button>
+                  )}
+                </div>
+              </td>
+            </SortableRow>
+          );
+        })}
+      </SortableContext>
+      {/* Inline subtitle input row */}
+      {showSubInput ? (
+        <tr>
+          <td colSpan={visibleCols.size + 3}>
+            <div className="flex items-center gap-2 px-4 py-1">
+              <input autoFocus placeholder="Texto do subtítulo..." className="text-sm px-2 py-1 bg-muted rounded border-0 outline-none focus:ring-2 focus:ring-ring"
+                value={subText} onChange={(e) => setSubText(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleAddSubtitle(); if (e.key === "Escape") setShowSubInput(false); }} />
+              <Button size="sm" variant="outline" onClick={handleAddSubtitle}>Adicionar</Button>
+              <Button size="sm" variant="ghost" onClick={() => setShowSubInput(false)}>Cancelar</Button>
+            </div>
+          </td>
+        </tr>
+      ) : (
+        <tr>
+          <td colSpan={visibleCols.size + 3}>
+            <div className="px-4 py-1">
+              <Button size="sm" variant="ghost" className="gap-1 text-xs h-6 text-muted-foreground" onClick={() => setShowSubInput(true)}>
+                <Type className="w-3 h-3" /> Subtítulo
+              </Button>
+            </div>
+          </td>
+        </tr>
+      )}
+    </DndContext>
   );
 }
 
@@ -101,8 +199,6 @@ export default function Composicoes() {
     return next;
   });
   const colLabels: Record<string, string> = { ordem_id: "ID", grupo_nome: "Grupo", codigo: "Código", nome: "Nome", mercado_id: "Mercado", area_empresa_id: "Área da Empresa", modulo_id: "Departamento", descricao: "Descrição", unidade: "Unidade", custo_unitario_total: "Custo Unitário" };
-  const [showSubInput, setShowSubInput] = useState(false);
-  const [subText, setSubText] = useState("");
 
   const { data: composicoes, isLoading } = useSupabaseQuery("composicoes");
   const { data: servicos } = useSupabaseQuery("servicos");
@@ -153,14 +249,12 @@ export default function Composicoes() {
   const allRows = [...composicaoRows, ...servicosSemComposicao];
   const { sorted: sortedAllRows, sortKey, sortDirection, handleSort } = useTableSort<RowData>(allRows);
 
-  // Fixed activity order
   const ORDEM_ATIVIDADES = ["cadastro", "p&m", "avaliação", "negociação", "jurídico", "regularização"];
   const getOrdemIndex = (nome: string) => {
     const idx = ORDEM_ATIVIDADES.findIndex((a) => nome.toLowerCase().startsWith(a));
     return idx === -1 ? ORDEM_ATIVIDADES.length : idx;
   };
 
-  // Build group structure
   const grupoRows = (grupos || []).sort((a, b) => getOrdemIndex(String(a.nome)) - getOrdemIndex(String(b.nome))).map((g) => {
     const servicoIds = (vinculos || []).filter((v) => v.grupo_id === g.id).map((v) => String(v.servico_id));
     const rows = sortedAllRows.filter((r) => {
@@ -170,12 +264,11 @@ export default function Composicoes() {
     return { grupo: g, rows, servicoIds };
   });
 
-  // Services not in any group (avulsas)
   const allGroupedServiceIds = new Set(
     (vinculos || []).map((v) => String(v.servico_id))
   );
   const avulsaRows = sortedAllRows.filter((r) => {
-    if (r.isAvulsa) return true; // composições avulsas always show
+    if (r.isAvulsa) return true;
     const sId = r.type === "composicao" ? String(r.servico_id || "") : r.id;
     return !allGroupedServiceIds.has(sId);
   });
@@ -184,25 +277,7 @@ export default function Composicoes() {
     r.nome.toLowerCase().includes(search.toLowerCase()) ||
     r.codigo.toLowerCase().includes(search.toLowerCase());
 
-  const { orderedItems: orderedAvulsas, moveItem, insertSubtitle, removeSubtitle, editSubtitle } =
-    useRowOrdering("composicoes", avulsaRows.filter(matchesSearch) as any);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor)
-  );
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIndex = orderedAvulsas.findIndex((i) => i._orderingId === active.id);
-    const newIndex = orderedAvulsas.findIndex((i) => i._orderingId === over.id);
-    if (oldIndex !== -1 && newIndex !== -1) moveItem(oldIndex, newIndex);
-  };
-
-  const handleAddSubtitle = () => {
-    if (subText.trim()) { insertSubtitle(subText.trim()); setSubText(""); setShowSubInput(false); }
-  };
+  const filteredAvulsas = avulsaRows.filter(matchesSearch);
 
   const toggleGroup = (id: string) => {
     setExpandedGroups((prev) => {
@@ -273,19 +348,6 @@ export default function Composicoes() {
             />
           </div>
           <div className="flex items-center gap-2">
-            {showSubInput ? (
-              <div className="flex items-center gap-2">
-                <input autoFocus placeholder="Texto do subtítulo..." className="text-sm px-2 py-1 bg-muted rounded border-0 outline-none focus:ring-2 focus:ring-ring"
-                  value={subText} onChange={(e) => setSubText(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") handleAddSubtitle(); if (e.key === "Escape") setShowSubInput(false); }} />
-                <Button size="sm" variant="outline" onClick={handleAddSubtitle}>Adicionar</Button>
-                <Button size="sm" variant="ghost" onClick={() => setShowSubInput(false)}>Cancelar</Button>
-              </div>
-            ) : (
-              <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => setShowSubInput(true)}>
-                <Type className="w-3 h-3" /> Subtítulo
-              </Button>
-            )}
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2 shrink-0">
@@ -312,7 +374,6 @@ export default function Composicoes() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <table className="data-table">
               <thead>
                 <tr>
@@ -331,6 +392,7 @@ export default function Composicoes() {
                   if (search && filteredRows.length === 0) return null;
                   const isExpanded = expandedGroups.has(String(grupo.id));
                   const custoTotal = rows.reduce((sum, r) => sum + (r.type === "composicao" ? r.custo_unitario_total : 0), 0);
+                  const displayRows = search ? filteredRows : rows;
 
                   return (
                     <React.Fragment key={String(grupo.id)}>
@@ -361,106 +423,50 @@ export default function Composicoes() {
                         )}
                         <td></td>
                       </tr>
-                      {isExpanded && (search ? filteredRows : rows).map((row) => (
-                        <ServiceRow
-                          key={`${row.type}-${row.id}`}
-                          row={{ ...row, grupo_nome: String(grupo.nome) }}
+                      {isExpanded && (
+                        <OrderedRowGroup
+                          tableName={`composicoes_grupo_${grupo.id}`}
+                          rows={displayRows.map((r) => ({ ...r, grupo_nome: String(grupo.nome) }))}
+                          visibleCols={visibleCols}
                           navigate={navigate}
                           setDeletingId={setDeletingId}
                           getMercadoNome={getMercadoNome}
                           getAreaNome={getAreaNome}
                           getModuloNome={getModuloNome}
-                          visibleCols={visibleCols}
                         />
-                      ))}
+                      )}
                     </React.Fragment>
                   );
                 })}
 
-                {/* Ungrouped / avulsa rows with drag-drop */}
-                {orderedAvulsas.length > 0 && grupoRows.length > 0 && (
+                {/* Ungrouped / avulsa rows */}
+                {filteredAvulsas.length > 0 && grupoRows.length > 0 && (
                   <tr className="bg-muted/20">
                     <td colSpan={visibleCols.size + 3} className="text-xs font-semibold text-muted-foreground py-2">
                       Sem grupo
                     </td>
                   </tr>
                 )}
-                <SortableContext items={orderedAvulsas.map((i) => i._orderingId)} strategy={verticalListSortingStrategy}>
-                  {orderedAvulsas.map((item) => {
-                    if (item._isSubtitle) {
-                      return (
-                        <SortableRow key={item._orderingId} id={item._orderingId} isSubtitle>
-                          <td colSpan={visibleCols.size + 1} className="py-2 px-4">
-                            <span className="text-sm font-semibold text-primary uppercase tracking-wide">{item._subtitleText}</span>
-                          </td>
-                          <td className="text-center">
-                            <div className="flex items-center justify-center gap-1">
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
-                                const newText = prompt("Editar subtítulo:", item._subtitleText);
-                                if (newText) editSubtitle(item._orderingId, newText);
-                              }}><Pencil className="w-3 h-3" /></Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeSubtitle(item._orderingId)}><X className="w-3 h-3" /></Button>
-                            </div>
-                          </td>
-                        </SortableRow>
-                      );
-                    }
-                    const row = item as unknown as RowData;
-                    return (
-                      <SortableRow key={item._orderingId} id={item._orderingId}>
-                        {(() => {
-                          const handleClick = () => {
-                            if (row.type === "composicao") navigate(`/composicoes/${row.id}`);
-                            else navigate(`/composicoes/novo?servico_id=${row.id}`);
-                          };
-                          const cellMap: Record<string, React.ReactNode> = {
-                            ordem_id: <td key="ordem_id" className="font-mono text-xs font-semibold">{row.ordem_id || "-"}</td>,
-                            grupo_nome: <td key="grupo_nome" className="text-sm text-muted-foreground">{row.grupo_nome || "-"}</td>,
-                            codigo: <td key="codigo" className="font-medium text-accent cursor-pointer" onClick={handleClick}>{row.codigo}</td>,
-                            nome: <td key="nome" className="font-medium cursor-pointer" onClick={handleClick}>{row.nome}</td>,
-                            mercado_id: <td key="mercado_id" className="text-sm">{getMercadoNome(row.mercado_id as string | null)}</td>,
-                            area_empresa_id: <td key="area_empresa_id"><span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">{getAreaNome(row.area_empresa_id as string | null)}</span></td>,
-                            modulo_id: <td key="modulo_id" className="text-sm">{getModuloNome(row.modulo_id as string | null)}</td>,
-                            descricao: <td key="descricao" className="text-sm text-muted-foreground max-w-[200px] truncate">{row.descricao ? String(row.descricao) : "-"}</td>,
-                            unidade: <td key="unidade" className="text-sm">{row.unidade}</td>,
-                            custo_unitario_total: <td key="custo_unitario_total" className="font-semibold font-mono">{row.type === "composicao" ? `R$ ${fmt(row.custo_unitario_total)}` : <span className="text-xs text-muted-foreground italic">Sem composição</span>}</td>,
-                          };
-                          return (
-                            <>
-                              {["ordem_id", "grupo_nome", "codigo", "nome", "mercado_id", "area_empresa_id", "modulo_id", "descricao", "unidade", "custo_unitario_total"]
-                                .filter((k) => visibleCols.has(k))
-                                .map((k) => cellMap[k])}
-                              <td className="text-center">
-                                <div className="flex items-center justify-center gap-1">
-                                  {row.type === "composicao" ? (
-                                    <>
-                                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/${row.id}`); }}><Eye className="w-4 h-4" /></Button>
-                                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/${row.id}`); }}><Edit className="w-4 h-4" /></Button>
-                                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); setDeletingId(row.id); }}><Trash2 className="w-4 h-4" /></Button>
-                                    </>
-                                  ) : (
-                                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); navigate(`/composicoes/novo?servico_id=${row.id}`); }}>
-                                      <Plus className="w-3 h-3 mr-1" />Criar
-                                    </Button>
-                                  )}
-                                </div>
-                              </td>
-                            </>
-                          );
-                        })()}
-                      </SortableRow>
-                    );
-                  })}
-                </SortableContext>
+                {filteredAvulsas.length > 0 && (
+                  <OrderedRowGroup
+                    tableName="composicoes_avulsas"
+                    rows={filteredAvulsas}
+                    visibleCols={visibleCols}
+                    navigate={navigate}
+                    setDeletingId={setDeletingId}
+                    getMercadoNome={getMercadoNome}
+                    getAreaNome={getAreaNome}
+                    getModuloNome={getModuloNome}
+                  />
+                )}
 
-                {grupoRows.length === 0 && orderedAvulsas.length === 0 && (
+                {grupoRows.length === 0 && filteredAvulsas.length === 0 && (
                   <tr>
                     <td colSpan={12} className="text-center py-8 text-muted-foreground">Nenhuma composição encontrada</td>
                   </tr>
                 )}
               </tbody>
             </table>
-          </DndContext>
           </div>
         )}
       </div>
