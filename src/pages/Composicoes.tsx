@@ -272,23 +272,38 @@ export default function Composicoes() {
               className="w-full pl-10 pr-4 py-2 text-sm bg-muted rounded-lg border-0 focus:ring-2 focus:ring-ring outline-none"
             />
           </div>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2 shrink-0">
-                <Columns3 className="w-4 h-4" />
-                Colunas
+          <div className="flex items-center gap-2">
+            {showSubInput ? (
+              <div className="flex items-center gap-2">
+                <input autoFocus placeholder="Texto do subtítulo..." className="text-sm px-2 py-1 bg-muted rounded border-0 outline-none focus:ring-2 focus:ring-ring"
+                  value={subText} onChange={(e) => setSubText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleAddSubtitle(); if (e.key === "Escape") setShowSubInput(false); }} />
+                <Button size="sm" variant="outline" onClick={handleAddSubtitle}>Adicionar</Button>
+                <Button size="sm" variant="ghost" onClick={() => setShowSubInput(false)}>Cancelar</Button>
+              </div>
+            ) : (
+              <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => setShowSubInput(true)}>
+                <Type className="w-3 h-3" /> Subtítulo
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-56 p-2" align="end">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">Colunas visíveis</p>
-              {allColKeys.map((key) => (
-                <label key={key} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
-                  <Checkbox checked={visibleCols.has(key)} onCheckedChange={() => toggleCol(key)} />
-                  {colLabels[key]}
-                </label>
-              ))}
-            </PopoverContent>
-          </Popover>
+            )}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2 shrink-0">
+                  <Columns3 className="w-4 h-4" />
+                  Colunas
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-2" align="end">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">Colunas visíveis</p>
+                {allColKeys.map((key) => (
+                  <label key={key} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                    <Checkbox checked={visibleCols.has(key)} onCheckedChange={() => toggleCol(key)} />
+                    {colLabels[key]}
+                  </label>
+                ))}
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
 
         {isLoading ? (
