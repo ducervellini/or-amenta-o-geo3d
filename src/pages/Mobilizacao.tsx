@@ -344,6 +344,158 @@ export default function Mobilizacao() {
   // Veículos cadastrados
   const { data: veiculosCadastrados } = useSupabaseQuery("veiculos");
 
+  // ── Cálculo automático de duração baseado em Custos de Serviços ──
+  const grupoServicosId = oportunidadeSelecionada?.grupo_servicos_id || null;
+
+  const { data: grupoServicoIdsData } = useQuery({
+    queryKey: ["mob-grupo-servico-ids", grupoServicosId],
+    queryFn: async () => {
+      const { data, error } = await (supabase.from as any)("grupos_servicos_servicos")
+        .select("servico_id")
+        .eq("grupo_id", grupoServicosId);
+      if (error) throw error;
+      return (data as any[]).map((r: any) => r.servico_id) as string[];
+    },
+    enabled: !!grupoServicosId,
+  });
+
+  const { data: servicosData } = useQuery({
+    queryKey: ["mob-servicos", grupoServicoIdsData?.join(",")],
+    queryFn: async () => {
+      if (!grupoServicoIdsData?.length) return [];
+      const { data, error } = await (supabase.from as any)("servicos")
+        .select("id, nome, codigo, unidade_medicao, produtividade_padrao, unidade_tempo_produtividade")
+        .in("id", grupoServicoIdsData);
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!grupoServicoIdsData?.length,
+  });
+
+  const { data: composicoesOp } = useQuery({
+    queryKey: ["mob-composicoes", grupoServicoIdsData?.join(",")],
+    queryFn: async () => {
+      if (!grupoServicoIdsData?.length) return [];
+      const { data, error } = await (supabase.from as any)("composicoes")
+        .select("id, codigo, nome, unidade, custo_unitario_total, servico_id")
+        .eq("ativo", true)
+        .in("servico_id", grupoServicoIdsData)
+        .order("codigo");
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!grupoServicoIdsData?.length,
+  });
+
+  const { data: orcamentoOp } = useQuery({
+    queryKey: ["mob-orcamento", oportunidadeId],
+    queryFn: async () => {
+      const { data, error } = await (supabase.from as any)("orcamentos")
+        .select("id, orcamento_itens_servico(*)")
+        .eq("oportunidade_id", oportunidadeId)
+        .limit(1);
+      if (error) throw error;
+      return (data as any[])?.[0] || null;
+    },
+    enabled: !!oportunidadeId,
+  });
+
+  // Calculate field days per service
+  const servicoDuracoes = useMemo(() => {
+    if (!composicoesOp?.length || !servicosData?.length || !orcamentoOp?.orcamento_itens_servico) return [];
+
+    const qtdMap: Record<string, number> = {};
+    for (const item of orcamentoOp.orcamento_itens_servico) {
+      qtdMap[item.composicao_id] = Number(item.quantidade || 0);
+    }
+
+    const servicoMap: Record<string, any> = {};
+    for (const s of servicosData) {
+      servicoMap[s.id] = s;
+    }
+
+    const result: {
+      composicao_id: string;
+      codigo: string;
+      nome: string;
+      unidade: string;
+      quantidade: number;
+      produtividade: number;
+      unidade_tempo: string;
+      dias_campo: number;
+      meses: number;
+    }[] = [];
+
+    for (const comp of composicoesOp) {
+      const qty = qtdMap[comp.id] || 0;
+      if (qty <= 0) continue;
+      const servico = servicoMap[comp.servico_id];
+      if (!servico) continue;
+
+      const prod = Number(servico.produtividade_padrao || 0);
+      const unidadeTempo = servico.unidade_tempo_produtividade || "dia";
+
+      if (prod <= 0) {
+        result.push({
+          composicao_id: comp.id,
+          codigo: comp.codigo,
+          nome: comp.nome,
+          unidade: comp.unidade,
+          quantidade: qty,
+          produtividade: 0,
+          unidade_tempo: unidadeTempo,
+          dias_campo: 0,
+          meses: 0,
+        });
+        continue;
+      }
+
+      // Convert productivity to daily
+      let prodDiaria = prod;
+      if (unidadeTempo === "hora") {
+        prodDiaria = prod * jornadaDiaria;
+      } else if (unidadeTempo === "mes" || unidadeTempo === "mês") {
+        prodDiaria = prod / diasProdutivosMes;
+      }
+
+      const diasCampo = prodDiaria > 0 ? qty / prodDiaria : 0;
+      const meses = diasProdutivosMes > 0 ? diasCampo / diasProdutivosMes : 0;
+
+      result.push({
+        composicao_id: comp.id,
+        codigo: comp.codigo,
+        nome: comp.nome,
+        unidade: comp.unidade,
+        quantidade: qty,
+        produtividade: prod,
+        unidade_tempo: unidadeTempo,
+        dias_campo: diasCampo,
+        meses,
+      });
+    }
+
+    return result.sort((a, b) => b.dias_campo - a.dias_campo);
+  }, [composicoesOp, servicosData, orcamentoOp, jornadaDiaria, diasProdutivosMes]);
+
+  const duracaoCalculada = useMemo(() => {
+    if (!servicoDuracoes.length) return null;
+    const maxMeses = Math.max(...servicoDuracoes.map((s) => s.meses));
+    return Math.ceil(maxMeses);
+  }, [servicoDuracoes]);
+
+  const totalDiasCampo = useMemo(() => {
+    return servicoDuracoes.reduce((acc, s) => acc + s.dias_campo, 0);
+  }, [servicoDuracoes]);
+
+  // Auto-update duration when calculated
+  const [duracaoAutoSync, setDuracaoAutoSync] = useState(true);
+  useEffect(() => {
+    if (duracaoCalculada && duracaoCalculada > 0 && duracaoAutoSync && !loadedRef.current) {
+      setDuracaoMeses(duracaoCalculada);
+    }
+  }, [duracaoCalculada, duracaoAutoSync]);
+
+
   // ── Load existing mobilização from query param ──
   useEffect(() => {
     const opId = searchParams.get("oportunidade");
