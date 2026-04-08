@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Calculator, Save, Info, Trash2, Edit } from "lucide-react";
+import { OportunidadeGate } from "@/components/orcamento/OportunidadeGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,6 +45,14 @@ function calcBdi(items: BDIItem[]) {
 }
 
 export default function BDI() {
+  return (
+    <OportunidadeGate>
+      {(oportunidadeId, oportunidade) => <BDIContent />}
+    </OportunidadeGate>
+  );
+}
+
+function BDIContent() {
   const [items, setItems] = useState<BDIItem[]>(defaultBDI);
   const [nome, setNome] = useState("");
   const [saving, setSaving] = useState(false);
