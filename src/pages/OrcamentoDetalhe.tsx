@@ -389,8 +389,8 @@ export default function OrcamentoDetalhe() {
     "bdi-preco": !!bdiData,
   }), [oportunidade, servicosValidos.length, mobilizacao, bdiData]);
 
-  const handleGerarRelatorio = () => {
-    const dadosRelatorio: DadosRelatorio = {
+  const handleGerarRelatorio = async () => {
+    const dadosRelatorio: DadosRelatorioDocx = {
       oportunidade: {
         codigo: oportunidade.codigo,
         descricao: oportunidade.descricao,
@@ -401,6 +401,7 @@ export default function OrcamentoDetalhe() {
       },
       servicos: servicosValidos.map(s => {
         const comp = (composicoes || []).find((c: any) => c.id === s.composicao_id);
+        const svc = (servicosCadastro || []).find((sv: any) => sv.id === comp?.servico_id);
         return {
           codigo: comp?.codigo || "",
           nome: comp?.nome || "",
@@ -408,6 +409,8 @@ export default function OrcamentoDetalhe() {
           unidade: comp?.unidade || "un",
           custoUnitario: comp?.custo_unitario_total || 0,
           subtotal: (comp?.custo_unitario_total || 0) * s.quantidade,
+          produtividadePadrao: svc?.produtividade_padrao ?? null,
+          unidadeTempoProdutividade: svc?.unidade_tempo_produtividade || "dia",
         };
       }),
       custoServicosPorTipo,
@@ -448,9 +451,14 @@ export default function OrcamentoDetalhe() {
     };
 
     try {
-      const doc = gerarRelatorioPDF(dadosRelatorio);
-      doc.save(`Relatorio_Exequibilidade_${oportunidade.codigo}.pdf`);
-      toast.success("Relatório de Exequibilidade gerado com sucesso!");
+      const blob = await gerarRelatorioDocx(dadosRelatorio);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Relatorio_Exequibilidade_${oportunidade.codigo}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Relatório de Exequibilidade (.docx) gerado com sucesso!");
     } catch (e: any) {
       toast.error("Erro ao gerar relatório: " + e.message);
     }
