@@ -1254,8 +1254,50 @@ export default function Mobilizacao() {
                   <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
                 </div>
                 <div>
-                  <Label className="text-xs">Duração (meses)</Label>
-                  <Input type="number" value={duracaoMeses} onChange={(e) => setDuracaoMeses(Number(e.target.value))} min={1} max={120} />
+                  <Label className="text-xs flex items-center gap-1">
+                    Duração (meses)
+                    {duracaoCalculada && duracaoCalculada > 0 && (
+                      <Badge variant="secondary" className="text-[9px] py-0 px-1">auto</Badge>
+                    )}
+                  </Label>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      value={duracaoMeses}
+                      onChange={(e) => {
+                        setDuracaoMeses(Number(e.target.value));
+                        setDuracaoAutoSync(false);
+                      }}
+                      min={1}
+                      max={120}
+                      className={duracaoCalculada && duracaoAutoSync ? "border-primary/50 bg-primary/5" : ""}
+                    />
+                    {duracaoCalculada && duracaoCalculada > 0 && !duracaoAutoSync && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9 shrink-0"
+                            onClick={() => {
+                              setDuracaoMeses(duracaoCalculada);
+                              setDuracaoAutoSync(true);
+                            }}
+                          >
+                            <Calculator className="w-3.5 h-3.5 text-primary" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs">Usar valor calculado: {duracaoCalculada} meses</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </div>
+                  {duracaoCalculada && duracaoCalculada > 0 && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Calculado: {duracaoCalculada} meses ({totalDiasCampo.toFixed(0)} dias de campo)
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label className="text-xs">Dias Úteis/Mês</Label>
