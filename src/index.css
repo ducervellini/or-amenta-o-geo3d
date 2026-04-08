@@ -153,6 +153,14 @@
   .data-table tr:hover td {
     @apply bg-muted/50;
   }
+
+
+  /* Ensure horizontal scrollbar is always reachable without scrolling to the bottom */
+  .bg-card .overflow-x-auto,
+  .bg-card > .overflow-x-auto {
+    max-height: calc(100vh - 280px);
+    overflow: auto;
+  }
 }
 
 @media print {
