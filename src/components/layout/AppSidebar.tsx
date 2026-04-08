@@ -96,8 +96,18 @@ interface AppSidebarProps {
 }
 
 export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
-  const [openMenus, setOpenMenus] = useState<string[]>(["Hierarquia"]);
   const location = useLocation();
+
+  // Auto-open groups that contain the active route
+  const [openMenus, setOpenMenus] = useState<string[]>(() => {
+    const initial = ["Hierarquia"];
+    for (const item of navigation) {
+      if (item.children?.some(c => location.pathname === c.path || location.pathname.startsWith(c.path + "/"))) {
+        initial.push(item.label);
+      }
+    }
+    return initial;
+  });
 
   const toggleMenu = (label: string) => {
     setOpenMenus((prev) =>
