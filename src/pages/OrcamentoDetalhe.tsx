@@ -605,27 +605,15 @@ export default function OrcamentoDetalhe() {
             <CardTitle className="text-base flex items-center gap-2">
               <Package className="w-4 h-4 text-primary" />
               Serviços — {oportunidade.grupos_servicos?.nome || "Todos"}
+              <Badge variant="outline" className="ml-2 text-xs">Somente leitura</Badge>
             </CardTitle>
-            {!grupoId && (
-              <Button size="sm" className="gap-1" onClick={addServico}>
-                <Plus className="w-4 h-4" /> Adicionar
-              </Button>
-            )}
           </CardHeader>
           <CardContent>
-            {!grupoId && servicos.length === 0 ? (
+            {servicos.length === 0 ? (
               <div className="text-center py-10 space-y-3">
                 <Package className="w-10 h-10 mx-auto text-muted-foreground/40" />
-                <p className="text-muted-foreground text-sm">Nenhum grupo de serviços selecionado na oportunidade.</p>
-                <p className="text-muted-foreground text-xs">Edite a oportunidade para vincular um grupo, ou adicione composições manualmente.</p>
-                <Button variant="outline" className="gap-2" onClick={addServico}>
-                  <Plus className="w-4 h-4" /> Adicionar composição
-                </Button>
-              </div>
-            ) : servicos.length === 0 ? (
-              <div className="text-center py-10 space-y-3">
-                <Package className="w-10 h-10 mx-auto text-muted-foreground/40" />
-                <p className="text-muted-foreground text-sm">Nenhuma composição encontrada para este grupo.</p>
+                <p className="text-muted-foreground text-sm">Nenhuma composição com quantidade definida.</p>
+                <p className="text-muted-foreground text-xs">Defina as quantidades no menu <strong>Custos de Serviços</strong>.</p>
               </div>
             ) : (
               <div className="space-y-3">
