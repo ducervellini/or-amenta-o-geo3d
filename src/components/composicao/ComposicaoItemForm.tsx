@@ -143,6 +143,11 @@ export function ComposicaoItemForm({ open, onOpenChange, tipoInicial = "mao_de_o
       if (eq) {
         setDescricao(String(eq.nome));
         if (servicoUnidade) setUnidade(servicoUnidade);
+        // Auto-inherit MO productivity settings
+        if (moCoeficiente) {
+          setQuantidade(moCoeficiente.produtividade);
+          setPeriodo(moCoeficiente.periodo as "hora" | "dia" | "mês");
+        }
         const comb = combustiveis?.find((c) => c.ativo);
         setParamsEq({
           valor_aquisicao: Number(eq.valor_aquisicao),
