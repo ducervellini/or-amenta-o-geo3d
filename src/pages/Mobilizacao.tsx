@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import {
   MapPin, Plus, Trash2, Save, Loader2, Cloud, Sun,
@@ -343,6 +344,161 @@ export default function Mobilizacao() {
   // Veículos cadastrados
   const { data: veiculosCadastrados } = useSupabaseQuery("veiculos");
 
+  // Dias produtivos por mês (declarado cedo para uso em cálculos de duração)
+  const diasProdutivosMes = Math.max(0, diasTrabalho - diasImprodutivosUsuario);
+
+  // ── Cálculo automático de duração baseado em Custos de Serviços ──
+  const grupoServicosId = oportunidadeSelecionada?.grupo_servicos_id || null;
+
+  const { data: grupoServicoIdsData } = useQuery({
+    queryKey: ["mob-grupo-servico-ids", grupoServicosId],
+    queryFn: async () => {
+      const { data, error } = await (supabase.from as any)("grupos_servicos_servicos")
+        .select("servico_id")
+        .eq("grupo_id", grupoServicosId);
+      if (error) throw error;
+      return (data as any[]).map((r: any) => r.servico_id) as string[];
+    },
+    enabled: !!grupoServicosId,
+  });
+
+  const { data: servicosData } = useQuery({
+    queryKey: ["mob-servicos", grupoServicoIdsData?.join(",")],
+    queryFn: async () => {
+      if (!grupoServicoIdsData?.length) return [];
+      const { data, error } = await (supabase.from as any)("servicos")
+        .select("id, nome, codigo, unidade_medicao, produtividade_padrao, unidade_tempo_produtividade")
+        .in("id", grupoServicoIdsData);
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!grupoServicoIdsData?.length,
+  });
+
+  const { data: composicoesOp } = useQuery({
+    queryKey: ["mob-composicoes", grupoServicoIdsData?.join(",")],
+    queryFn: async () => {
+      if (!grupoServicoIdsData?.length) return [];
+      const { data, error } = await (supabase.from as any)("composicoes")
+        .select("id, codigo, nome, unidade, custo_unitario_total, servico_id")
+        .eq("ativo", true)
+        .in("servico_id", grupoServicoIdsData)
+        .order("codigo");
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!grupoServicoIdsData?.length,
+  });
+
+  const { data: orcamentoOp } = useQuery({
+    queryKey: ["mob-orcamento", oportunidadeId],
+    queryFn: async () => {
+      const { data, error } = await (supabase.from as any)("orcamentos")
+        .select("id, orcamento_itens_servico(*)")
+        .eq("oportunidade_id", oportunidadeId)
+        .limit(1);
+      if (error) throw error;
+      return (data as any[])?.[0] || null;
+    },
+    enabled: !!oportunidadeId,
+  });
+
+  // Calculate field days per service
+  const servicoDuracoes = useMemo(() => {
+    if (!composicoesOp?.length || !servicosData?.length || !orcamentoOp?.orcamento_itens_servico) return [];
+
+    const qtdMap: Record<string, number> = {};
+    for (const item of orcamentoOp.orcamento_itens_servico) {
+      qtdMap[item.composicao_id] = Number(item.quantidade || 0);
+    }
+
+    const servicoMap: Record<string, any> = {};
+    for (const s of servicosData) {
+      servicoMap[s.id] = s;
+    }
+
+    const result: {
+      composicao_id: string;
+      codigo: string;
+      nome: string;
+      unidade: string;
+      quantidade: number;
+      produtividade: number;
+      unidade_tempo: string;
+      dias_campo: number;
+      meses: number;
+    }[] = [];
+
+    for (const comp of composicoesOp) {
+      const qty = qtdMap[comp.id] || 0;
+      if (qty <= 0) continue;
+      const servico = servicoMap[comp.servico_id];
+      if (!servico) continue;
+
+      const prod = Number(servico.produtividade_padrao || 0);
+      const unidadeTempo = servico.unidade_tempo_produtividade || "dia";
+
+      if (prod <= 0) {
+        result.push({
+          composicao_id: comp.id,
+          codigo: comp.codigo,
+          nome: comp.nome,
+          unidade: comp.unidade,
+          quantidade: qty,
+          produtividade: 0,
+          unidade_tempo: unidadeTempo,
+          dias_campo: 0,
+          meses: 0,
+        });
+        continue;
+      }
+
+      // Convert productivity to daily
+      let prodDiaria = prod;
+      if (unidadeTempo === "hora") {
+        prodDiaria = prod * jornadaDiaria;
+      } else if (unidadeTempo === "mes" || unidadeTempo === "mês") {
+        prodDiaria = prod / diasProdutivosMes;
+      }
+
+      const diasCampo = prodDiaria > 0 ? qty / prodDiaria : 0;
+      const meses = diasProdutivosMes > 0 ? diasCampo / diasProdutivosMes : 0;
+
+      result.push({
+        composicao_id: comp.id,
+        codigo: comp.codigo,
+        nome: comp.nome,
+        unidade: comp.unidade,
+        quantidade: qty,
+        produtividade: prod,
+        unidade_tempo: unidadeTempo,
+        dias_campo: diasCampo,
+        meses,
+      });
+    }
+
+    return result.sort((a, b) => b.dias_campo - a.dias_campo);
+  }, [composicoesOp, servicosData, orcamentoOp, jornadaDiaria, diasProdutivosMes]);
+
+  const duracaoCalculada = useMemo(() => {
+    if (!servicoDuracoes.length) return null;
+    const maxMeses = Math.max(...servicoDuracoes.map((s) => s.meses));
+    return Math.ceil(maxMeses);
+  }, [servicoDuracoes]);
+
+  const totalDiasCampo = useMemo(() => {
+    return servicoDuracoes.reduce((acc, s) => acc + s.dias_campo, 0);
+  }, [servicoDuracoes]);
+
+  // Auto-update duration when calculated (only if user hasn't manually overridden)
+  const [duracaoAutoSync, setDuracaoAutoSync] = useState(true);
+  useEffect(() => {
+    if (duracaoCalculada && duracaoCalculada > 0 && duracaoAutoSync) {
+      setDuracaoMeses(duracaoCalculada);
+    }
+  }, [duracaoCalculada, duracaoAutoSync]);
+
+
   // ── Load existing mobilização from query param ──
   useEffect(() => {
     const opId = searchParams.get("oportunidade");
@@ -640,7 +796,7 @@ export default function Mobilizacao() {
   );
 
   // Dias produtivos calculados pelo usuário (não pelo fator automático)
-  const diasProdutivosMes = Math.max(0, diasTrabalho - diasImprodutivosUsuario);
+  // Note: diasProdutivosMes is declared earlier (before servicoDuracoes useMemo)
   const diasProdutivos = diasProdutivosMes * duracaoMeses;
   const diasImprodutivosMes = diasImprodutivosUsuario;
   const diasImprodutivos = diasImprodutivosMes * duracaoMeses;
@@ -1098,8 +1254,50 @@ export default function Mobilizacao() {
                   <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
                 </div>
                 <div>
-                  <Label className="text-xs">Duração (meses)</Label>
-                  <Input type="number" value={duracaoMeses} onChange={(e) => setDuracaoMeses(Number(e.target.value))} min={1} max={120} />
+                  <Label className="text-xs flex items-center gap-1">
+                    Duração (meses)
+                    {duracaoCalculada && duracaoCalculada > 0 && (
+                      <Badge variant="secondary" className="text-[9px] py-0 px-1">auto</Badge>
+                    )}
+                  </Label>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      value={duracaoMeses}
+                      onChange={(e) => {
+                        setDuracaoMeses(Number(e.target.value));
+                        setDuracaoAutoSync(false);
+                      }}
+                      min={1}
+                      max={120}
+                      className={duracaoCalculada && duracaoAutoSync ? "border-primary/50 bg-primary/5" : ""}
+                    />
+                    {duracaoCalculada && duracaoCalculada > 0 && !duracaoAutoSync && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9 shrink-0"
+                            onClick={() => {
+                              setDuracaoMeses(duracaoCalculada);
+                              setDuracaoAutoSync(true);
+                            }}
+                          >
+                            <Calculator className="w-3.5 h-3.5 text-primary" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs">Usar valor calculado: {duracaoCalculada} meses</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </div>
+                  {duracaoCalculada && duracaoCalculada > 0 && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Calculado: {duracaoCalculada} meses ({totalDiasCampo.toFixed(0)} dias de campo)
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label className="text-xs">Dias Úteis/Mês</Label>
@@ -1844,6 +2042,75 @@ export default function Mobilizacao() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Prazo de Campo por Serviço */}
+            {servicoDuracoes.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-primary" />
+                    Prazo de Campo por Serviço
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-2">
+                    {servicoDuracoes.map((s) => {
+                      const pct = totalDiasCampo > 0 ? (s.dias_campo / totalDiasCampo) * 100 : 0;
+                      return (
+                        <div key={s.composicao_id} className="space-y-0.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium truncate">{s.codigo} — {s.nome}</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                {s.quantidade.toLocaleString("pt-BR")} {s.unidade}
+                                {s.produtividade > 0
+                                  ? ` ÷ ${s.produtividade.toLocaleString("pt-BR")} ${s.unidade}/${s.unidade_tempo}`
+                                  : " (sem produtividade)"}
+                              </p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="text-xs font-bold text-primary">{s.dias_campo.toFixed(1)} dias</p>
+                              <p className="text-[10px] text-muted-foreground">{s.meses.toFixed(1)} meses</p>
+                            </div>
+                          </div>
+                          {/* Progress bar */}
+                          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-primary/60 transition-all"
+                              style={{ width: `${Math.min(pct, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Total dias de campo</span>
+                      <span className="font-bold">{totalDiasCampo.toFixed(0)} dias</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Serviço mais longo</span>
+                      <span className="font-bold text-primary">
+                        {servicoDuracoes[0]?.dias_campo.toFixed(0)} dias ({servicoDuracoes[0]?.meses.toFixed(1)} meses)
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm font-bold text-primary pt-1 border-t">
+                      <span>Duração calculada</span>
+                      <span>{duracaoCalculada} meses</span>
+                    </div>
+                    {duracaoMeses !== duracaoCalculada && (
+                      <p className="text-[10px] text-amber-600">
+                        ⚠ Duração manual ({duracaoMeses} meses) difere do calculado
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
 
