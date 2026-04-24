@@ -425,17 +425,127 @@ export default function OrcamentoDetalhe() {
       mobilizacao: mobilizacao ? {
         nome: mobilizacao.nome,
         diasProdutivos: mobilizacao.dias_produtivos,
+        diasImprodutivos: mobilizacao.dias_improdutivos,
         custoPorDia: mobilizacao.custo_por_dia,
         distanciaBaseProjeto: mobilizacao.distancia_base_projeto,
+        distanciaMediaDiaria: mobilizacao.distancia_media_diaria,
         diasChuva: mobilizacao.dias_chuva_mes,
         fatorImprodutividade: mobilizacao.fator_improdutividade,
         duracaoMeses: mobilizacao.duracao_meses,
         jornadaDiaria: mobilizacao.jornada_diaria,
+        diasTrabalho: mobilizacao.dias_trabalho,
         regimeTrabalho: `${mobilizacao.dias_trabalho || 22} dias/mês, ${mobilizacao.jornada_diaria || 8}h/dia`,
+        dataInicio: mobilizacao.data_inicio,
+        dataFim: (() => {
+          if (!mobilizacao.data_inicio) return null;
+          const d = new Date(mobilizacao.data_inicio);
+          d.setMonth(d.getMonth() + Number(mobilizacao.duracao_meses || 0));
+          return d.toISOString().split("T")[0];
+        })(),
+        municipio: mobilizacao.municipio || undefined,
+        estado: mobilizacao.estado || undefined,
+        baseEndereco: mobilizacao.base_endereco || undefined,
+        latitude: mobilizacao.latitude,
+        longitude: mobilizacao.longitude,
+        baseLatitude: mobilizacao.base_latitude,
+        baseLongitude: mobilizacao.base_longitude,
+        municipiosRota: Array.isArray(mobilizacao.municipios_considerados)
+          ? mobilizacao.municipios_considerados as any[]
+          : [],
+        pluviometria: (() => {
+          const pl: any = mobilizacao.pluviometria_dados;
+          if (!pl) return null;
+          return {
+            estacao: pl.estacao?.nome,
+            municipio_estacao: pl.estacao?.municipio,
+            uf_estacao: pl.estacao?.uf,
+            distancia_estacao_km: pl.estacao?.distancia_km,
+            anos_analisados: Array.isArray(pl.anos_analisados) ? pl.anos_analisados.length : undefined,
+            precipitacao_total_mm: pl.resumo?.precipitacao_total_mm,
+            media_dias_chuva_mes: pl.resumo?.media_dias_chuva_mes,
+            mensal: Array.isArray(pl.mensal) ? pl.mensal.map((m: any) => ({
+              mes: m.mes,
+              precipitacao_media: Number(m.precipitacao_media || 0),
+              dias_chuva_media: Number(m.dias_chuva_media || 0),
+            })) : undefined,
+          };
+        })(),
       } : null,
       deslocamentosPorCategoria,
       custoDeslocamentos,
       custoMobDesmob,
+      deslocamentosItens: (mobilizacaoCustos || []).map((c: any) => {
+        let obs: any = {};
+        try { obs = JSON.parse(c.observacoes || "{}"); } catch { /* ignore */ }
+        const veic = obs.veiculo_id ? (veiculosCadastrados as any[])?.find((v: any) => v.id === obs.veiculo_id) : null;
+        const duracao = Number(mobilizacao?.duracao_meses || 1);
+        return {
+          categoria: c.categoria,
+          descricao: c.descricao || undefined,
+          valor_unitario: Number(c.valor_unitario || 0),
+          quantidade: Number(c.quantidade || 1),
+          frequencia: c.frequencia || "mensal",
+          custo_total: Number(c.custo_total || 0),
+          custo_mensal: duracao > 0 ? Number(c.custo_total || 0) / duracao : undefined,
+          veiculo_nome: veic?.nome,
+          tipo_hospedagem: obs.tipo_hospedagem,
+          tipo_veiculo: obs.tipo_veiculo,
+          km_dia: obs.km_dia,
+          meses_hospedagem: obs.meses_hospedagem,
+        };
+      }),
+      mobDesmobItens: (() => {
+        if (!mobilizacao?.mob_desmob_itens || !Array.isArray(mobilizacao.mob_desmob_itens)) return [];
+        const jornadaDiaria = Number(mobilizacao.jornada_diaria || 8);
+        return mobilizacao.mob_desmob_itens.map((item: any) => {
+          const distancia = Number(item.distancia_km || 0);
+          const kmMaxDia = Number(item.km_max_dia || 600);
+          const diasViagem = kmMaxDia > 0 ? Math.ceil(distancia / kmMaxDia) : 1;
+          const pernoites = Math.max(0, diasViagem - 1);
+          const qVeiculos = Number(item.quantidade_veiculos || 1);
+          const qPessoas = Number(item.quantidade_pessoas || 1);
+          const hospPernoite = Number(item.hospedagem_pernoite || 0);
+          const custoHoraPessoa = Number(item.custo_hora_pessoa || 0);
+          const pedagiosIda = Number(item.pedagios_ida || 0);
+          let custoCombKm = 0;
+          let veicNome = "";
+          if (item.veiculo_id && veiculosCadastrados) {
+            const veic = (veiculosCadastrados as any[])?.find((v: any) => v.id === item.veiculo_id);
+            if (veic) {
+              veicNome = veic.nome;
+              const mediaKmL = Number(veic.media_km_l || 0);
+              const precoComb = Number(veic.combustivel_preco_litro || 0);
+              const consumoKm = Number(veic.combustivel_consumo_km || 0);
+              custoCombKm = consumoKm > 0
+                ? precoComb * consumoKm
+                : (mediaKmL > 0 ? precoComb / mediaKmL : 0);
+            }
+          }
+          const custoCombustivelIda = custoCombKm * distancia * qVeiculos;
+          const custoPernoiteIda = pernoites * hospPernoite * qPessoas;
+          const custoHorasPessoasIda = diasViagem * jornadaDiaria * custoHoraPessoa * qPessoas;
+          const custoIda = custoCombustivelIda + custoPernoiteIda + pedagiosIda + custoHorasPessoasIda;
+          return {
+            municipio_saida: item.municipio_saida || "",
+            estado_saida: item.estado_saida || "",
+            veiculo_nome: veicNome,
+            distancia_km: distancia,
+            km_max_dia: kmMaxDia,
+            dias_viagem: diasViagem,
+            pernoites,
+            quantidade_pessoas: qPessoas,
+            quantidade_veiculos: qVeiculos,
+            hospedagem_pernoite: hospPernoite,
+            pedagios_ida: pedagiosIda,
+            custo_hora_pessoa: custoHoraPessoa,
+            custo_combustivel_ida: custoCombustivelIda,
+            custo_pernoite_ida: custoPernoiteIda,
+            custo_horas_pessoas_ida: custoHorasPessoasIda,
+            custo_ida: custoIda,
+            custo_total: custoIda * 2,
+          };
+        });
+      })(),
       composicaoItens: (composicaoItens || []).map((ci: any) => {
         const comp = (composicoes || []).find((c: any) => c.id === ci.composicao_id);
         return {
