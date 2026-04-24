@@ -241,9 +241,68 @@
     break-inside: avoid;
   }
 
-  /* Force expand all sections */
-  [data-state="closed"] {
+  /* Force expand all collapsibles, accordions, and tab panels */
+  [data-state="closed"],
+  [data-state="inactive"] {
     display: block !important;
+  }
+
+  /* Show all Radix tab panels regardless of active state */
+  [role="tabpanel"] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  [role="tabpanel"][hidden],
+  [hidden] {
+    display: block !important;
+  }
+
+  /* Tab list itself can stay visible as a label, but hide selectors that act like buttons */
+  [role="tablist"] {
+    display: none !important;
+  }
+
+  /* Collapse multi-column grids into single column for full content visibility */
+  .page-container .grid,
+  [class*="grid-cols-"] {
+    display: block !important;
+    grid-template-columns: none !important;
+  }
+  .page-container .grid > *,
+  [class*="grid-cols-"] > * {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* Ensure all overflow containers expand */
+  .overflow-hidden,
+  .overflow-auto,
+  .overflow-y-auto,
+  .overflow-x-auto {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+  }
+
+  /* Sticky elements should not stick when printing */
+  .sticky, [class*="sticky"] {
+    position: static !important;
+  }
+
+  /* Maps and large media: cap height so they don't overflow a page */
+  .leaflet-container {
+    height: 320px !important;
+    max-height: 320px !important;
+    page-break-inside: avoid;
+  }
+
+  /* Avoid splitting cards across pages when possible */
+  [class*="card"], [class*="Card"] {
+    page-break-inside: avoid;
   }
 
   /* Page breaks */

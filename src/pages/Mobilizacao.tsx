@@ -903,9 +903,14 @@ function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: 
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" className="gap-2 print:hidden" onClick={() => window.print()}>
+            <Button
+              variant="outline"
+              className="gap-2 print:hidden"
+              onClick={() => window.print()}
+              title="Imprimir todos os detalhes desta página em PDF (use 'Salvar como PDF' no diálogo de impressão)"
+            >
               <Printer className="w-4 h-4" />
-              Imprimir
+              Imprimir PDF
             </Button>
             <Button className="gap-2" disabled={!formValido || saving} onClick={handleSalvar}>
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
