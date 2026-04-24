@@ -723,21 +723,179 @@ export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blo
   }
 
   // ════════════════════════════════════════
-  // 4. LOGÍSTICA E ADM LOCAL
+  // 4. LOGÍSTICA E ADM LOCAL — DETALHADO
   // ════════════════════════════════════════
   children.push(new Paragraph({ children: [new PageBreak()] }));
-  children.push(sectionTitle(4, "ADMINISTRAÇÃO LOCAL E LOGÍSTICA"));
+  children.push(sectionTitle(4, "ADMINISTRAÇÃO LOCAL E LOGÍSTICA — DETALHAMENTO COMPLETO"));
 
   if (dados.mobilizacao) {
-    children.push(keyValuePara("Base Operacional", dados.mobilizacao.nome));
-    children.push(keyValuePara("Distância Base-Projeto", `${fmtNum2(dados.mobilizacao.distanciaBaseProjeto)} km`));
-    children.push(keyValuePara("Dias de Chuva/Mês", `${dados.mobilizacao.diasChuva} dias`));
-    children.push(keyValuePara("Fator Improdutividade", fmtPct(dados.mobilizacao.fatorImprodutividade * 100)));
-    children.push(keyValuePara("Duração", `${dados.mobilizacao.duracaoMeses} meses`));
-    children.push(keyValuePara("Regime", dados.mobilizacao.regimeTrabalho));
+    const m = dados.mobilizacao;
+
+    // 4.1 Identificação e Localização
+    children.push(subTitle("4.1 Identificação e Localização do Projeto"));
+    children.push(keyValuePara("Mobilização", m.nome));
+    if (m.municipio) children.push(keyValuePara("Município do Projeto", `${m.municipio}${m.estado ? ` / ${m.estado}` : ""}`));
+    if (m.latitude !== null && m.latitude !== undefined && m.longitude !== null && m.longitude !== undefined) {
+      children.push(keyValuePara("Coordenadas do Projeto", `${fmtNum2(Number(m.latitude))}, ${fmtNum2(Number(m.longitude))}`));
+    }
+    if (m.baseEndereco) children.push(keyValuePara("Base Operacional", m.baseEndereco));
+    if (m.baseLatitude !== null && m.baseLatitude !== undefined && m.baseLongitude !== null && m.baseLongitude !== undefined) {
+      children.push(keyValuePara("Coordenadas da Base", `${fmtNum2(Number(m.baseLatitude))}, ${fmtNum2(Number(m.baseLongitude))}`));
+    }
+    children.push(keyValuePara("Distância Base ↔ Projeto", `${fmtNum2(m.distanciaBaseProjeto)} km`));
+    if (m.distanciaMediaDiaria) children.push(keyValuePara("Distância Média Diária no Projeto", `${fmtNum2(m.distanciaMediaDiaria)} km`));
+
+    // 4.2 Cronograma e Regime
+    children.push(subTitle("4.2 Cronograma e Regime de Trabalho"));
+    if (m.dataInicio) children.push(keyValuePara("Data de Início", new Date(m.dataInicio).toLocaleDateString("pt-BR")));
+    if (m.dataFim) children.push(keyValuePara("Data de Término", new Date(m.dataFim).toLocaleDateString("pt-BR")));
+    children.push(keyValuePara("Duração do Contrato", `${m.duracaoMeses} meses`));
+    children.push(keyValuePara("Dias de Trabalho/Mês", `${m.diasTrabalho || 24} dias`));
+    children.push(keyValuePara("Jornada Diária", `${fmtNum2(m.jornadaDiaria)} horas`));
+    children.push(keyValuePara("Dias Produtivos no Período", `${m.diasProdutivos} dias`));
+    if (m.diasImprodutivos !== undefined) children.push(keyValuePara("Dias Improdutivos", `${m.diasImprodutivos} dias`));
+    children.push(keyValuePara("Dias de Chuva/Mês", `${m.diasChuva} dias`));
+    children.push(keyValuePara("Fator de Improdutividade", fmtPct(m.fatorImprodutividade * 100)));
+
+    // 4.3 Pluviometria
+    if (m.pluviometria) {
+      children.push(subTitle("4.3 Análise Pluviométrica (INMET)"));
+      const pl = m.pluviometria;
+      if (pl.estacao) children.push(keyValuePara("Estação Meteorológica", `${pl.estacao}${pl.municipio_estacao ? ` — ${pl.municipio_estacao}/${pl.uf_estacao || ""}` : ""}`));
+      if (pl.distancia_estacao_km !== undefined) children.push(keyValuePara("Distância da Estação", `${fmtNum2(pl.distancia_estacao_km)} km`));
+      if (pl.anos_analisados) children.push(keyValuePara("Anos Analisados", `${pl.anos_analisados} anos`));
+      if (pl.precipitacao_total_mm !== undefined) children.push(keyValuePara("Precipitação Total Anual", `${fmtNum2(pl.precipitacao_total_mm)} mm`));
+      if (pl.media_dias_chuva_mes !== undefined) children.push(keyValuePara("Média de Dias com Chuva/Mês", fmtNum2(pl.media_dias_chuva_mes)));
+
+      if (pl.mensal && pl.mensal.length > 0) {
+        const pluvCols = [3120, 3120, 3120];
+        const pluvW = pluvCols.reduce((a, b) => a + b, 0);
+        children.push(new Table({
+          width: { size: pluvW, type: WidthType.DXA },
+          columnWidths: pluvCols,
+          rows: [
+            new TableRow({
+              children: [
+                headerCell("Mês", pluvCols[0]),
+                headerCell("Precipitação (mm)", pluvCols[1]),
+                headerCell("Dias com Chuva", pluvCols[2]),
+              ],
+            }),
+            ...pl.mensal.map((row, i) => new TableRow({
+              children: [
+                dataCell(row.mes, pluvCols[0], { fill: i % 2 === 1 ? LIGHT_GRAY : undefined }),
+                dataCell(fmtNum2(row.precipitacao_media), pluvCols[1], { align: AlignmentType.RIGHT, fill: i % 2 === 1 ? LIGHT_GRAY : undefined }),
+                dataCell(fmtNum2(row.dias_chuva_media), pluvCols[2], { align: AlignmentType.RIGHT, fill: i % 2 === 1 ? LIGHT_GRAY : undefined }),
+              ],
+            })),
+          ],
+        }));
+      }
+    }
+
+    // 4.4 Municípios na Rota
+    if (m.municipiosRota && m.municipiosRota.length > 0) {
+      children.push(subTitle("4.4 Municípios Considerados na Rota"));
+      const munCols = [4680, 1560, 3120];
+      const munW = munCols.reduce((a, b) => a + b, 0);
+      children.push(new Table({
+        width: { size: munW, type: WidthType.DXA },
+        columnWidths: munCols,
+        rows: [
+          new TableRow({
+            children: [
+              headerCell("Município", munCols[0]),
+              headerCell("UF", munCols[1]),
+              headerCell("Distância (km)", munCols[2]),
+            ],
+          }),
+          ...m.municipiosRota.map((mu, i) => new TableRow({
+            children: [
+              dataCell(mu.nome, munCols[0], { fill: i % 2 === 1 ? LIGHT_GRAY : undefined }),
+              dataCell(mu.uf, munCols[1], { align: AlignmentType.CENTER, fill: i % 2 === 1 ? LIGHT_GRAY : undefined }),
+              dataCell(fmtNum2(mu.distancia_km), munCols[2], { align: AlignmentType.RIGHT, fill: i % 2 === 1 ? LIGHT_GRAY : undefined }),
+            ],
+          })),
+        ],
+      }));
+    }
   }
 
-  children.push(subTitle("Custos de Administração Local"));
+  // 4.5 Deslocamentos do Projeto — Detalhado por Item
+  if (dados.deslocamentosItens && dados.deslocamentosItens.length > 0) {
+    children.push(subTitle("4.5 Deslocamentos do Projeto — Itens Detalhados"));
+    const dCols = [1620, 2400, 1100, 900, 1100, 1100, 1140];
+    const dW = dCols.reduce((a, b) => a + b, 0);
+    children.push(new Table({
+      width: { size: dW, type: WidthType.DXA },
+      columnWidths: dCols,
+      rows: [
+        new TableRow({
+          children: [
+            headerCell("Categoria", dCols[0]),
+            headerCell("Descrição", dCols[1]),
+            headerCell("V. Unit.", dCols[2]),
+            headerCell("Qtd", dCols[3]),
+            headerCell("Frequência", dCols[4]),
+            headerCell("Custo/Mês", dCols[5]),
+            headerCell("Custo Total", dCols[6]),
+          ],
+        }),
+        ...dados.deslocamentosItens.map((item, i) => {
+          const fill = i % 2 === 1 ? LIGHT_GRAY : undefined;
+          const desc = [
+            item.descricao || "—",
+            item.veiculo_nome ? `Veíc.: ${item.veiculo_nome}` : "",
+            item.tipo_hospedagem ? `Hosp.: ${item.tipo_hospedagem}` : "",
+            item.km_dia ? `${fmtNum2(item.km_dia)} km/dia` : "",
+          ].filter(Boolean).join(" | ");
+          return new TableRow({
+            children: [
+              dataCell(CATEGORIAS[item.categoria] || item.categoria, dCols[0], { bold: true, fill, size: 14 }),
+              dataCell(desc, dCols[1], { fill, size: 14 }),
+              dataCell(fmt(item.valor_unitario), dCols[2], { align: AlignmentType.RIGHT, fill, size: 14 }),
+              dataCell(fmtNum2(item.quantidade), dCols[3], { align: AlignmentType.RIGHT, fill, size: 14 }),
+              dataCell(item.frequencia, dCols[4], { align: AlignmentType.CENTER, fill, size: 14 }),
+              dataCell(item.custo_mensal !== undefined ? fmt(item.custo_mensal) : "—", dCols[5], { align: AlignmentType.RIGHT, fill, size: 14 }),
+              dataCell(fmt(item.custo_total), dCols[6], { align: AlignmentType.RIGHT, bold: true, fill, size: 14 }),
+            ],
+          });
+        }),
+      ],
+    }));
+  }
+
+  // 4.6 Mobilização / Desmobilização — Detalhado por Trajeto
+  if (dados.mobDesmobItens && dados.mobDesmobItens.length > 0) {
+    children.push(subTitle("4.6 Mobilização e Desmobilização — Cálculo por Trajeto"));
+    children.push(para(
+      `Cada trajeto é computado como ida e volta (×2). Combustível: custo/km × distância × veículos. ` +
+      `Pernoites: (dias_viagem - 1) × valor/pernoite × pessoas. Horas/Pessoa: dias_viagem × jornada × custo H/H × pessoas.`
+    ));
+
+    for (const md of dados.mobDesmobItens) {
+      children.push(subSubTitle(`▸ ${md.municipio_saida || "—"}/${md.estado_saida || ""} → Projeto (${fmtNum2(md.distancia_km)} km)`, ACCENT));
+      const mdRows = [
+        { desc: "Veículo", formula: "", valor: md.veiculo_nome || "—" },
+        { desc: "Distância (ida)", formula: "", valor: `${fmtNum2(md.distancia_km)} km` },
+        { desc: "Km máx/dia", formula: "", valor: `${fmtNum2(md.km_max_dia)} km` },
+        { desc: "Dias de Viagem (ida)", formula: `⌈${fmtNum2(md.distancia_km)} ÷ ${fmtNum2(md.km_max_dia)}⌉`, valor: `${md.dias_viagem} dias` },
+        { desc: "Pernoites (ida)", formula: `${md.dias_viagem} - 1`, valor: `${md.pernoites}` },
+        { desc: "Pessoas", formula: "", valor: `${md.quantidade_pessoas}` },
+        { desc: "Veículos", formula: "", valor: `${md.quantidade_veiculos}` },
+        { desc: "Combustível (ida)", formula: `custo/km × ${fmtNum2(md.distancia_km)} × ${md.quantidade_veiculos}`, valor: fmt(md.custo_combustivel_ida) },
+        { desc: "Pernoites (ida)", formula: `${md.pernoites} × ${fmt(md.hospedagem_pernoite)} × ${md.quantidade_pessoas}`, valor: fmt(md.custo_pernoite_ida) },
+        { desc: "Pedágios (ida)", formula: "", valor: fmt(md.pedagios_ida) },
+        { desc: "Horas Pessoas (ida)", formula: `${md.dias_viagem} × jornada × ${fmt(md.custo_hora_pessoa)} × ${md.quantidade_pessoas}`, valor: fmt(md.custo_horas_pessoas_ida) },
+        { desc: "Subtotal IDA", formula: "soma das parcelas", valor: fmt(md.custo_ida) },
+        { desc: "TOTAL (IDA + VOLTA)", formula: `${fmt(md.custo_ida)} × 2`, valor: fmt(md.custo_total), highlight: true },
+      ];
+      children.push(calcTable(mdRows));
+    }
+  }
+
+  // 4.7 Resumo Consolidado de ADM Local
+  children.push(subTitle("4.7 Resumo Consolidado de ADM Local"));
   const logRows: string[][] = [];
   for (const [cat, valor] of Object.entries(dados.deslocamentosPorCategoria)) {
     if (valor > 0) logRows.push([CATEGORIAS[cat] || cat, fmt(valor)]);
@@ -750,7 +908,7 @@ export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blo
       width: { size: TABLE_W, type: WidthType.DXA },
       columnWidths: [COL_LABEL, COL_VALUE],
       rows: [
-        new TableRow({ children: [headerCell("Categoria", COL_LABEL), headerCell("Valor Mensal", COL_VALUE)] }),
+        new TableRow({ children: [headerCell("Categoria", COL_LABEL), headerCell("Valor Total no Período", COL_VALUE)] }),
         ...logRows.map((row, i) => {
           const isTotal = i === logRows.length - 1;
           return new TableRow({
@@ -766,7 +924,8 @@ export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blo
 
   children.push(para(
     `O impacto pluviométrico foi considerado através do fator de improdutividade de ` +
-    `${fmtPct((dados.mobilizacao?.fatorImprodutividade || 0.15) * 100)}, reduzindo os dias úteis de trabalho.`
+    `${fmtPct((dados.mobilizacao?.fatorImprodutividade || 0.15) * 100)}, reduzindo os dias úteis de trabalho ` +
+    `e calibrando os custos fixos da Administração Local ao longo do prazo contratual.`
   ));
 
   // ════════════════════════════════════════
