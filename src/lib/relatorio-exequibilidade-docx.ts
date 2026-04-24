@@ -56,17 +56,75 @@ export interface DadosRelatorioDocx {
   mobilizacao: {
     nome: string;
     diasProdutivos: number;
+    diasImprodutivos?: number;
     custoPorDia: number;
     distanciaBaseProjeto: number;
+    distanciaMediaDiaria?: number;
     diasChuva: number;
     fatorImprodutividade: number;
     duracaoMeses: number;
     jornadaDiaria: number;
+    diasTrabalho?: number;
     regimeTrabalho: string;
+    dataInicio?: string | null;
+    dataFim?: string | null;
+    municipio?: string;
+    estado?: string;
+    baseEndereco?: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    baseLatitude?: number | null;
+    baseLongitude?: number | null;
+    municipiosRota?: Array<{ nome: string; uf: string; distancia_km: number }>;
+    pluviometria?: {
+      estacao?: string;
+      municipio_estacao?: string;
+      uf_estacao?: string;
+      distancia_estacao_km?: number;
+      anos_analisados?: number;
+      precipitacao_total_mm?: number;
+      media_dias_chuva_mes?: number;
+      mensal?: Array<{ mes: string; precipitacao_media: number; dias_chuva_media: number }>;
+    } | null;
   } | null;
   deslocamentosPorCategoria: Record<string, number>;
   custoDeslocamentos: number;
   custoMobDesmob: number;
+  /** Itens detalhados de Deslocamentos (vindos de mobilizacao_custos) */
+  deslocamentosItens?: Array<{
+    categoria: string;
+    descricao?: string;
+    valor_unitario: number;
+    quantidade: number;
+    frequencia: string;
+    custo_total: number;
+    custo_mensal?: number;
+    veiculo_nome?: string;
+    tipo_hospedagem?: string;
+    tipo_veiculo?: string;
+    km_dia?: number;
+    meses_hospedagem?: number;
+  }>;
+  /** Itens detalhados de Mobilização/Desmobilização */
+  mobDesmobItens?: Array<{
+    municipio_saida: string;
+    estado_saida: string;
+    veiculo_nome?: string;
+    distancia_km: number;
+    km_max_dia: number;
+    dias_viagem: number;
+    pernoites: number;
+    quantidade_pessoas: number;
+    quantidade_veiculos: number;
+    hospedagem_pernoite: number;
+    pedagios_ida: number;
+    custo_hora_pessoa: number;
+    custo_combustivel_ida: number;
+    custo_pernoite_ida: number;
+    custo_horas_pessoas_ida: number;
+    custo_ida: number;
+    custo_total: number;
+  }>;
   composicaoItens: ComposicaoItemRelatorio[];
   numEquipes: number;
 }
