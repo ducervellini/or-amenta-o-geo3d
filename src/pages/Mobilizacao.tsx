@@ -324,7 +324,9 @@ function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: 
   const [duracaoMeses, setDuracaoMeses] = useState(3);
   const dataFim = useMemo(() => {
     const d = new Date(dataInicio);
-    d.setMonth(d.getMonth() + duracaoMeses);
+    if (isNaN(d.getTime())) return "";
+    d.setMonth(d.getMonth() + (Number(duracaoMeses) || 0));
+    if (isNaN(d.getTime())) return "";
     return d.toISOString().split("T")[0];
   }, [dataInicio, duracaoMeses]);
 
