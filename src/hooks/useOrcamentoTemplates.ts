@@ -30,12 +30,12 @@ export function useServicoVariacoes(servicoId: string | null) {
     enabled: !!servicoId,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("servico_variacoes" as never)
+        .from("servico_variacoes")
         .select("*")
-        .eq("servico_id" as never, servicoId as never)
+        .eq("servico_id", servicoId as string)
         .is("deleted_at", null)
-        .eq("ativo" as never, true as never)
-        .order("ordem" as never);
+        .eq("ativo", true)
+        .order("ordem");
       if (error) throw error;
       return (data ?? []) as unknown as ServicoVariacao[];
     },
@@ -47,7 +47,7 @@ export function useTodasVariacoes() {
     queryKey: ["servico_variacoes_todas"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("servico_variacoes" as never)
+        .from("servico_variacoes")
         .select("*")
         .is("deleted_at", null);
       if (error) throw error;
@@ -67,7 +67,7 @@ export function useVariacaoMutations() {
 
   const criar = useMutation({
     mutationFn: async (v: Partial<ServicoVariacao>) => {
-      const { error } = await supabase.from("servico_variacoes" as never).insert({
+      const { error } = await supabase.from("servico_variacoes").insert({
         servico_id: v.servico_id!,
         nome: v.nome!,
         descricao_diferenca: v.descricao_diferenca ?? null,
@@ -76,7 +76,7 @@ export function useVariacaoMutations() {
         multiplicador_custo: v.multiplicador_custo ?? 1.0,
         is_default: v.is_default ?? false,
         ordem: v.ordem ?? 0,
-      } as never);
+      });
       if (error) throw error;
     },
     onSuccess: (_, v) => {
@@ -89,8 +89,8 @@ export function useVariacaoMutations() {
   const atualizar = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<ServicoVariacao> }) => {
       const { error } = await supabase
-        .from("servico_variacoes" as never)
-        .update(updates as never)
+        .from("servico_variacoes")
+        .update(updates)
         .eq("id", id);
       if (error) throw error;
     },
@@ -104,8 +104,8 @@ export function useVariacaoMutations() {
   const remover = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("servico_variacoes" as never)
-        .update({ deleted_at: new Date().toISOString() } as never)
+        .from("servico_variacoes")
+        .update({ deleted_at: new Date().toISOString() })
         .eq("id", id);
       if (error) throw error;
     },
@@ -144,9 +144,9 @@ export function useOrcamentoParametros(orcamentoId: string | null) {
     enabled: !!orcamentoId,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("orcamento_parametros" as never)
+        .from("orcamento_parametros")
         .select("*")
-        .eq("orcamento_id" as never, orcamentoId as never)
+        .eq("orcamento_id", orcamentoId as string)
         .is("deleted_at", null)
         .maybeSingle();
       if (error) throw error;
@@ -176,8 +176,8 @@ export function useOrcamentoParametrosMutations(orcamentoId: string) {
         tipo_obra: params.tipo_obra ?? null,
       };
       const { error } = await supabase
-        .from("orcamento_parametros" as never)
-        .upsert(payload as never, { onConflict: "orcamento_id" });
+        .from("orcamento_parametros")
+        .upsert(payload, { onConflict: "orcamento_id" });
       if (error) throw error;
     },
     onSuccess: invalidate,
@@ -215,11 +215,11 @@ export function useOrcamentoTemplates() {
     queryKey: ["orcamento_templates"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("orcamento_templates" as never)
+        .from("orcamento_templates")
         .select("*")
         .is("deleted_at", null)
-        .eq("ativo" as never, true as never)
-        .order("tipo_obra" as never);
+        .eq("ativo", true)
+        .order("tipo_obra");
       if (error) throw error;
       return (data ?? []) as unknown as OrcamentoTemplate[];
     },
@@ -232,11 +232,11 @@ export function useTemplatesPorTipoObra(tipoObra: string | null) {
     enabled: !!tipoObra,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("orcamento_templates" as never)
+        .from("orcamento_templates")
         .select("*")
-        .eq("tipo_obra" as never, tipoObra as never)
+        .eq("tipo_obra", tipoObra as string)
         .is("deleted_at", null)
-        .eq("ativo" as never, true as never);
+        .eq("ativo", true);
       if (error) throw error;
       return (data ?? []) as unknown as OrcamentoTemplate[];
     },

@@ -10,6 +10,11 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   hasRole: (role: string) => boolean;
+  canViewAppData: boolean;
+  canEditMestres: boolean;
+  canEditParametros: boolean;
+  canEditOrcamentos: boolean;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -20,6 +25,11 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   signOut: async () => {},
   hasRole: () => false,
+  canViewAppData: false,
+  canEditMestres: false,
+  canEditParametros: false,
+  canEditOrcamentos: false,
+  isAdmin: false,
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -83,9 +93,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const hasRole = (role: string) => roles.includes(role);
+  const isAdmin = hasRole("admin");
+  const canViewAppData = roles.length > 0;
+  const canEditMestres = hasRole("admin") || hasRole("diretor") || hasRole("gerente");
+  const canEditParametros = canEditMestres;
+  const canEditOrcamentos =
+    canEditMestres || hasRole("orcamentista") || hasRole("engenheiro");
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, roles, loading, signOut, hasRole }}>
+    <AuthContext.Provider
+      value={{
+        session,
+        user,
+        profile,
+        roles,
+        loading,
+        signOut,
+        hasRole,
+        canViewAppData,
+        canEditMestres,
+        canEditParametros,
+        canEditOrcamentos,
+        isAdmin,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, FileText, Edit, Trash2, GripVertical, Type, Pencil, X } from "lucide-react";
+import { Search, FileText, Edit, Trash2, GripVertical, Type, Pencil, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -148,6 +148,9 @@ export default function Orcamentos() {
           <h1 className="page-title">Orçamentos</h1>
           <p className="page-subtitle">Selecione uma oportunidade para montar o orçamento</p>
         </div>
+        <Button onClick={() => navigate("/orcamentos/novo")} className="gap-2">
+          <Plus className="w-4 h-4" /> Novo Orçamento
+        </Button>
       </div>
 
       <div className="bg-card rounded-lg border shadow-sm">

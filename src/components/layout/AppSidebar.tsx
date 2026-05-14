@@ -87,6 +87,16 @@ const navigation: NavItem[] = [
       { label: "Lista de Orçamentos", path: "/orcamentos", icon: FileText },
     ],
   },
+  {
+    label: "Administração",
+    icon: Landmark,
+    children: [
+      { label: "Admin Central Mensal", path: "/admin/central-mensal", icon: Calendar },
+      { label: "Variações de Serviço", path: "/admin/variacoes-servico", icon: Layers },
+      { label: "Templates de Orçamento", path: "/admin/templates-orcamento", icon: FileText },
+      { label: "Benchmark", path: "/admin/benchmark", icon: BarChart3 },
+    ],
+  },
   { label: "Configurações", path: "/configuracoes", icon: Settings },
 ];
 

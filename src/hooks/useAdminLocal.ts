@@ -117,8 +117,8 @@ export function useAdminLocalMutations(orcamentoId: string) {
         .from("admin_local_itens")
         .insert({
           orcamento_id: orcamentoId,
-          categoria_id: item.categoria_id!,
-          escala_aplicada: item.escala_aplicada!,
+          categoria_id: item.categoria_id,
+          escala_aplicada: item.escala_aplicada,
           quantidade: item.quantidade ?? 0,
           valor_unitario: item.valor_unitario ?? 0,
           frequencia_evento: item.frequencia_evento ?? null,
@@ -220,11 +220,11 @@ export function useAplicarTemplate(orcamentoId: string) {
             ordem: idx,
           };
         })
-        .filter(Boolean) as Array<Record<string, unknown>>;
+        .filter(Boolean);
 
       const { error: e3 } = await supabase
         .from("admin_local_itens")
-        .insert(itensPayload as never);
+        .insert(itensPayload);
       if (e3) throw e3;
     },
     onSuccess: () =>

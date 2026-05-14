@@ -70,46 +70,27 @@ export function useBenchmarkOrcamentos(filtros: BenchmarkFiltros = {}) {
         .select("*");
 
       if (filtros.tipo_obra) {
-        q = (q as never as { or: (s: string) => typeof q }).or(
+        q = q.or(
           `tipo_obra_parametros.eq.${filtros.tipo_obra},tipo_obra_oportunidade.eq.${filtros.tipo_obra}`
         );
       }
       if (filtros.estagio) {
-        q = (q as never as { eq: (c: string, v: string) => typeof q }).eq(
-          "estagio_pipeline",
-          filtros.estagio
-        );
+        q = q.eq("estagio_pipeline" as never, filtros.estagio as never);
       }
       if (filtros.uf) {
-        q = (q as never as { eq: (c: string, v: string) => typeof q }).eq("uf", filtros.uf);
+        q = q.eq("uf" as never, filtros.uf as never);
       }
       if (filtros.cliente_id) {
-        q = (q as never as { eq: (c: string, v: string) => typeof q }).eq(
-          "cliente_id",
-          filtros.cliente_id
-        );
+        q = q.eq("cliente_id" as never, filtros.cliente_id as never);
       }
       if (filtros.ano_de) {
-        q = (q as never as { gte: (c: string, v: string) => typeof q }).gte(
-          "created_at",
-          `${filtros.ano_de}-01-01`
-        );
+        q = q.gte("created_at" as never, `${filtros.ano_de}-01-01` as never);
       }
       if (filtros.ano_ate) {
-        q = (q as never as { lte: (c: string, v: string) => typeof q }).lte(
-          "created_at",
-          `${filtros.ano_ate}-12-31`
-        );
+        q = q.lte("created_at" as never, `${filtros.ano_ate}-12-31` as never);
       }
 
-      const { data, error } = await (
-        q as never as {
-          order: (
-            c: string,
-            o: { ascending: boolean }
-          ) => Promise<{ data: unknown; error: unknown }>;
-        }
-      ).order("created_at", { ascending: false });
+      const { data, error } = await q.order("created_at" as never, { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as BenchmarkOrcamento[];
     },
