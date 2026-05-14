@@ -110,6 +110,11 @@ const App = () => {
               <Route path="/admin-local/passagens" element={<AdminLocalPassagens />} />
               <Route path="/admin-local/hospedagem" element={<AdminLocalHospedagem />} />
               <Route path="/parametros/admin-local" element={<ParametrosAdminLocal />} />
+              <Route path="/orcamentos/novo" element={<WizardNovoOrcamentoRoute />} />
+              <Route path="/admin/central-mensal" element={<AdminCentralMensal />} />
+              <Route path="/admin/variacoes-servico" element={<GerenciarVariacoesServico />} />
+              <Route path="/admin/templates-orcamento" element={<GerenciarTemplatesOrcamento />} />
+              <Route path="/admin/benchmark" element={<BenchmarkHistorico />} />
               <Route path="/parametros/admin-central" element={<ParametrosAdminCentral />} />
               <Route path="/parametros/financiamento" element={<ParametrosFinanciamento />} />
               <Route path="/parametros/tributos" element={<ParametrosTributos />} />
