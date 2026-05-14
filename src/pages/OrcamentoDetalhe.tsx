@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { cn, addMonthsISO } from "@/lib/utils";
 
 interface OrcamentoServico {
   composicao_id: string;
@@ -436,12 +436,11 @@ export default function OrcamentoDetalhe() {
         diasTrabalho: mobilizacao.dias_trabalho,
         regimeTrabalho: `${mobilizacao.dias_trabalho || 22} dias/mês, ${mobilizacao.jornada_diaria || 8}h/dia`,
         dataInicio: mobilizacao.data_inicio,
-        dataFim: (() => {
-          if (!mobilizacao.data_inicio) return null;
-          const d = new Date(mobilizacao.data_inicio);
-          d.setMonth(d.getMonth() + Number(mobilizacao.duracao_meses || 0));
-          return d.toISOString().split("T")[0];
-        })(),
+        dataFim: addMonthsISO(
+          mobilizacao.data_inicio as string | null,
+          Number(mobilizacao.duracao_meses || 0),
+          ""
+        ) || null,
         municipio: mobilizacao.municipio || undefined,
         estado: mobilizacao.estado || undefined,
         baseEndereco: mobilizacao.base_endereco || undefined,

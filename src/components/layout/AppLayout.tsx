@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
 import { GlobalHorizontalScrollbar } from "./GlobalHorizontalScrollbar";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { cn } from "@/lib/utils";
 
 export function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation();
 
   return (
     <div className="app-layout-root min-h-screen bg-background">
@@ -19,10 +21,14 @@ export function AppLayout() {
       >
         <AppHeader />
         <main className="app-layout-main flex-1">
-          <Outlet />
+          {/* key força reset do boundary ao trocar de rota */}
+          <ErrorBoundary key={location.pathname}>
+            <Outlet />
+          </ErrorBoundary>
         </main>
         <GlobalHorizontalScrollbar />
       </div>
     </div>
   );
 }
+
