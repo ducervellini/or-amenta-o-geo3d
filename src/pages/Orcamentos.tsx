@@ -148,6 +148,9 @@ export default function Orcamentos() {
           <h1 className="page-title">Orçamentos</h1>
           <p className="page-subtitle">Selecione uma oportunidade para montar o orçamento</p>
         </div>
+        <Button onClick={() => navigate("/orcamentos/novo")} className="gap-2">
+          <Plus className="w-4 h-4" /> Novo Orçamento
+        </Button>
       </div>
 
       <div className="bg-card rounded-lg border shadow-sm">
