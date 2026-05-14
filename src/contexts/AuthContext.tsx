@@ -93,9 +93,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const hasRole = (role: string) => roles.includes(role);
+  const isAdmin = hasRole("admin");
+  const canViewAppData = roles.length > 0;
+  const canEditMestres = hasRole("admin") || hasRole("diretor") || hasRole("gerente");
+  const canEditParametros = canEditMestres;
+  const canEditOrcamentos =
+    canEditMestres || hasRole("orcamentista") || hasRole("engenheiro");
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, roles, loading, signOut, hasRole }}>
+    <AuthContext.Provider
+      value={{
+        session,
+        user,
+        profile,
+        roles,
+        loading,
+        signOut,
+        hasRole,
+        canViewAppData,
+        canEditMestres,
+        canEditParametros,
+        canEditOrcamentos,
+        isAdmin,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
