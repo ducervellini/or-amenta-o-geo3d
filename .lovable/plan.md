@@ -1,31 +1,33 @@
-## Parte 1 de 3 — Hooks e Lib
 
-Criar 6 arquivos novos (sobrescrevendo se existirem) com o conteúdo já validado pelo usuário em 141 testes unitários. Não modificar o código fornecido.
 
-### Arquivos a criar
+## Correção da Composição de Processamento GNSS
 
-1. **`src/lib/admin-local-calculo.ts`** — Lógica de cálculo de Admin Local (Sprint 4): tipos de bloco/escala, função `calcularItemAdminLocal`, totalização por bloco, conversão dias↔meses.
+### Problema Identificado
 
-2. **`src/lib/formula-quantidade.ts`** — Avaliador TypeScript de fórmulas de quantidade (paridade com função SQL `avaliar_formula_quantidade`): whitelist de variáveis e funções, `validarFormula` e `avaliarFormula`.
+Os equipamentos da composição "Processamento de dados GNSS" estão com o **coeficiente incorreto**. O sistema não está propagando o coeficiente da Mão de Obra para os equipamentos da mesma composição:
 
-3. **`src/hooks/useAdminLocal.ts`** — Hooks React Query para categorias e itens de admin local de um orçamento, agrupamento por bloco, mutations CRUD, aplicação de templates e busca de admin central vigente.
+| Item | Coef. Atual | Coef. Correto |
+|------|-------------|---------------|
+| ANALISTA II (MO) | 1,10 h/un | 1,10 h/un ✓ |
+| NOTEBOOK (Equip.) | 1,00 h/un | 1,10 h/un ✗ |
+| CELULAR (Equip.) | 1,00 h/un | 1,10 h/un ✗ |
 
-4. **`src/hooks/useOrcamentoTemplates.ts`** — Hooks para variações de serviço, parâmetros do orçamento e templates de orçamento, incluindo RPC `aplicar_template_orcamento`.
+A causa raiz: o `ComposicaoItemForm` declara a prop `existingItems` para herdar o coeficiente da MO, mas essa prop **nunca é passada** pelo `ComposicaoDetalhe.tsx`, e a lógica de herança **não está implementada** no formulário.
 
-5. **`src/hooks/useCustoCargo.ts`** — Hook que busca cargo + jornada + regime + almoço + encargos + benefícios e calcula custo total mensal/dia/hora via `calcularCustoDetalhado`.
+### Plano de Correção
 
-6. **`src/hooks/useBenchmark.ts`** — Hooks para views de benchmark histórico (`v_orcamentos_benchmark`, `v_benchmark_distribuicao_tipo_obra`) e RPC `buscar_orcamentos_similares`.
+**1. Implementar herança de coeficiente no `ComposicaoItemForm.tsx`**
+- Quando o tipo de insumo for "equipamento", buscar o coeficiente da primeira MO existente na composição
+- Usar esse coeficiente para calcular o custo do equipamento (em vez de usar `periodoEmHoras / quantidade` com horas padrão de 8h)
+- Ajustar o `coeficienteCalculado` para equipamentos: usar `horas_diarias` da MO quando disponível
 
-### Após criar os arquivos
+**2. Passar `existingItems` do `ComposicaoDetalhe.tsx`**
+- Na chamada ao `ComposicaoItemForm`, adicionar `existingItems={itens}` para que o formulário tenha acesso aos itens existentes
 
-- Regenerar os tipos do Supabase (cliente/types.ts) para que as novas tabelas (`admin_local_categorias`, `admin_local_itens`, `admin_local_templates`, `servico_variacoes`, `orcamento_parametros`, `orcamento_templates`, views e RPCs) fiquem tipadas.
-- Não rodar testes (já validados pelo usuário).
-- Garantir que o build TypeScript compila — corrigir apenas erros de tipagem causados pela ausência das novas tabelas/views nos types regenerados, sem alterar a lógica.
+**3. Recalcular itens existentes**
+- Ao abrir a composição, recalcular automaticamente os equipamentos cujo coeficiente diverge da MO
 
-### Confirmação
+### Arquivos Alterados
+- `src/components/composicao/ComposicaoItemForm.tsx` — implementar lógica de herança
+- `src/pages/ComposicaoDetalhe.tsx` — passar prop `existingItems`
 
-Ao final, responder exatamente: **"Parte 1 concluída"**.
-
-### Observações técnicas
-
-- As tabelas `admin_local_categorias`, `admin_local_itens`, `admin_local_templates` já existem no schema (vistas no contexto). As demais (`servico_variacoes`, `orcamento_parametros`, `orcamento_templates`, views `v_orcamentos_benchmark` e `v_benchmark_distribuicao_tipo_obra`, RPCs `aplicar_template_orcamento`, `buscar_orcamentos_similares`, `get_admin_central_percentual`) precisam existir no banco para os tipos serem regenerados corretamente. Se algumas ainda não existirem, os hooks usam `as never` casts que fazem o build passar mesmo sem tipagem.

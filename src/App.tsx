@@ -46,19 +46,8 @@ import ParametrosMargem from "./pages/parametros/Margem";
 import BdiDre from "./pages/BdiDre";
 import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
-import AdminCentralMensal from "./pages/admin/AdminCentralMensal";
-import GerenciarVariacoesServico from "./pages/admin/GerenciarVariacoesServico";
-import GerenciarTemplatesOrcamento from "./pages/admin/GerenciarTemplatesOrcamento";
-import BenchmarkHistorico from "./pages/admin/BenchmarkHistorico";
-import { WizardNovoOrcamento } from "./components/orcamento/WizardNovoOrcamento";
-import { useNavigate } from "react-router-dom";
 
 const queryClient = new QueryClient();
-
-function WizardNovoOrcamentoRoute() {
-  const navigate = useNavigate();
-  return <WizardNovoOrcamento onCancelar={() => navigate("/orcamentos")} />;
-}
 
 const App = () => {
   useGlobalColumnResize();
@@ -110,11 +99,6 @@ const App = () => {
               <Route path="/admin-local/passagens" element={<AdminLocalPassagens />} />
               <Route path="/admin-local/hospedagem" element={<AdminLocalHospedagem />} />
               <Route path="/parametros/admin-local" element={<ParametrosAdminLocal />} />
-              <Route path="/orcamentos/novo" element={<WizardNovoOrcamentoRoute />} />
-              <Route path="/admin/central-mensal" element={<AdminCentralMensal />} />
-              <Route path="/admin/variacoes-servico" element={<GerenciarVariacoesServico />} />
-              <Route path="/admin/templates-orcamento" element={<GerenciarTemplatesOrcamento />} />
-              <Route path="/admin/benchmark" element={<BenchmarkHistorico />} />
               <Route path="/parametros/admin-central" element={<ParametrosAdminCentral />} />
               <Route path="/parametros/financiamento" element={<ParametrosFinanciamento />} />
               <Route path="/parametros/tributos" element={<ParametrosTributos />} />
