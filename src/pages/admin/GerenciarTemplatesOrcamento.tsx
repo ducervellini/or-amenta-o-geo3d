@@ -113,7 +113,7 @@ function PainelTemplate({ template }: { template: OrcamentoTemplate }) {
     mutationFn: async (updates: Partial<OrcamentoTemplate>) => {
       const { error } = await supabase
         .from("orcamento_templates")
-        .update(updates)
+        .update(updates as never)
         .eq("id", template.id);
       if (error) throw error;
     },
