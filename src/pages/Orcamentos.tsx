@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, FileText, Edit, Trash2, GripVertical, Type, Pencil, X } from "lucide-react";
+import { Search, FileText, Edit, Trash2, GripVertical, Type, Pencil, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
