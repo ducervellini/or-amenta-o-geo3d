@@ -10,6 +10,11 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   hasRole: (role: string) => boolean;
+  canViewAppData: boolean;
+  canEditMestres: boolean;
+  canEditParametros: boolean;
+  canEditOrcamentos: boolean;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -20,6 +25,11 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   signOut: async () => {},
   hasRole: () => false,
+  canViewAppData: false,
+  canEditMestres: false,
+  canEditParametros: false,
+  canEditOrcamentos: false,
+  isAdmin: false,
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
