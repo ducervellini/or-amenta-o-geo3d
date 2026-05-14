@@ -105,7 +105,7 @@ export function WizardNovoOrcamento({
       if (!clienteId && estado.cliente_nome_rapido.trim()) {
         const { data: novoCli, error: e1 } = await supabase
           .from("clientes")
-          .insert({ nome: estado.cliente_nome_rapido.trim() })
+          .insert({ nome: estado.cliente_nome_rapido.trim() } as never)
           .select("id")
           .single();
         if (e1) throw e1;
@@ -121,7 +121,7 @@ export function WizardNovoOrcamento({
           descricao: `${estado.template?.nome} - ${estado.municipio}/${estado.uf}`,
           status: "rascunho",
           created_by: user?.id,
-        })
+        } as never)
         .select("id")
         .single();
       if (e2) throw e2;
