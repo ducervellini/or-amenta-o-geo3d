@@ -1044,7 +1044,12 @@ export default function OrcamentoDetalhe() {
         </Card>
       )}
 
-      {/* ETAPA 4: BDI & Preço */}
+      {/* ETAPA 4: Cronograma (campo × escritório) */}
+      {activeStep === "cronograma" && (
+        <CronogramaPanel orcamentoId={orcamentoId} oportunidadeId={id!} />
+      )}
+
+      {/* ETAPA 5: BDI & Preço */}
       {activeStep === "bdi-preco" && (
         <div className="space-y-6">
           {/* BDI Selector */}
