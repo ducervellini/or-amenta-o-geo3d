@@ -9,7 +9,7 @@ import {
   ArrowLeft, Plus, Trash2, Save, ExternalLink, Loader2,
   Users, Wrench, Package, Truck, Route, Calculator, TrendingUp, Target,
   ChevronDown, ChevronUp, Printer, Check, ChevronRight, ChevronLeft,
-  Building, FileText, DollarSign, FileDown,
+  Building, FileText, DollarSign, FileDown, Calendar,
 } from "lucide-react";
 import { gerarRelatorioDocx, type DadosRelatorioDocx } from "@/lib/relatorio-exequibilidade-docx";
 import { useState, useMemo, useEffect } from "react";
@@ -24,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn, addMonthsISO } from "@/lib/utils";
 import { calcularStatusOrcamento } from "@/lib/orcamento-status";
+import { CronogramaPanel } from "@/components/orcamento/CronogramaPanel";
 
 interface OrcamentoServico {
   composicao_id: string;
@@ -47,6 +48,7 @@ const STEPS = [
   { key: "oportunidade", label: "Oportunidade", icon: FileText },
   { key: "servicos", label: "Serviços", icon: Package },
   { key: "adm-local", label: "ADM Local", icon: Building },
+  { key: "cronograma", label: "Cronograma", icon: Calendar },
   { key: "bdi-preco", label: "BDI & Preço", icon: DollarSign },
 ] as const;
 
@@ -84,6 +86,7 @@ export default function OrcamentoDetalhe() {
       return data as any;
     },
     enabled: !!id,
+    staleTime: 30_000,
   });
 
   const grupoId = oportunidade?.grupo_servicos_id || null;
@@ -99,6 +102,7 @@ export default function OrcamentoDetalhe() {
       return (data as any[]).map((item: any) => item.servico_id) as string[];
     },
     enabled: !!grupoId,
+    staleTime: 30_000,
   });
 
   const { data: composicoes } = useQuery({
@@ -114,6 +118,7 @@ export default function OrcamentoDetalhe() {
       return data as any[];
     },
     enabled: grupoServicoIds !== undefined,
+    staleTime: 30_000,
   });
 
   const { data: servicosCadastro } = useQuery({
@@ -127,6 +132,7 @@ export default function OrcamentoDetalhe() {
       return data as any[];
     },
     enabled: !!grupoServicoIds?.length,
+    staleTime: 30_000,
   });
 
   const { data: composicaoItens } = useQuery({
@@ -141,6 +147,7 @@ export default function OrcamentoDetalhe() {
       return data as any[];
     },
     enabled: servicos.some(s => s.composicao_id),
+    staleTime: 30_000,
   });
 
   const { data: mobilizacao } = useQuery({
@@ -155,6 +162,7 @@ export default function OrcamentoDetalhe() {
       return (data as any[])?.[0] || null;
     },
     enabled: !!id,
+    staleTime: 30_000,
   });
 
   const { data: mobilizacaoCustos } = useQuery({
@@ -167,6 +175,7 @@ export default function OrcamentoDetalhe() {
       return data as any[];
     },
     enabled: !!mobilizacao?.id,
+    staleTime: 30_000,
   });
 
   const { data: veiculosCadastrados } = useQuery({
@@ -204,6 +213,7 @@ export default function OrcamentoDetalhe() {
       return (data as any[])?.[0] || null;
     },
     enabled: !!id,
+    staleTime: 30_000,
   });
 
   useEffect(() => {
@@ -1042,7 +1052,12 @@ export default function OrcamentoDetalhe() {
         </Card>
       )}
 
-      {/* ETAPA 4: BDI & Preço */}
+      {/* ETAPA 4: Cronograma (campo × escritório) */}
+      {activeStep === "cronograma" && (
+        <CronogramaPanel orcamentoId={orcamentoId} oportunidadeId={id!} />
+      )}
+
+      {/* ETAPA 5: BDI & Preço */}
       {activeStep === "bdi-preco" && (
         <div className="space-y-6">
           {/* BDI Selector */}
