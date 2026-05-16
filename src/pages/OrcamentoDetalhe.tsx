@@ -48,6 +48,7 @@ const STEPS = [
   { key: "oportunidade", label: "Oportunidade", icon: FileText },
   { key: "servicos", label: "Serviços", icon: Package },
   { key: "adm-local", label: "ADM Local", icon: Building },
+  { key: "cronograma", label: "Cronograma", icon: Calendar },
   { key: "bdi-preco", label: "BDI & Preço", icon: DollarSign },
 ] as const;
 
