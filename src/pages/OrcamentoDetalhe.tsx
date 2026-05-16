@@ -86,6 +86,7 @@ export default function OrcamentoDetalhe() {
       return data as any;
     },
     enabled: !!id,
+    staleTime: 30_000,
   });
 
   const grupoId = oportunidade?.grupo_servicos_id || null;
@@ -101,6 +102,7 @@ export default function OrcamentoDetalhe() {
       return (data as any[]).map((item: any) => item.servico_id) as string[];
     },
     enabled: !!grupoId,
+    staleTime: 30_000,
   });
 
   const { data: composicoes } = useQuery({
@@ -116,6 +118,7 @@ export default function OrcamentoDetalhe() {
       return data as any[];
     },
     enabled: grupoServicoIds !== undefined,
+    staleTime: 30_000,
   });
 
   const { data: servicosCadastro } = useQuery({
@@ -129,6 +132,7 @@ export default function OrcamentoDetalhe() {
       return data as any[];
     },
     enabled: !!grupoServicoIds?.length,
+    staleTime: 30_000,
   });
 
   const { data: composicaoItens } = useQuery({
@@ -143,6 +147,7 @@ export default function OrcamentoDetalhe() {
       return data as any[];
     },
     enabled: servicos.some(s => s.composicao_id),
+    staleTime: 30_000,
   });
 
   const { data: mobilizacao } = useQuery({
@@ -157,6 +162,7 @@ export default function OrcamentoDetalhe() {
       return (data as any[])?.[0] || null;
     },
     enabled: !!id,
+    staleTime: 30_000,
   });
 
   const { data: mobilizacaoCustos } = useQuery({
@@ -169,6 +175,7 @@ export default function OrcamentoDetalhe() {
       return data as any[];
     },
     enabled: !!mobilizacao?.id,
+    staleTime: 30_000,
   });
 
   const { data: veiculosCadastrados } = useQuery({
@@ -206,6 +213,7 @@ export default function OrcamentoDetalhe() {
       return (data as any[])?.[0] || null;
     },
     enabled: !!id,
+    staleTime: 30_000,
   });
 
   useEffect(() => {
