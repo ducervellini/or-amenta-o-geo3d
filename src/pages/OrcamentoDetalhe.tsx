@@ -754,6 +754,25 @@ export default function OrcamentoDetalhe() {
         </div>
       </div>
 
+      {/* Banner de progresso + próximo passo */}
+      {progresso.proximoPasso && progresso.proximoPasso !== activeStep && (
+        <div className="print:hidden bg-primary/5 border border-primary/20 rounded-lg px-4 py-2 flex items-center justify-between gap-4">
+          <div className="text-sm">
+            <span className="font-medium text-primary">Próximo passo:</span>{" "}
+            <span className="text-muted-foreground">{progresso.pendencias[0]}</span>
+            <span className="text-xs text-muted-foreground ml-3">({progresso.percentual}% concluído)</span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-2 shrink-0"
+            onClick={() => setActiveStep(progresso.proximoPasso!)}
+          >
+            Ir para próxima etapa <ChevronRight className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      )}
+
       {/* ── Step Content ── */}
 
       {/* ETAPA 1: Oportunidade */}
