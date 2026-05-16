@@ -706,7 +706,7 @@ export default function OrcamentoDetalhe() {
           </Button>
           {activeStep === "servicos" && (
             <Button variant="outline" className="gap-2" onClick={() => navigate(`/custos-servicos?oportunidade=${id}&from=orcamento`)}>
-              <ExternalLink className="w-4 h-4" /> Editar Custos
+              <ExternalLink className="w-4 h-4" /> Abrir em página cheia
             </Button>
           )}
           {activeStep === "adm-local" && (
