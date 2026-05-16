@@ -8,6 +8,7 @@ import {
   HeadingLevel, BorderStyle, WidthType, ShadingType,
   PageNumber, PageBreak,
 } from "docx";
+import { produtividadePorDia } from "@/lib/cronograma-calculo";
 
 // ── Types ──
 export interface ServicoRelatorio {
@@ -366,23 +367,29 @@ export async function gerarRelatorioDocx(dados: DadosRelatorioDocx): Promise<Blo
     pedagios: "Pedágios", passagens: "Passagens", diversos: "Diversos",
   };
 
-  // ── Compute productivity schedule ──
+  // ── Compute productivity schedule (shared engine with the UI Cronograma) ──
   interface CronogramaItem {
     s: ServicoRelatorio;
     prodDia: number;
     diasTotais: number;
     diasPorEquipe: number;
+    diasEfetivos: number;
     meses: number;
   }
+  const jornada = dados.mobilizacao?.jornadaDiaria || 8;
+  const fatorImprod = dados.mobilizacao?.fatorImprodutividade || 0;
   const cronograma: CronogramaItem[] = dados.servicos.map(s => {
-    let prodDia = s.produtividadePadrao || 0;
-    if (s.unidadeTempoProdutividade === "hora") prodDia *= (dados.mobilizacao?.jornadaDiaria || 8);
-    else if (s.unidadeTempoProdutividade === "mes") prodDia /= diasProdutivosMes;
-    if (prodDia <= 0) prodDia = 1;
+    const prodDia = produtividadePorDia(
+      s.produtividadePadrao,
+      s.unidadeTempoProdutividade,
+      jornada,
+      diasProdutivosMes,
+    ) || 1;
     const diasTotais = Math.ceil(s.quantidade / prodDia);
     const diasPorEquipe = Math.ceil(diasTotais / numEquipes);
-    const meses = Math.max(1, Math.ceil(diasPorEquipe / diasProdutivosMes));
-    return { s, prodDia, diasTotais, diasPorEquipe, meses };
+    const diasEfetivos = Math.ceil(diasPorEquipe * (1 + fatorImprod));
+    const meses = Math.max(1, Math.ceil(diasEfetivos / diasProdutivosMes));
+    return { s, prodDia, diasTotais, diasPorEquipe, diasEfetivos, meses };
   });
 
   // ── Financial calcs ──

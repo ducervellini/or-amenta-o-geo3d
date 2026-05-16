@@ -738,6 +738,8 @@ export function MobilizacaoContent({ initialOportunidadeId, embedded = false }: 
       }
 
       toast.success("ADM Local salvo com sucesso!");
+      // Notify embedding shells (e.g. OrcamentoDetalhe) to refresh their summary immediately
+      window.dispatchEvent(new CustomEvent("orcamento:refresh", { detail: { oportunidadeId } }));
     } catch (err: any) {
       console.error("Erro ao salvar:", err);
       toast.error("Erro ao salvar: " + (err.message || "tente novamente"));

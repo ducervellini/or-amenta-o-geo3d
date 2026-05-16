@@ -220,11 +220,22 @@ export default function Orcamentos() {
                           <td className="text-muted-foreground">{bdiPercentual.toFixed(2)}%</td>
                           <td className="font-semibold text-accent">{fmt(precoTotal)}</td>
                           <td>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline" className={statusClass[statusInfo.status]}>
-                                {ORCAMENTO_STATUS_LABEL[statusInfo.status]}
-                              </Badge>
-                              <span className="text-xs text-muted-foreground">{statusInfo.percentual}%</span>
+                            <div className="flex flex-col gap-0.5">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className={statusClass[statusInfo.status]}>
+                                  {ORCAMENTO_STATUS_LABEL[statusInfo.status]}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">{statusInfo.percentual}%</span>
+                              </div>
+                              {statusInfo.proximoPasso && statusInfo.pendencias[0] && (
+                                <button
+                                  className="text-[10px] text-muted-foreground hover:text-primary text-left transition-colors"
+                                  onClick={() => navigate(`/orcamentos/${o.id}?step=${statusInfo.proximoPasso}`)}
+                                  title="Ir para a próxima etapa pendente"
+                                >
+                                  → {statusInfo.pendencias[0]}
+                                </button>
+                              )}
                             </div>
                           </td>
                           <td className="text-center">

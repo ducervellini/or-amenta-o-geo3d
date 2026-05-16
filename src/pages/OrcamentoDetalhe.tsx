@@ -1,5 +1,5 @@
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,6 +75,19 @@ export default function OrcamentoDetalhe() {
   const [precoAlvo, setPrecoAlvo] = useState<string>("");
   const [ajusteAtivo, setAjusteAtivo] = useState(false);
 
+  // Listen to embedded panel saves and refresh all orcamento-* queries for this opportunity
+  useEffect(() => {
+    const handler = (e: any) => {
+      if (!id || e.detail?.oportunidadeId !== id) return;
+      queryClient.invalidateQueries({ predicate: (q) => {
+        const k = q.queryKey?.[0];
+        return typeof k === "string" && k.startsWith("orcamento-");
+      }});
+    };
+    window.addEventListener("orcamento:refresh", handler);
+    return () => window.removeEventListener("orcamento:refresh", handler);
+  }, [id, queryClient]);
+
   // ── Queries ──
 
   const { data: oportunidade } = useQuery({
@@ -89,6 +102,7 @@ export default function OrcamentoDetalhe() {
     },
     enabled: !!id,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 
   const grupoId = oportunidade?.grupo_servicos_id || null;
@@ -105,6 +119,7 @@ export default function OrcamentoDetalhe() {
     },
     enabled: !!grupoId,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 
   const { data: composicoes } = useQuery({
@@ -121,6 +136,7 @@ export default function OrcamentoDetalhe() {
     },
     enabled: grupoServicoIds !== undefined,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 
   const { data: servicosCadastro } = useQuery({
@@ -135,21 +151,27 @@ export default function OrcamentoDetalhe() {
     },
     enabled: !!grupoServicoIds?.length,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 
+  const composicaoIdsStable = useMemo(() => {
+    const ids = servicos.map(s => s.composicao_id).filter(Boolean);
+    return Array.from(new Set(ids)).sort();
+  }, [servicos]);
+
   const { data: composicaoItens } = useQuery({
-    queryKey: ["orcamento-composicao-itens", servicos.map(s => s.composicao_id).filter(Boolean).join(",")],
+    queryKey: ["orcamento-composicao-itens", composicaoIdsStable],
     queryFn: async () => {
-      const ids = servicos.map(s => s.composicao_id).filter(Boolean);
-      if (ids.length === 0) return [];
+      if (composicaoIdsStable.length === 0) return [];
       const { data, error } = await (supabase.from as any)("composicao_itens")
         .select("composicao_id, tipo_insumo, descricao, custo_unitario, quantidade, coeficiente, custo_total, unidade, parametros")
-        .in("composicao_id", ids);
+        .in("composicao_id", composicaoIdsStable);
       if (error) throw error;
       return data as any[];
     },
-    enabled: servicos.some(s => s.composicao_id),
+    enabled: composicaoIdsStable.length > 0,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 
   const { data: mobilizacao } = useQuery({
@@ -165,6 +187,7 @@ export default function OrcamentoDetalhe() {
     },
     enabled: !!id,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 
   const { data: mobilizacaoCustos } = useQuery({
@@ -178,6 +201,7 @@ export default function OrcamentoDetalhe() {
     },
     enabled: !!mobilizacao?.id,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 
   const { data: veiculosCadastrados } = useQuery({
@@ -216,6 +240,7 @@ export default function OrcamentoDetalhe() {
     },
     enabled: !!id,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 
   useEffect(() => {
@@ -398,7 +423,6 @@ export default function OrcamentoDetalhe() {
   const currentStepIndex = STEPS.findIndex(s => s.key === activeStep);
   const canGoNext = currentStepIndex < STEPS.length - 1;
   const canGoPrev = currentStepIndex > 0;
-  const goNext = () => canGoNext && setActiveStep(STEPS[currentStepIndex + 1].key);
   const goPrev = () => canGoPrev && setActiveStep(STEPS[currentStepIndex - 1].key);
 
   // Status / progresso unificado (mesma fonte usada na lista de Orçamentos)
@@ -409,6 +433,14 @@ export default function OrcamentoDetalhe() {
     temBdi: !!bdiData,
   }), [oportunidade, servicosValidos.length, mobilizacao, bdiData]);
   const stepStatus = progresso.etapas;
+
+  // Smart "Próximo": if current step is done, jump to the first incomplete step ahead; else sequential.
+  const goNext = () => {
+    if (!canGoNext) return;
+    const remaining = STEPS.slice(currentStepIndex + 1);
+    const firstIncomplete = remaining.find(s => (stepStatus as any)[s.key] === false);
+    setActiveStep((firstIncomplete?.key ?? STEPS[currentStepIndex + 1].key) as StepKey);
+  };
 
   const handleGerarRelatorio = async () => {
     const dadosRelatorio: DadosRelatorioDocx = {
