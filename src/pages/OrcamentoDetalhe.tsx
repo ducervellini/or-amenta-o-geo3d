@@ -27,7 +27,6 @@ import { calcularStatusOrcamento } from "@/lib/orcamento-status";
 import { CronogramaPanel } from "@/components/orcamento/CronogramaPanel";
 import { MobilizacaoContent } from "@/pages/Mobilizacao";
 import { CustosServicosContent } from "@/pages/CustosServicos";
-import { BdiDreContent } from "@/pages/BdiDre";
 
 interface OrcamentoServico {
   composicao_id: string;
