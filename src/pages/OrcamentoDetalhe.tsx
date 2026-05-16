@@ -75,6 +75,19 @@ export default function OrcamentoDetalhe() {
   const [precoAlvo, setPrecoAlvo] = useState<string>("");
   const [ajusteAtivo, setAjusteAtivo] = useState(false);
 
+  // Listen to embedded panel saves and refresh all orcamento-* queries for this opportunity
+  useEffect(() => {
+    const handler = (e: any) => {
+      if (!id || e.detail?.oportunidadeId !== id) return;
+      queryClient.invalidateQueries({ predicate: (q) => {
+        const k = q.queryKey?.[0];
+        return typeof k === "string" && k.startsWith("orcamento-");
+      }});
+    };
+    window.addEventListener("orcamento:refresh", handler);
+    return () => window.removeEventListener("orcamento:refresh", handler);
+  }, [id, queryClient]);
+
   // ── Queries ──
 
   const { data: oportunidade } = useQuery({
