@@ -148,6 +148,16 @@ function calcAll(items: BDIItem[], custoDireto: number) {
 // ══════════════════════════════════════════════
 
 export default function BdiDre() {
+  return <BdiDreContent />;
+}
+
+export function BdiDreContent({
+  embedded = false,
+  oportunidadeId,
+}: {
+  embedded?: boolean;
+  oportunidadeId?: string;
+} = {}) {
   const queryClient = useQueryClient();
 
   const [bdiItems, setBdiItems] = useState<BDIItem[]>(defaultBDI);
@@ -169,8 +179,15 @@ export default function BdiDre() {
   });
 
   const { data: oportunidades } = useQuery({
-    queryKey: ["oportunidades_bdi_dre"],
+    queryKey: ["oportunidades_bdi_dre", oportunidadeId],
     queryFn: async () => {
+      if (oportunidadeId) {
+        const { data, error } = await supabase
+          .from("oportunidades").select("*, clientes(nome)")
+          .eq("id", oportunidadeId).eq("ativo", true);
+        if (error) throw error;
+        return data;
+      }
       const { data, error } = await supabase
         .from("oportunidades").select("*, clientes(nome)")
         .eq("ativo", true).order("created_at", { ascending: false });
