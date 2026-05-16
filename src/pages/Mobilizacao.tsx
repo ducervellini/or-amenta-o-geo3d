@@ -751,6 +751,7 @@ function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: 
   return (
     <TooltipProvider>
       <div className="page-container animate-fade-in">
+        <VoltarAoOrcamento step="adm-local" />
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="page-title">Mobilização e Administração Local</h1>

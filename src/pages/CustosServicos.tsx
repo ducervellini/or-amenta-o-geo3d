@@ -316,6 +316,7 @@ function CustosServicosContent({ oportunidadeId, oportunidade }: { oportunidadeI
 
   return (
     <div className="space-y-4 p-4 md:p-6">
+      <VoltarAoOrcamento step="servicos" />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

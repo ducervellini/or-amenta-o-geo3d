@@ -147,6 +147,7 @@ function BDIContent() {
 
   return (
     <div className="page-container animate-fade-in">
+      <VoltarAoOrcamento step="bdi-preco" />
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="page-title">Cálculo de BDI</h1>
