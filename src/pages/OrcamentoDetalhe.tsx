@@ -137,19 +137,24 @@ export default function OrcamentoDetalhe() {
     staleTime: 30_000,
   });
 
+  const composicaoIdsStable = useMemo(() => {
+    const ids = servicos.map(s => s.composicao_id).filter(Boolean);
+    return Array.from(new Set(ids)).sort();
+  }, [servicos]);
+
   const { data: composicaoItens } = useQuery({
-    queryKey: ["orcamento-composicao-itens", servicos.map(s => s.composicao_id).filter(Boolean).join(",")],
+    queryKey: ["orcamento-composicao-itens", composicaoIdsStable],
     queryFn: async () => {
-      const ids = servicos.map(s => s.composicao_id).filter(Boolean);
-      if (ids.length === 0) return [];
+      if (composicaoIdsStable.length === 0) return [];
       const { data, error } = await (supabase.from as any)("composicao_itens")
         .select("composicao_id, tipo_insumo, descricao, custo_unitario, quantidade, coeficiente, custo_total, unidade, parametros")
-        .in("composicao_id", ids);
+        .in("composicao_id", composicaoIdsStable);
       if (error) throw error;
       return data as any[];
     },
-    enabled: servicos.some(s => s.composicao_id),
+    enabled: composicaoIdsStable.length > 0,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 
   const { data: mobilizacao } = useQuery({
