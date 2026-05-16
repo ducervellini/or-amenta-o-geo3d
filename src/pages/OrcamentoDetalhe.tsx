@@ -89,6 +89,7 @@ export default function OrcamentoDetalhe() {
     },
     enabled: !!id,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 
   const grupoId = oportunidade?.grupo_servicos_id || null;
@@ -105,6 +106,7 @@ export default function OrcamentoDetalhe() {
     },
     enabled: !!grupoId,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 
   const { data: composicoes } = useQuery({
@@ -121,6 +123,7 @@ export default function OrcamentoDetalhe() {
     },
     enabled: grupoServicoIds !== undefined,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 
   const { data: servicosCadastro } = useQuery({
@@ -135,6 +138,7 @@ export default function OrcamentoDetalhe() {
     },
     enabled: !!grupoServicoIds?.length,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 
   const composicaoIdsStable = useMemo(() => {
@@ -155,6 +159,7 @@ export default function OrcamentoDetalhe() {
     enabled: composicaoIdsStable.length > 0,
     staleTime: 30_000,
     placeholderData: keepPreviousData,
+    placeholderData: keepPreviousData,
   });
 
   const { data: mobilizacao } = useQuery({
@@ -170,6 +175,7 @@ export default function OrcamentoDetalhe() {
     },
     enabled: !!id,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 
   const { data: mobilizacaoCustos } = useQuery({
@@ -183,6 +189,7 @@ export default function OrcamentoDetalhe() {
     },
     enabled: !!mobilizacao?.id,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 
   const { data: veiculosCadastrados } = useQuery({
@@ -221,6 +228,7 @@ export default function OrcamentoDetalhe() {
     },
     enabled: !!id,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 
   useEffect(() => {
