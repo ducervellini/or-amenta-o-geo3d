@@ -709,8 +709,8 @@ export default function OrcamentoDetalhe() {
             </Button>
           )}
           {activeStep === "adm-local" && (
-            <Button variant="outline" className="gap-2" onClick={() => navigate(`/mobilizacao?oportunidade=${id}&from=orcamento`)}>
-              <ExternalLink className="w-4 h-4" /> Editar ADM Local
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate(`/mobilizacao?oportunidade=${id}&from=orcamento`)}>
+              <ExternalLink className="w-4 h-4" /> Abrir em página cheia
             </Button>
           )}
           <Button className="gap-2" onClick={handleSalvar} disabled={!podesSalvar || saving}>
