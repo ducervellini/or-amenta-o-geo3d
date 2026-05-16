@@ -24,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn, addMonthsISO } from "@/lib/utils";
 import { calcularStatusOrcamento } from "@/lib/orcamento-status";
+import { CronogramaPanel } from "@/components/orcamento/CronogramaPanel";
 
 interface OrcamentoServico {
   composicao_id: string;
