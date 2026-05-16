@@ -26,6 +26,7 @@ import { cn, addMonthsISO } from "@/lib/utils";
 import { calcularStatusOrcamento } from "@/lib/orcamento-status";
 import { CronogramaPanel } from "@/components/orcamento/CronogramaPanel";
 import { MobilizacaoContent } from "@/pages/Mobilizacao";
+import { CustosServicosContent } from "@/pages/CustosServicos";
 
 interface OrcamentoServico {
   composicao_id: string;
@@ -705,7 +706,7 @@ export default function OrcamentoDetalhe() {
           </Button>
           {activeStep === "servicos" && (
             <Button variant="outline" className="gap-2" onClick={() => navigate(`/custos-servicos?oportunidade=${id}&from=orcamento`)}>
-              <ExternalLink className="w-4 h-4" /> Editar Custos
+              <ExternalLink className="w-4 h-4" /> Abrir em página cheia
             </Button>
           )}
           {activeStep === "adm-local" && (
@@ -852,109 +853,54 @@ export default function OrcamentoDetalhe() {
         </Card>
       )}
 
-      {/* ETAPA 2: Serviços (Composições) */}
+      {/* ETAPA 2: Serviços (editor inline) */}
       {activeStep === "servicos" && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Package className="w-4 h-4 text-primary" />
-              Serviços — {oportunidade.grupos_servicos?.nome || "Todos"}
-            </CardTitle>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1"
-              onClick={() => navigate(`/custos-servicos?oportunidade=${id}&from=orcamento`)}
-            >
-              <ExternalLink className="w-4 h-4" />
-              Editar Quantidades
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {servicos.length === 0 || servicosValidos.length === 0 ? (
-              <div className="text-center py-10 space-y-3">
-                <Package className="w-10 h-10 mx-auto text-muted-foreground/40" />
-                <p className="text-muted-foreground text-sm">Nenhuma composição com quantidade definida.</p>
+        <div className="space-y-4">
+          {servicosValidos.length > 0 && (
+            <Card>
+              <CardHeader className="py-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Package className="w-4 h-4 text-primary" />
+                  Resumo de Serviços
+                </CardTitle>
                 <Button
-                  variant="outline"
-                  className="gap-2"
+                  size="sm"
+                  variant="ghost"
+                  className="gap-1 text-xs"
                   onClick={() => navigate(`/custos-servicos?oportunidade=${id}&from=orcamento`)}
                 >
-                  <Plus className="w-4 h-4" /> Definir Quantidades
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Abrir em página cheia
                 </Button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b text-xs font-medium text-muted-foreground">
-                        <th className="text-left py-2 px-2">Composição</th>
-                        <th className="text-right py-2 px-2 w-24">Qtd</th>
-                        <th className="text-left py-2 px-2 w-16">Und</th>
-                        <th className="text-right py-2 px-2">Custo Unit.</th>
-                        <th className="text-right py-2 px-2">Subtotal</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {servicos.map((s, idx) => {
-                        const comp = (composicoes || []).find((c: any) => c.id === s.composicao_id);
-                        const subtotal = (comp?.custo_unitario_total || 0) * s.quantidade;
-                        const unidade = comp?.unidade || "un";
-                        if (s.quantidade <= 0) return null;
-                        return (
-                          <tr key={idx} className="border-b hover:bg-muted/30">
-                            <td className="py-2 px-2">
-                              <span className="font-medium">{comp?.codigo} — {comp?.nome || "—"}</span>
-                            </td>
-                            <td className="py-2 px-2 text-right font-medium tabular-nums">
-                              {s.quantidade.toLocaleString("pt-BR")}
-                            </td>
-                            <td className="py-2 px-2 text-xs text-muted-foreground">
-                              {unidade}
-                            </td>
-                            <td className="py-2 px-2 text-right font-medium">
-                              {fmt(comp?.custo_unitario_total || 0)}
-                            </td>
-                            <td className="py-2 px-2 text-right font-semibold">
-                              {fmt(subtotal)}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                <Separator className="my-2" />
-
-                {/* Resumo por tipo de insumo */}
-                {Object.keys(custoServicosPorTipo).length > 0 && (
-                  <div className="bg-muted/30 rounded-lg p-3 space-y-1">
-                    <p className="text-xs font-semibold text-muted-foreground mb-2">Breakdown por Insumo</p>
-                    {Object.entries(TIPO_INSUMO_LABELS).map(([tipo, { label, icon: Icon }]) => {
-                      const valor = custoServicosPorTipo[tipo] || 0;
-                      if (valor <= 0) return null;
-                      return (
-                        <div key={tipo} className="flex items-center justify-between text-sm">
-                          <span className="flex items-center gap-2 text-muted-foreground">
-                            <Icon className="w-3.5 h-3.5" /> {label}
-                          </span>
-                          <span className="font-medium">{fmt(valor)}</span>
-                        </div>
-                      );
-                    })}
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground text-xs">Composições</span>
+                    <p className="font-semibold">{servicosValidos.length}</p>
                   </div>
-                )}
-
-                <div className="flex justify-between text-sm font-bold bg-primary/5 p-3 rounded-md border border-primary/20">
-                  <span>Total Serviços</span>
-                  <span className="text-primary">{fmt(custoServicos)}</span>
+                  <div>
+                    <span className="text-muted-foreground text-xs">Total Serviços</span>
+                    <p className="font-semibold text-primary">{fmt(custoServicos)}</p>
+                  </div>
+                  {Object.entries(custoServicosPorTipo).slice(0, 2).map(([tipo, valor]) => {
+                    const meta = TIPO_INSUMO_LABELS[tipo as keyof typeof TIPO_INSUMO_LABELS];
+                    if (!meta || valor <= 0) return null;
+                    return (
+                      <div key={tipo}>
+                        <span className="text-muted-foreground text-xs flex items-center gap-1">
+                          <meta.icon className="w-3 h-3" /> {meta.label}
+                        </span>
+                        <p className="font-semibold">{fmt(valor)}</p>
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          )}
+          <CustosServicosContent oportunidadeId={id!} oportunidade={oportunidade} embedded />
+        </div>
       )}
 
       {/* ETAPA 3: ADM Local (editor inline) */}

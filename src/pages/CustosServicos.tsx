@@ -74,7 +74,15 @@ export default function CustosServicos() {
   );
 }
 
-function CustosServicosContent({ oportunidadeId, oportunidade }: { oportunidadeId: string; oportunidade: any }) {
+export function CustosServicosContent({
+  oportunidadeId,
+  oportunidade,
+  embedded = false,
+}: {
+  oportunidadeId: string;
+  oportunidade: any;
+  embedded?: boolean;
+}) {
   const queryClient = useQueryClient();
   const selectedOportunidadeId = oportunidadeId;
   const [quantidades, setQuantidades] = useState<Record<string, number>>({});
@@ -316,33 +324,35 @@ function CustosServicosContent({ oportunidadeId, oportunidade }: { oportunidadeI
   const colCount = 7; // grip + código + nome + unidade + qtd + custo unit + custo total + actions
 
   return (
-    <div className="space-y-4 p-4 md:p-6">
-      <VoltarAoOrcamento step="servicos" />
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-primary" />
-            Custos de Serviços
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Defina quantidades e calcule custos por composição
-          </p>
-        </div>
-      </div>
-
-      {/* Info da Oportunidade */}
-      <Card>
-        <CardContent className="pt-4">
-          <div className="flex items-center gap-3 text-sm">
-            <Badge variant="outline" className="text-xs font-bold">{oportunidade.codigo}</Badge>
-            <span className="font-medium">{oportunidade.descricao}</span>
-            {oportunidade.clientes?.nome && (
-              <span className="text-muted-foreground">({oportunidade.clientes.nome})</span>
-            )}
+    <div className={cn("space-y-4", !embedded && "p-4 md:p-6")}>
+      {!embedded && <VoltarAoOrcamento step="servicos" />}
+      {!embedded && (
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-primary" />
+              Custos de Serviços
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Defina quantidades e calcule custos por composição
+            </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
+
+      {!embedded && (
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3 text-sm">
+              <Badge variant="outline" className="text-xs font-bold">{oportunidade.codigo}</Badge>
+              <span className="font-medium">{oportunidade.descricao}</span>
+              {oportunidade.clientes?.nome && (
+                <span className="text-muted-foreground">({oportunidade.clientes.nome})</span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Tabela de Composições */}
       {selectedOportunidadeId && !grupoId && (
