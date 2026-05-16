@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -55,10 +55,17 @@ export default function OrcamentoDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [servicos, setServicos] = useState<OrcamentoServico[]>([]);
   const [saving, setSaving] = useState(false);
   const [orcamentoId, setOrcamentoId] = useState<string | null>(null);
-  const [activeStep, setActiveStep] = useState<StepKey>("oportunidade");
+  const stepFromUrl = (searchParams.get("step") as StepKey) || "oportunidade";
+  const activeStep: StepKey = STEPS.some(s => s.key === stepFromUrl) ? stepFromUrl : "oportunidade";
+  const setActiveStep = (step: StepKey) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("step", step);
+    setSearchParams(next, { replace: true });
+  };
   const [selectedBdiId, setSelectedBdiId] = useState<string>("");
   const [precoAlvo, setPrecoAlvo] = useState<string>("");
   const [ajusteAtivo, setAjusteAtivo] = useState(false);
