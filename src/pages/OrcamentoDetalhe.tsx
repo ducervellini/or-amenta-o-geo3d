@@ -434,6 +434,14 @@ export default function OrcamentoDetalhe() {
   }), [oportunidade, servicosValidos.length, mobilizacao, bdiData]);
   const stepStatus = progresso.etapas;
 
+  // Smart "Próximo": if current step is done, jump to the first incomplete step ahead; else sequential.
+  const goNext = () => {
+    if (!canGoNext) return;
+    const remaining = STEPS.slice(currentStepIndex + 1);
+    const firstIncomplete = remaining.find(s => !stepStatus[s.key as keyof typeof stepStatus]);
+    setActiveStep((firstIncomplete?.key ?? STEPS[currentStepIndex + 1].key) as StepKey);
+  };
+
   const handleGerarRelatorio = async () => {
     const dadosRelatorio: DadosRelatorioDocx = {
       oportunidade: {
