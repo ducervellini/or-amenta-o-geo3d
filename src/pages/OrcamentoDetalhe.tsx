@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { cn, addMonthsISO } from "@/lib/utils";
+import { calcularStatusOrcamento } from "@/lib/orcamento-status";
 
 interface OrcamentoServico {
   composicao_id: string;
@@ -388,13 +389,14 @@ export default function OrcamentoDetalhe() {
   const goNext = () => canGoNext && setActiveStep(STEPS[currentStepIndex + 1].key);
   const goPrev = () => canGoPrev && setActiveStep(STEPS[currentStepIndex - 1].key);
 
-  // Step completion status
-  const stepStatus = useMemo(() => ({
-    oportunidade: !!oportunidade,
-    servicos: servicosValidos.length > 0,
-    "adm-local": !!mobilizacao,
-    "bdi-preco": !!bdiData,
+  // Status / progresso unificado (mesma fonte usada na lista de Orçamentos)
+  const progresso = useMemo(() => calcularStatusOrcamento({
+    oportunidade,
+    temServicos: servicosValidos.length > 0,
+    temMobilizacao: !!mobilizacao,
+    temBdi: !!bdiData,
   }), [oportunidade, servicosValidos.length, mobilizacao, bdiData]);
+  const stepStatus = progresso.etapas;
 
   const handleGerarRelatorio = async () => {
     const dadosRelatorio: DadosRelatorioDocx = {
