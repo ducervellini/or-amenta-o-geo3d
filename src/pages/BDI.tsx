@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Calculator, Save, Info, Trash2, Edit } from "lucide-react";
 import { OportunidadeGate } from "@/components/orcamento/OportunidadeGate";
+import { VoltarAoOrcamento } from "@/components/orcamento/VoltarAoOrcamento";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
