@@ -3,6 +3,7 @@ import {
   Calculator, Save, Info, Trash2, DollarSign,
   TrendingUp, Link2, Briefcase, ArrowRight, RefreshCw,
 } from "lucide-react";
+import { VoltarAoOrcamento } from "@/components/orcamento/VoltarAoOrcamento";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -147,6 +148,18 @@ function calcAll(items: BDIItem[], custoDireto: number) {
 // ══════════════════════════════════════════════
 
 export default function BdiDre() {
+  const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+  const opId = params.get("oportunidade") || undefined;
+  return <BdiDreContent oportunidadeId={opId} />;
+}
+
+export function BdiDreContent({
+  embedded = false,
+  oportunidadeId,
+}: {
+  embedded?: boolean;
+  oportunidadeId?: string;
+} = {}) {
   const queryClient = useQueryClient();
 
   const [bdiItems, setBdiItems] = useState<BDIItem[]>(defaultBDI);
@@ -168,8 +181,15 @@ export default function BdiDre() {
   });
 
   const { data: oportunidades } = useQuery({
-    queryKey: ["oportunidades_bdi_dre"],
+    queryKey: ["oportunidades_bdi_dre", oportunidadeId],
     queryFn: async () => {
+      if (oportunidadeId) {
+        const { data, error } = await supabase
+          .from("oportunidades").select("*, clientes(nome)")
+          .eq("id", oportunidadeId).eq("ativo", true);
+        if (error) throw error;
+        return data;
+      }
       const { data, error } = await supabase
         .from("oportunidades").select("*, clientes(nome)")
         .eq("ativo", true).order("created_at", { ascending: false });
@@ -346,30 +366,33 @@ export default function BdiDre() {
   }, [resultado]);
 
   return (
-    <div className="page-container animate-fade-in">
+    <div className={embedded ? "animate-fade-in" : "page-container animate-fade-in"}>
+      {!embedded && <VoltarAoOrcamento step="bdi-preco" />}
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="page-title">BDI & Formação de Preço</h1>
-          <p className="page-subtitle">
-            Altere qualquer valor — BDI e DRE se atualizam instantaneamente
-          </p>
+      {!embedded && (
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="page-title">BDI & Formação de Preço</h1>
+            <p className="page-subtitle">
+              Altere qualquer valor — BDI e DRE se atualizam instantaneamente
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            {latestOportunidade && (
+              <div className="flex items-center gap-2 text-xs bg-muted/50 rounded-lg px-3 py-2">
+                <Briefcase className="w-4 h-4 text-primary" />
+                <span className="text-muted-foreground">Oport.:</span>
+                <span className="font-semibold">{latestOportunidade.codigo}</span>
+                {orcamentoOportunidade && (
+                  <Badge variant="outline" className="text-[10px]">
+                    CD: {fmt(Number(orcamentoOportunidade.custo_total))}
+                  </Badge>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          {latestOportunidade && (
-            <div className="flex items-center gap-2 text-xs bg-muted/50 rounded-lg px-3 py-2">
-              <Briefcase className="w-4 h-4 text-primary" />
-              <span className="text-muted-foreground">Oport.:</span>
-              <span className="font-semibold">{latestOportunidade.codigo}</span>
-              {orcamentoOportunidade && (
-                <Badge variant="outline" className="text-[10px]">
-                  CD: {fmt(Number(orcamentoOportunidade.custo_total))}
-                </Badge>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+      )}
 
       {/* KPI strip */}
       <div className="grid grid-cols-5 gap-3 mb-6">

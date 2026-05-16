@@ -977,6 +977,15 @@ export default function OrcamentoDetalhe() {
                     BDI: {fmtPct(bdiPercentual)}
                   </Badge>
                 )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => navigate(`/bdi-dre?oportunidade=${id}&from=orcamento`)}
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Editor completo BDI/DRE
+                </Button>
               </div>
               {bdiComponentes.length > 0 && (
                 <div className="mt-4 space-y-1 bg-muted/30 rounded-lg p-3">
