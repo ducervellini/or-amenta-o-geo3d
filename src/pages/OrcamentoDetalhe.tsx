@@ -423,7 +423,6 @@ export default function OrcamentoDetalhe() {
   const currentStepIndex = STEPS.findIndex(s => s.key === activeStep);
   const canGoNext = currentStepIndex < STEPS.length - 1;
   const canGoPrev = currentStepIndex > 0;
-  const goNext = () => canGoNext && setActiveStep(STEPS[currentStepIndex + 1].key);
   const goPrev = () => canGoPrev && setActiveStep(STEPS[currentStepIndex - 1].key);
 
   // Status / progresso unificado (mesma fonte usada na lista de Orçamentos)
