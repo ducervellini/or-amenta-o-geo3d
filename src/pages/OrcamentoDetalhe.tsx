@@ -159,7 +159,6 @@ export default function OrcamentoDetalhe() {
     enabled: composicaoIdsStable.length > 0,
     staleTime: 30_000,
     placeholderData: keepPreviousData,
-    placeholderData: keepPreviousData,
   });
 
   const { data: mobilizacao } = useQuery({
