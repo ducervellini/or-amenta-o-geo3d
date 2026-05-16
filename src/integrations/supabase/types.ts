@@ -1975,6 +1975,57 @@ export type Database = {
           },
         ]
       }
+      orcamento_cronograma_itens: {
+        Row: {
+          ativo: boolean
+          composicao_id: string
+          created_at: string
+          created_by: string | null
+          data_inicio_override: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          num_equipes: number
+          observacoes: string | null
+          orcamento_id: string
+          ordem: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          composicao_id: string
+          created_at?: string
+          created_by?: string | null
+          data_inicio_override?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          id?: string
+          num_equipes?: number
+          observacoes?: string | null
+          orcamento_id: string
+          ordem?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          composicao_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_inicio_override?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          id?: string
+          num_equipes?: number
+          observacoes?: string | null
+          orcamento_id?: string
+          ordem?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       orcamento_itens_servico: {
         Row: {
           composicao_id: string
