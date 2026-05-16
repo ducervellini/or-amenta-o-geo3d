@@ -9,7 +9,7 @@ import {
   ArrowLeft, Plus, Trash2, Save, ExternalLink, Loader2,
   Users, Wrench, Package, Truck, Route, Calculator, TrendingUp, Target,
   ChevronDown, ChevronUp, Printer, Check, ChevronRight, ChevronLeft,
-  Building, FileText, DollarSign, FileDown,
+  Building, FileText, DollarSign, FileDown, Calendar,
 } from "lucide-react";
 import { gerarRelatorioDocx, type DadosRelatorioDocx } from "@/lib/relatorio-exequibilidade-docx";
 import { useState, useMemo, useEffect } from "react";
