@@ -148,7 +148,9 @@ function calcAll(items: BDIItem[], custoDireto: number) {
 // ══════════════════════════════════════════════
 
 export default function BdiDre() {
-  return <BdiDreContent />;
+  const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+  const opId = params.get("oportunidade") || undefined;
+  return <BdiDreContent oportunidadeId={opId} />;
 }
 
 export function BdiDreContent({
