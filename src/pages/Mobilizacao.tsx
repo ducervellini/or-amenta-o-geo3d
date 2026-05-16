@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { OportunidadeGate } from "@/components/orcamento/OportunidadeGate";
+import { VoltarAoOrcamento } from "@/components/orcamento/VoltarAoOrcamento";
 import { LeafletMap } from "@/components/mobilizacao/LeafletMap";
 import { Section } from "@/components/mobilizacao/Section";
 import { useQuery } from "@tanstack/react-query";
@@ -751,6 +752,7 @@ function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: 
   return (
     <TooltipProvider>
       <div className="page-container animate-fade-in">
+        <VoltarAoOrcamento step="adm-local" />
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="page-title">Mobilização e Administração Local</h1>

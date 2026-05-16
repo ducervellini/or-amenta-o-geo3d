@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Edit, Trash2, Columns3, GripVertical, Type, Pencil, X, DollarSign, Building, Calculator } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Columns3, GripVertical, Type, Pencil, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -62,17 +62,15 @@ function OportunidadeActions({ item, onEdit, onDelete }: { item: any; onEdit: ()
   const opId = String(item.id);
   return (
     <div className="flex items-center justify-center gap-0.5">
-      <Button variant="ghost" size="icon" className="h-7 w-7" title="Custos de Serviços"
-        onClick={() => navigate(`/custos-servicos?oportunidade=${opId}`)}>
-        <DollarSign className="w-3.5 h-3.5" />
-      </Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7" title="ADM Local"
-        onClick={() => navigate(`/mobilizacao?oportunidade=${opId}`)}>
-        <Building className="w-3.5 h-3.5" />
-      </Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7" title="BDI & DRE"
-        onClick={() => navigate(`/bdi?oportunidade=${opId}`)}>
-        <Calculator className="w-3.5 h-3.5" />
+      <Button
+        variant="default"
+        size="sm"
+        className="h-7 gap-1.5 text-xs"
+        title="Abrir orçamento desta oportunidade"
+        onClick={() => navigate(`/orcamentos/${opId}`)}
+      >
+        <FileText className="w-3.5 h-3.5" />
+        Abrir Orçamento
       </Button>
       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit}>
         <Edit className="w-3.5 h-3.5" />

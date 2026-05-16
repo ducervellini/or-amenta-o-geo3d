@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { cn, addMonthsISO } from "@/lib/utils";
+import { calcularStatusOrcamento } from "@/lib/orcamento-status";
 
 interface OrcamentoServico {
   composicao_id: string;
@@ -55,10 +56,17 @@ export default function OrcamentoDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [servicos, setServicos] = useState<OrcamentoServico[]>([]);
   const [saving, setSaving] = useState(false);
   const [orcamentoId, setOrcamentoId] = useState<string | null>(null);
-  const [activeStep, setActiveStep] = useState<StepKey>("oportunidade");
+  const stepFromUrl = (searchParams.get("step") as StepKey) || "oportunidade";
+  const activeStep: StepKey = STEPS.some(s => s.key === stepFromUrl) ? stepFromUrl : "oportunidade";
+  const setActiveStep = (step: StepKey) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("step", step);
+    setSearchParams(next, { replace: true });
+  };
   const [selectedBdiId, setSelectedBdiId] = useState<string>("");
   const [precoAlvo, setPrecoAlvo] = useState<string>("");
   const [ajusteAtivo, setAjusteAtivo] = useState(false);
@@ -381,13 +389,14 @@ export default function OrcamentoDetalhe() {
   const goNext = () => canGoNext && setActiveStep(STEPS[currentStepIndex + 1].key);
   const goPrev = () => canGoPrev && setActiveStep(STEPS[currentStepIndex - 1].key);
 
-  // Step completion status
-  const stepStatus = useMemo(() => ({
-    oportunidade: !!oportunidade,
-    servicos: servicosValidos.length > 0,
-    "adm-local": !!mobilizacao,
-    "bdi-preco": !!bdiData,
+  // Status / progresso unificado (mesma fonte usada na lista de Orçamentos)
+  const progresso = useMemo(() => calcularStatusOrcamento({
+    oportunidade,
+    temServicos: servicosValidos.length > 0,
+    temMobilizacao: !!mobilizacao,
+    temBdi: !!bdiData,
   }), [oportunidade, servicosValidos.length, mobilizacao, bdiData]);
+  const stepStatus = progresso.etapas;
 
   const handleGerarRelatorio = async () => {
     const dadosRelatorio: DadosRelatorioDocx = {
@@ -684,12 +693,12 @@ export default function OrcamentoDetalhe() {
             <Printer className="w-4 h-4" /> Imprimir
           </Button>
           {activeStep === "servicos" && (
-            <Button variant="outline" className="gap-2" onClick={() => navigate(`/custos-servicos?oportunidade=${id}`)}>
+            <Button variant="outline" className="gap-2" onClick={() => navigate(`/custos-servicos?oportunidade=${id}&from=orcamento`)}>
               <ExternalLink className="w-4 h-4" /> Editar Custos
             </Button>
           )}
           {activeStep === "adm-local" && (
-            <Button variant="outline" className="gap-2" onClick={() => navigate(`/mobilizacao?oportunidade=${id}`)}>
+            <Button variant="outline" className="gap-2" onClick={() => navigate(`/mobilizacao?oportunidade=${id}&from=orcamento`)}>
               <ExternalLink className="w-4 h-4" /> Editar ADM Local
             </Button>
           )}
@@ -744,6 +753,25 @@ export default function OrcamentoDetalhe() {
           })}
         </div>
       </div>
+
+      {/* Banner de progresso + próximo passo */}
+      {progresso.proximoPasso && progresso.proximoPasso !== activeStep && (
+        <div className="print:hidden bg-primary/5 border border-primary/20 rounded-lg px-4 py-2 flex items-center justify-between gap-4">
+          <div className="text-sm">
+            <span className="font-medium text-primary">Próximo passo:</span>{" "}
+            <span className="text-muted-foreground">{progresso.pendencias[0]}</span>
+            <span className="text-xs text-muted-foreground ml-3">({progresso.percentual}% concluído)</span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-2 shrink-0"
+            onClick={() => setActiveStep(progresso.proximoPasso!)}
+          >
+            Ir para próxima etapa <ChevronRight className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      )}
 
       {/* ── Step Content ── */}
 
@@ -825,7 +853,7 @@ export default function OrcamentoDetalhe() {
               size="sm"
               variant="outline"
               className="gap-1"
-              onClick={() => navigate(`/custos-servicos?oportunidade=${id}`)}
+              onClick={() => navigate(`/custos-servicos?oportunidade=${id}&from=orcamento`)}
             >
               <ExternalLink className="w-4 h-4" />
               Editar Quantidades
@@ -839,7 +867,7 @@ export default function OrcamentoDetalhe() {
                 <Button
                   variant="outline"
                   className="gap-2"
-                  onClick={() => navigate(`/custos-servicos?oportunidade=${id}`)}
+                  onClick={() => navigate(`/custos-servicos?oportunidade=${id}&from=orcamento`)}
                 >
                   <Plus className="w-4 h-4" /> Definir Quantidades
                 </Button>
@@ -930,7 +958,7 @@ export default function OrcamentoDetalhe() {
               size="sm"
               variant="outline"
               className="gap-1"
-              onClick={() => navigate(`/mobilizacao?oportunidade=${id}`)}
+              onClick={() => navigate(`/mobilizacao?oportunidade=${id}&from=orcamento`)}
             >
               <ExternalLink className="w-4 h-4" />
               {mobilizacao ? "Editar" : "Configurar"}
@@ -1004,7 +1032,7 @@ export default function OrcamentoDetalhe() {
                 <Button
                   variant="outline"
                   className="gap-2"
-                  onClick={() => navigate(`/mobilizacao?oportunidade=${id}`)}
+                  onClick={() => navigate(`/mobilizacao?oportunidade=${id}&from=orcamento`)}
                 >
                   <Plus className="w-4 h-4" /> Configurar ADM Local
                 </Button>

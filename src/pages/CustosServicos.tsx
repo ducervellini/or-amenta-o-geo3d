@@ -22,6 +22,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { OportunidadeGate } from "@/components/orcamento/OportunidadeGate";
+import { VoltarAoOrcamento } from "@/components/orcamento/VoltarAoOrcamento";
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -316,6 +317,7 @@ function CustosServicosContent({ oportunidadeId, oportunidade }: { oportunidadeI
 
   return (
     <div className="space-y-4 p-4 md:p-6">
+      <VoltarAoOrcamento step="servicos" />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

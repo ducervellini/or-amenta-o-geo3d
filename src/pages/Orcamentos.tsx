@@ -12,12 +12,12 @@ import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent,
 } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { calcularStatusOrcamento, ORCAMENTO_STATUS_LABEL } from "@/lib/orcamento-status";
 
-const statusConfig: Record<string, { label: string; className: string }> = {
-  rascunho: { label: "Rascunho", className: "bg-muted text-muted-foreground" },
-  em_andamento: { label: "Em andamento", className: "bg-primary/15 text-primary border-primary/30" },
-  revisao: { label: "Revisão", className: "bg-yellow-100 text-yellow-800 border-yellow-300" },
-  finalizado: { label: "Finalizado", className: "bg-accent/15 text-accent border-accent/30 font-semibold" },
+const statusClass: Record<string, string> = {
+  rascunho: "bg-muted text-muted-foreground",
+  em_andamento: "bg-primary/15 text-primary border-primary/30",
+  finalizado: "bg-accent/15 text-accent border-accent/30 font-semibold",
 };
 
 function SubtitleInlineRow({ item, colSpan, onEdit, onRemove }: {
@@ -102,14 +102,12 @@ export default function Orcamentos() {
 
   const getStatus = (op: any) => {
     const orc = getOrcamento(op.id);
-    if (!orc) return "rascunho";
-    const temServicos = (orc.orcamento_itens_servico || []).length > 0;
-    const temMobilizacao = !!(mobilizacoes || []).find((m: any) => m.oportunidade_id === op.id);
-    const temBdi = !!orc.bdi_id;
-    const temGrupo = !!op.grupo_servicos_id;
-    if (temServicos && temMobilizacao && temBdi && temGrupo) return "finalizado";
-    if (temServicos || temMobilizacao) return "em_andamento";
-    return "rascunho";
+    return calcularStatusOrcamento({
+      oportunidade: op,
+      temServicos: !!orc && (orc.orcamento_itens_servico || []).length > 0,
+      temMobilizacao: !!(mobilizacoes || []).find((m: any) => m.oportunidade_id === op.id),
+      temBdi: !!orc?.bdi_id,
+    });
   };
 
   const filtered = (oportunidades || []).filter(
@@ -210,8 +208,7 @@ export default function Orcamentos() {
                       const orc = getOrcamento(String(o.id));
                       const custoTotal = orc?.custo_total || getMobCusto(String(o.id));
                       const precoTotal = orc?.preco_total || (custoTotal > 0 ? custoTotal * (1 + bdiPercentual / 100) : 0);
-                      const status = getStatus(o);
-                      const cfg = statusConfig[status] || statusConfig.rascunho;
+                      const statusInfo = getStatus(o);
 
                       return (
                         <SortableRow key={item._orderingId} id={item._orderingId}>
@@ -222,7 +219,14 @@ export default function Orcamentos() {
                           <td className="font-semibold">{fmt(custoTotal)}</td>
                           <td className="text-muted-foreground">{bdiPercentual.toFixed(2)}%</td>
                           <td className="font-semibold text-accent">{fmt(precoTotal)}</td>
-                          <td><Badge variant="outline" className={cfg.className}>{cfg.label}</Badge></td>
+                          <td>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className={statusClass[statusInfo.status]}>
+                                {ORCAMENTO_STATUS_LABEL[statusInfo.status]}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">{statusInfo.percentual}%</span>
+                            </div>
+                          </td>
                           <td className="text-center">
                             <div className="flex items-center justify-center gap-1">
                               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/orcamentos/${o.id}`)} title="Abrir"><FileText className="w-4 h-4" /></Button>
