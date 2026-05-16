@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { cn, addMonthsISO } from "@/lib/utils";
 import { calcularStatusOrcamento } from "@/lib/orcamento-status";
 import { CronogramaPanel } from "@/components/orcamento/CronogramaPanel";
+import { MobilizacaoContent } from "@/pages/Mobilizacao";
 
 interface OrcamentoServico {
   composicao_id: string;
@@ -708,8 +709,8 @@ export default function OrcamentoDetalhe() {
             </Button>
           )}
           {activeStep === "adm-local" && (
-            <Button variant="outline" className="gap-2" onClick={() => navigate(`/mobilizacao?oportunidade=${id}&from=orcamento`)}>
-              <ExternalLink className="w-4 h-4" /> Editar ADM Local
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate(`/mobilizacao?oportunidade=${id}&from=orcamento`)}>
+              <ExternalLink className="w-4 h-4" /> Abrir em página cheia
             </Button>
           )}
           <Button className="gap-2" onClick={handleSalvar} disabled={!podesSalvar || saving}>
@@ -956,100 +957,41 @@ export default function OrcamentoDetalhe() {
         </Card>
       )}
 
-      {/* ETAPA 3: ADM Local */}
+      {/* ETAPA 3: ADM Local (editor inline) */}
       {activeStep === "adm-local" && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Building className="w-4 h-4 text-primary" />
-              ADM Local
-            </CardTitle>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1"
-              onClick={() => navigate(`/mobilizacao?oportunidade=${id}&from=orcamento`)}
-            >
-              <ExternalLink className="w-4 h-4" />
-              {mobilizacao ? "Editar" : "Configurar"}
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {mobilizacao ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <div className="space-y-4">
+          {mobilizacao && (
+            <Card>
+              <CardHeader className="py-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Building className="w-4 h-4 text-primary" />
+                  Resumo ADM Local
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                   <div>
-                    <span className="text-muted-foreground">Projeto</span>
-                    <p className="font-semibold">{mobilizacao.nome}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Dias Produtivos</span>
+                    <span className="text-muted-foreground text-xs">Dias Produtivos</span>
                     <p className="font-semibold">{mobilizacao.dias_produtivos}</p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Custo/Dia</span>
+                    <span className="text-muted-foreground text-xs">Custo/Dia</span>
                     <p className="font-semibold">{fmt(mobilizacao.custo_por_dia)}</p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Custo Total</span>
-                    <p className="font-semibold text-primary">{fmt(custoAdmLocal)}</p>
+                    <span className="text-muted-foreground text-xs">Mob/Desmob</span>
+                    <p className="font-semibold">{fmt(custoMobDesmob)}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground text-xs">Total ADM Local</span>
+                    <p className="font-bold text-primary">{fmt(custoAdmLocal)}</p>
                   </div>
                 </div>
-
-                {/* Breakdown */}
-                <Separator />
-                <div className="space-y-2">
-                  {custoMobDesmob > 0 && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="flex items-center gap-2 text-muted-foreground">
-                        <Route className="w-3.5 h-3.5" /> Mob / Desmob
-                      </span>
-                      <span className="font-medium">{fmt(custoMobDesmob)}</span>
-                    </div>
-                  )}
-                  {Object.entries(deslocamentosPorCategoria).map(([cat, valor]) => {
-                    if (valor <= 0) return null;
-                    return (
-                      <div key={cat} className="flex items-center justify-between text-sm">
-                        <span className="flex items-center gap-2 text-muted-foreground">
-                          <Truck className="w-3.5 h-3.5" /> {CATEGORIAS_DESL_LABELS[cat] || cat}
-                        </span>
-                        <span className="font-medium">{fmt(valor)}</span>
-                      </div>
-                    );
-                  })}
-                  {custoAdmLocalOutros > 0 && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="flex items-center gap-2 text-muted-foreground">
-                        <Package className="w-3.5 h-3.5" /> Demais custos
-                      </span>
-                      <span className="font-medium">{fmt(custoAdmLocalOutros)}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex justify-between text-sm font-bold bg-primary/5 p-3 rounded-md border border-primary/20">
-                  <span>Total ADM Local</span>
-                  <span className="text-primary">{fmt(custoAdmLocal)}</span>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-10 space-y-3">
-                <Building className="w-10 h-10 mx-auto text-muted-foreground/40" />
-                <p className="text-muted-foreground text-sm">
-                  Nenhuma configuração de ADM Local vinculada.
-                </p>
-                <Button
-                  variant="outline"
-                  className="gap-2"
-                  onClick={() => navigate(`/mobilizacao?oportunidade=${id}&from=orcamento`)}
-                >
-                  <Plus className="w-4 h-4" /> Configurar ADM Local
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          )}
+          <MobilizacaoContent initialOportunidadeId={id!} embedded />
+        </div>
       )}
 
       {/* ETAPA 4: Cronograma (campo × escritório) */}

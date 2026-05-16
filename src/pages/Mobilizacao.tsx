@@ -144,7 +144,7 @@ export default function Mobilizacao() {
   );
 }
 
-function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: string }) {
+export function MobilizacaoContent({ initialOportunidadeId, embedded = false }: { initialOportunidadeId: string; embedded?: boolean }) {
   const [searchParams] = useSearchParams();
   const loadedRef = useRef(false);
   // ── State ──
@@ -751,31 +751,41 @@ function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: 
 
   return (
     <TooltipProvider>
-      <div className="page-container animate-fade-in">
-        <VoltarAoOrcamento step="adm-local" />
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="page-title">Mobilização e Administração Local</h1>
-            <p className="page-subtitle">
-              Planejamento de custos de deslocamento, hospedagem e logística de campo
-            </p>
+      <div className={embedded ? "animate-fade-in" : "page-container animate-fade-in"}>
+        {!embedded && <VoltarAoOrcamento step="adm-local" />}
+        {!embedded && (
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="page-title">Mobilização e Administração Local</h1>
+              <p className="page-subtitle">
+                Planejamento de custos de deslocamento, hospedagem e logística de campo
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                className="gap-2 print:hidden"
+                onClick={() => window.print()}
+                title="Imprimir todos os detalhes desta página em PDF (use 'Salvar como PDF' no diálogo de impressão)"
+              >
+                <Printer className="w-4 h-4" />
+                Imprimir PDF
+              </Button>
+              <Button className="gap-2" disabled={!formValido || saving} onClick={handleSalvar}>
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {saving ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              className="gap-2 print:hidden"
-              onClick={() => window.print()}
-              title="Imprimir todos os detalhes desta página em PDF (use 'Salvar como PDF' no diálogo de impressão)"
-            >
-              <Printer className="w-4 h-4" />
-              Imprimir PDF
-            </Button>
-            <Button className="gap-2" disabled={!formValido || saving} onClick={handleSalvar}>
+        )}
+        {embedded && (
+          <div className="flex items-center justify-end mb-4 print:hidden">
+            <Button className="gap-2" size="sm" disabled={!formValido || saving} onClick={handleSalvar}>
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              {saving ? "Salvando..." : "Salvar"}
+              {saving ? "Salvando..." : "Salvar ADM Local"}
             </Button>
           </div>
-        </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* ── Coluna Esquerda: Entradas ── */}
