@@ -26,6 +26,7 @@ import { cn, addMonthsISO } from "@/lib/utils";
 import { calcularStatusOrcamento } from "@/lib/orcamento-status";
 import { CronogramaPanel } from "@/components/orcamento/CronogramaPanel";
 import { MobilizacaoContent } from "@/pages/Mobilizacao";
+import { CustosServicosContent } from "@/pages/CustosServicos";
 
 interface OrcamentoServico {
   composicao_id: string;
