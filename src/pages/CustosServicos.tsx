@@ -74,7 +74,15 @@ export default function CustosServicos() {
   );
 }
 
-function CustosServicosContent({ oportunidadeId, oportunidade }: { oportunidadeId: string; oportunidade: any }) {
+export function CustosServicosContent({
+  oportunidadeId,
+  oportunidade,
+  embedded = false,
+}: {
+  oportunidadeId: string;
+  oportunidade: any;
+  embedded?: boolean;
+}) {
   const queryClient = useQueryClient();
   const selectedOportunidadeId = oportunidadeId;
   const [quantidades, setQuantidades] = useState<Record<string, number>>({});
