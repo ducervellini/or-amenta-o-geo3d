@@ -691,12 +691,12 @@ export default function OrcamentoDetalhe() {
             <Printer className="w-4 h-4" /> Imprimir
           </Button>
           {activeStep === "servicos" && (
-            <Button variant="outline" className="gap-2" onClick={() => navigate(`/custos-servicos?oportunidade=${id}`)}>
+            <Button variant="outline" className="gap-2" onClick={() => navigate(`/custos-servicos?oportunidade=${id}&from=orcamento`)}>
               <ExternalLink className="w-4 h-4" /> Editar Custos
             </Button>
           )}
           {activeStep === "adm-local" && (
-            <Button variant="outline" className="gap-2" onClick={() => navigate(`/mobilizacao?oportunidade=${id}`)}>
+            <Button variant="outline" className="gap-2" onClick={() => navigate(`/mobilizacao?oportunidade=${id}&from=orcamento`)}>
               <ExternalLink className="w-4 h-4" /> Editar ADM Local
             </Button>
           )}
@@ -832,7 +832,7 @@ export default function OrcamentoDetalhe() {
               size="sm"
               variant="outline"
               className="gap-1"
-              onClick={() => navigate(`/custos-servicos?oportunidade=${id}`)}
+              onClick={() => navigate(`/custos-servicos?oportunidade=${id}&from=orcamento`)}
             >
               <ExternalLink className="w-4 h-4" />
               Editar Quantidades
@@ -846,7 +846,7 @@ export default function OrcamentoDetalhe() {
                 <Button
                   variant="outline"
                   className="gap-2"
-                  onClick={() => navigate(`/custos-servicos?oportunidade=${id}`)}
+                  onClick={() => navigate(`/custos-servicos?oportunidade=${id}&from=orcamento`)}
                 >
                   <Plus className="w-4 h-4" /> Definir Quantidades
                 </Button>
@@ -937,7 +937,7 @@ export default function OrcamentoDetalhe() {
               size="sm"
               variant="outline"
               className="gap-1"
-              onClick={() => navigate(`/mobilizacao?oportunidade=${id}`)}
+              onClick={() => navigate(`/mobilizacao?oportunidade=${id}&from=orcamento`)}
             >
               <ExternalLink className="w-4 h-4" />
               {mobilizacao ? "Editar" : "Configurar"}
@@ -1011,7 +1011,7 @@ export default function OrcamentoDetalhe() {
                 <Button
                   variant="outline"
                   className="gap-2"
-                  onClick={() => navigate(`/mobilizacao?oportunidade=${id}`)}
+                  onClick={() => navigate(`/mobilizacao?oportunidade=${id}&from=orcamento`)}
                 >
                   <Plus className="w-4 h-4" /> Configurar ADM Local
                 </Button>
