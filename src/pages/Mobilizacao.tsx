@@ -144,7 +144,7 @@ export default function Mobilizacao() {
   );
 }
 
-function MobilizacaoContent({ initialOportunidadeId }: { initialOportunidadeId: string }) {
+export function MobilizacaoContent({ initialOportunidadeId, embedded = false }: { initialOportunidadeId: string; embedded?: boolean }) {
   const [searchParams] = useSearchParams();
   const loadedRef = useRef(false);
   // ── State ──
