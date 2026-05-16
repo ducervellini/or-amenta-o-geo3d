@@ -738,6 +738,11 @@ export function MobilizacaoContent({ initialOportunidadeId, embedded = false }: 
       }
 
       toast.success("ADM Local salvo com sucesso!");
+      // Invalidate parent shell caches so embedded saves refresh the budget summary instantly
+      try {
+        const qc = (await import("@tanstack/react-query")).useQueryClient;
+      } catch {}
+      window.dispatchEvent(new CustomEvent("orcamento:refresh", { detail: { oportunidadeId: oportunidadeIdToUse } }));
     } catch (err: any) {
       console.error("Erro ao salvar:", err);
       toast.error("Erro ao salvar: " + (err.message || "tente novamente"));
