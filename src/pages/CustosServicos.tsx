@@ -299,6 +299,8 @@ export function CustosServicosContent({
             .eq("id", orcId);
 
           queryClient.invalidateQueries({ queryKey: ["custos-orcamento"] });
+          // Notify embedding shells (e.g. OrcamentoDetalhe) to refresh their summary
+          window.dispatchEvent(new CustomEvent("orcamento:refresh", { detail: { oportunidadeId: selectedOportunidadeId } }));
         } catch (err) {
           console.error("Erro ao salvar:", err);
           toast.error("Erro ao salvar quantidades");
