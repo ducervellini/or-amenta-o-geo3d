@@ -438,7 +438,7 @@ export default function OrcamentoDetalhe() {
   const goNext = () => {
     if (!canGoNext) return;
     const remaining = STEPS.slice(currentStepIndex + 1);
-    const firstIncomplete = remaining.find(s => !stepStatus[s.key as keyof typeof stepStatus]);
+    const firstIncomplete = remaining.find(s => (stepStatus as any)[s.key] === false);
     setActiveStep((firstIncomplete?.key ?? STEPS[currentStepIndex + 1].key) as StepKey);
   };
 
