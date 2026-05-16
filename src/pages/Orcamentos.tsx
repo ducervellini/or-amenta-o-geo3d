@@ -208,8 +208,7 @@ export default function Orcamentos() {
                       const orc = getOrcamento(String(o.id));
                       const custoTotal = orc?.custo_total || getMobCusto(String(o.id));
                       const precoTotal = orc?.preco_total || (custoTotal > 0 ? custoTotal * (1 + bdiPercentual / 100) : 0);
-                      const status = getStatus(o);
-                      const cfg = statusConfig[status] || statusConfig.rascunho;
+                      const statusInfo = getStatus(o);
 
                       return (
                         <SortableRow key={item._orderingId} id={item._orderingId}>
@@ -220,7 +219,14 @@ export default function Orcamentos() {
                           <td className="font-semibold">{fmt(custoTotal)}</td>
                           <td className="text-muted-foreground">{bdiPercentual.toFixed(2)}%</td>
                           <td className="font-semibold text-accent">{fmt(precoTotal)}</td>
-                          <td><Badge variant="outline" className={cfg.className}>{cfg.label}</Badge></td>
+                          <td>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className={statusClass[statusInfo.status]}>
+                                {ORCAMENTO_STATUS_LABEL[statusInfo.status]}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">{statusInfo.percentual}%</span>
+                            </div>
+                          </td>
                           <td className="text-center">
                             <div className="flex items-center justify-center gap-1">
                               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/orcamentos/${o.id}`)} title="Abrir"><FileText className="w-4 h-4" /></Button>
