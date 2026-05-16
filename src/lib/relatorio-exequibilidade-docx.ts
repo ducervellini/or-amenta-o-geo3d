@@ -8,6 +8,7 @@ import {
   HeadingLevel, BorderStyle, WidthType, ShadingType,
   PageNumber, PageBreak,
 } from "docx";
+import { produtividadePorDia } from "@/lib/cronograma-calculo";
 
 // ── Types ──
 export interface ServicoRelatorio {
