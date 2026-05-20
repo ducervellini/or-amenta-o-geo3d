@@ -18,17 +18,20 @@ import type { MetodologiaCalculoVersao } from "@/types/calculo-v2";
 interface Props {
   custoDireto: number;
   onBdiCalculado?: (resultado: ResultadoBDI) => void;
-  /** Fase 1 BDI/CCU: metodologia selecionada (default simplificado mantém comportamento atual) */
+  /** Fase 1 BDI/CCU: metodologia inicial (default simplificado mantém comportamento atual) */
   bdiMetodologia?: BdiMetodologia;
   /** Regime tributário da oportunidade (zera tributos REIDI/Simples/MEI) */
   regimeTributario?: RegimeTributario;
-  /** Códigos TCU por tributo (sigla → AC/S/G/R/DF/L/IT_*) — usado quando bdiMetodologia === 'tcu_2622' */
+  /** Códigos TCU por tributo (sigla → AC/S/G/R/DF/L/IT_*) — usado quando metodologia === 'tcu_2622' */
   codigosTcu?: Record<string, CodigoTCU>;
+  /** Versão de cálculo gravada no orçamento — exibe alerta de recálculo se for v1_legado */
+  orcamentoVersao?: MetodologiaCalculoVersao;
 }
 
 const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
-export function PainelBDI({ custoDireto, onBdiCalculado, bdiMetodologia = "simplificado", regimeTributario = "padrao", codigosTcu = {} }: Props) {
+export function PainelBDI({ custoDireto, onBdiCalculado, bdiMetodologia = "simplificado", regimeTributario = "padrao", codigosTcu = {}, orcamentoVersao }: Props) {
+  const [metodologia, setMetodologia] = useState<BdiMetodologia>(bdiMetodologia);
   const { data: paramAdminLocal } = useSupabaseQuery("parametros_admin_local");
   const { data: paramAdminCentral } = useSupabaseQuery("parametros_admin_central");
   const { data: paramFinanciamento } = useSupabaseQuery("parametros_financiamento");
