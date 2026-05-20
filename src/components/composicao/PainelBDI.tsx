@@ -10,22 +10,28 @@ import {
 import { calcularBDITCU2622, percentualEfetivoTributo, type ParametrosTCU2622 } from "@/lib/calculos-v2";
 import type { BdiMetodologia, RegimeTributario, CodigoTCU } from "@/types/calculo-v2";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building, Landmark, TrendingUp, Receipt, DollarSign } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Building, Landmark, TrendingUp, Receipt, DollarSign, AlertTriangle, Scale } from "lucide-react";
+import type { MetodologiaCalculoVersao } from "@/types/calculo-v2";
 
 interface Props {
   custoDireto: number;
   onBdiCalculado?: (resultado: ResultadoBDI) => void;
-  /** Fase 1 BDI/CCU: metodologia selecionada (default simplificado mantém comportamento atual) */
+  /** Fase 1 BDI/CCU: metodologia inicial (default simplificado mantém comportamento atual) */
   bdiMetodologia?: BdiMetodologia;
   /** Regime tributário da oportunidade (zera tributos REIDI/Simples/MEI) */
   regimeTributario?: RegimeTributario;
-  /** Códigos TCU por tributo (sigla → AC/S/G/R/DF/L/IT_*) — usado quando bdiMetodologia === 'tcu_2622' */
+  /** Códigos TCU por tributo (sigla → AC/S/G/R/DF/L/IT_*) — usado quando metodologia === 'tcu_2622' */
   codigosTcu?: Record<string, CodigoTCU>;
+  /** Versão de cálculo gravada no orçamento — exibe alerta de recálculo se for v1_legado */
+  orcamentoVersao?: MetodologiaCalculoVersao;
 }
 
 const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
-export function PainelBDI({ custoDireto, onBdiCalculado, bdiMetodologia = "simplificado", regimeTributario = "padrao", codigosTcu = {} }: Props) {
+export function PainelBDI({ custoDireto, onBdiCalculado, bdiMetodologia = "simplificado", regimeTributario = "padrao", codigosTcu = {}, orcamentoVersao }: Props) {
+  const [metodologia, setMetodologia] = useState<BdiMetodologia>(bdiMetodologia);
   const { data: paramAdminLocal } = useSupabaseQuery("parametros_admin_local");
   const { data: paramAdminCentral } = useSupabaseQuery("parametros_admin_central");
   const { data: paramFinanciamento } = useSupabaseQuery("parametros_financiamento");
@@ -63,7 +69,7 @@ export function PainelBDI({ custoDireto, onBdiCalculado, bdiMetodologia = "simpl
 
   const resultadoBDI = useMemo(() => {
     // Roteia para TCU 2622/2013 quando solicitado; preserva simplificado por padrão
-    if (bdiMetodologia === "tcu_2622") {
+    if (metodologia === "tcu_2622") {
       const pct = (sigla: string): number => {
         const t = params.tributos.find((x) => x.sigla.toUpperCase() === sigla);
         return t ? t.percentual / 100 : 0;
@@ -95,7 +101,7 @@ export function PainelBDI({ custoDireto, onBdiCalculado, bdiMetodologia = "simpl
     const r = calcularBDI(custoDireto, params);
     onBdiCalculado?.(r);
     return r;
-  }, [custoDireto, params, bdiMetodologia]);
+  }, [custoDireto, params, metodologia]);
 
   const resultadoDRE = useMemo(() => {
     return calcularDRE(resultadoBDI.preco_final_bdi, custoDireto, params);
@@ -132,6 +138,36 @@ export function PainelBDI({ custoDireto, onBdiCalculado, bdiMetodologia = "simpl
           <div className="font-mono font-semibold text-sm">R$ {fmt(resultadoBDI.margem)}</div>
         </div>
       </div>
+
+      {/* Metodologia BDI: Simplificado vs TCU 2622/2013 */}
+      <div className="bg-card rounded-lg border p-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs flex items-center gap-1.5">
+            <Scale className="w-3.5 h-3.5" /> Metodologia BDI
+          </Label>
+          <ToggleGroup
+            type="single"
+            size="sm"
+            value={metodologia}
+            onValueChange={(v) => v && setMetodologia(v as BdiMetodologia)}
+          >
+            <ToggleGroupItem value="simplificado" className="text-xs h-7 px-2">Simplificado</ToggleGroupItem>
+            <ToggleGroupItem value="tcu_2622" className="text-xs h-7 px-2">TCU 2622/2013</ToggleGroupItem>
+          </ToggleGroup>
+        </div>
+        {orcamentoVersao === "v1_legado" && metodologia === "tcu_2622" && (
+          <Alert variant="default" className="py-2">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle className="text-xs">Recalcular como v2</AlertTitle>
+            <AlertDescription className="text-xs">
+              Este orçamento está marcado como <code>v1_legado</code>. Os valores acima mostram a simulação TCU,
+              mas o orçamento salvo continua na metodologia simplificada original. Atualize a versão do orçamento
+              para v2_corrigido para gravar os novos preços.
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
+
 
       {/* BDI highlight */}
       <div className="bg-primary/10 rounded-lg border border-primary/30 p-4 text-center space-y-1">
