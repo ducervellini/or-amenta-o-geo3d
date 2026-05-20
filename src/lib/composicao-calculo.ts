@@ -2,6 +2,8 @@
  * Motor de cálculo de composição de custos
  * Fase 1: Custos diretos (mão de obra, equipamentos, materiais)
  */
+import { aplicarFatorUtilizacao } from "@/lib/calculos-v2";
+import type { MetodologiaCalculoVersao } from "@/types/calculo-v2";
 
 export interface ParametrosMaoDeObra {
   salario_base: number;
