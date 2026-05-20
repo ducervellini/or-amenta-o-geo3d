@@ -186,8 +186,9 @@ export function calcularVeiculo(
   const custoHoraTotal = params.custo_hora + params.operador_custo_hora;
   memoria.push({ descricao: "Custo hora (veículo + operador)", formula: `${fmt(params.custo_hora)} + ${fmt(params.operador_custo_hora)} = ${fmt(custoHoraTotal)}`, valor: custoHoraTotal });
 
-  const custoComFator = custoHoraTotal * params.fator_utilizacao;
-  memoria.push({ descricao: "Custo hora c/ fator utilização", formula: `${fmt(custoHoraTotal)} × ${fmt(params.fator_utilizacao)} = ${fmt(custoComFator)}`, valor: custoComFator });
+  const custoComFator = aplicarFatorUtilizacao(custoHoraTotal, params.fator_utilizacao, metodologia);
+  const opLabelV = metodologia === "v2_corrigido" ? "÷" : "×";
+  memoria.push({ descricao: `Custo hora c/ fator utilização (${metodologia})`, formula: `${fmt(custoHoraTotal)} ${opLabelV} ${fmt(params.fator_utilizacao)} = ${fmt(custoComFator)}`, valor: custoComFator });
 
   const custoUnitario = custoComFator * coeficiente;
   memoria.push({ descricao: "Custo unitário", formula: `${fmt(custoComFator)} × ${fmt(coeficiente)} = ${fmt(custoUnitario)}`, valor: custoUnitario });
