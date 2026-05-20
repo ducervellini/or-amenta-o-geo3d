@@ -47,16 +47,55 @@ export function PainelBDI({ custoDireto, onBdiCalculado, bdiMetodologia = "simpl
       admin_local_percentual: al?.reduce((s, p) => s + Number(p.percentual), 0) ?? prev.admin_local_percentual,
       admin_central_percentual: ac?.reduce((s, p) => s + Number(p.percentual), 0) ?? prev.admin_central_percentual,
       financiamento_percentual: fin?.[0] ? Number(fin[0].percentual) : prev.financiamento_percentual,
-      tributos: trib?.map((t) => ({ nome: String(t.nome), sigla: String(t.sigla), percentual: Number(t.percentual) })) ?? prev.tributos,
+      tributos: trib?.map((t) => {
+        const flags = {
+          percentual: Number(t.percentual),
+          aplicavel_reidi: Boolean((t as Record<string, unknown>).aplicavel_reidi),
+          aplicavel_simples: Boolean((t as Record<string, unknown>).aplicavel_simples),
+          aplicavel_mei: Boolean((t as Record<string, unknown>).aplicavel_mei),
+        };
+        const efetivo = percentualEfetivoTributo(flags, regimeTributario);
+        return { nome: String(t.nome), sigla: String(t.sigla), percentual: efetivo };
+      }) ?? prev.tributos,
       margem_percentual: marg?.[0] ? Number(marg[0].percentual_padrao) : prev.margem_percentual,
     }));
-  }, [paramAdminLocal, paramAdminCentral, paramFinanciamento, paramTributos, paramMargem]);
+  }, [paramAdminLocal, paramAdminCentral, paramFinanciamento, paramTributos, paramMargem, regimeTributario]);
 
   const resultadoBDI = useMemo(() => {
+    // Roteia para TCU 2622/2013 quando solicitado; preserva simplificado por padrão
+    if (bdiMetodologia === "tcu_2622") {
+      const pct = (sigla: string): number => {
+        const t = params.tributos.find((x) => x.sigla.toUpperCase() === sigla);
+        return t ? t.percentual / 100 : 0;
+      };
+      const ptcu: ParametrosTCU2622 = {
+        AC: (params.admin_central_percentual || 0) / 100,
+        S: 0, G: 0, R: 0,
+        DF: (params.financiamento_percentual || 0) / 100,
+        L: (params.margem_percentual || 0) / 100,
+        IT_PIS: pct("PIS"),
+        IT_COFINS: pct("COFINS"),
+        IT_ISS: pct("ISS"),
+        IT_IRPJ: pct("IRPJ"),
+        IT_CSLL: pct("CSLL"),
+      };
+      try {
+        const rTcu = calcularBDITCU2622(custoDireto, ptcu);
+        const r: ResultadoBDI = {
+          ...calcularBDI(custoDireto, params),
+          bdi_percentual: rTcu.bdiPercentual,
+          preco_final_bdi: rTcu.precoVenda,
+        };
+        onBdiCalculado?.(r);
+        return r;
+      } catch (e) {
+        console.warn("calcularBDITCU2622 falhou, voltando para simplificado:", e);
+      }
+    }
     const r = calcularBDI(custoDireto, params);
     onBdiCalculado?.(r);
     return r;
-  }, [custoDireto, params]);
+  }, [custoDireto, params, bdiMetodologia]);
 
   const resultadoDRE = useMemo(() => {
     return calcularDRE(resultadoBDI.preco_final_bdi, custoDireto, params);
