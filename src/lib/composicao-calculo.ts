@@ -145,8 +145,9 @@ export function calcularEquipamento(
   const custoHoraProdutiva = depHora + params.manutencao_hora + custoCombustivelHora + params.operador_custo_hora;
   memoria.push({ descricao: "Custo hora produtiva", formula: `${fmt(depHora)} + ${fmt(params.manutencao_hora)} + ${fmt(custoCombustivelHora)} + ${fmt(params.operador_custo_hora)} = ${fmt(custoHoraProdutiva)}`, valor: custoHoraProdutiva });
 
-  const custoHoraComFator = custoHoraProdutiva * params.fator_utilizacao;
-  memoria.push({ descricao: "Custo hora c/ fator utilização", formula: `${fmt(custoHoraProdutiva)} × ${fmt(params.fator_utilizacao)} = ${fmt(custoHoraComFator)}`, valor: custoHoraComFator });
+  const custoHoraComFator = aplicarFatorUtilizacao(custoHoraProdutiva, params.fator_utilizacao, metodologia);
+  const opLabel = metodologia === "v2_corrigido" ? "÷" : "×";
+  memoria.push({ descricao: `Custo hora c/ fator utilização (${metodologia})`, formula: `${fmt(custoHoraProdutiva)} ${opLabel} ${fmt(params.fator_utilizacao)} = ${fmt(custoHoraComFator)}`, valor: custoHoraComFator });
 
   const custoUnitario = custoHoraComFator * coeficiente;
   memoria.push({ descricao: "Custo unitário", formula: `${fmt(custoHoraComFator)} × ${fmt(coeficiente)} = ${fmt(custoUnitario)}`, valor: custoUnitario });
