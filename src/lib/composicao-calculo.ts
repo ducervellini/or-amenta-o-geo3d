@@ -122,7 +122,8 @@ export function calcularMaoDeObra(
 export function calcularEquipamento(
   params: ParametrosEquipamento,
   quantidade: number,
-  coeficiente: number
+  coeficiente: number,
+  metodologia: MetodologiaCalculoVersao = "v1_legado",
 ): ResultadoCalculo {
   const memoria: MemoriaCalculo[] = [];
 
