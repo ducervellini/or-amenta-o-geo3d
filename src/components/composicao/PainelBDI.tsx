@@ -7,12 +7,20 @@ import {
   calcularBDI, calcularDRE, getDefaultParametrosBDI,
   type ParametrosBDI, type ResultadoBDI, type ResultadoDRE,
 } from "@/lib/bdi-calculo";
+import { calcularBDITCU2622, percentualEfetivoTributo, type ParametrosTCU2622 } from "@/lib/calculos-v2";
+import type { BdiMetodologia, RegimeTributario, CodigoTCU } from "@/types/calculo-v2";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building, Landmark, TrendingUp, Receipt, DollarSign } from "lucide-react";
 
 interface Props {
   custoDireto: number;
   onBdiCalculado?: (resultado: ResultadoBDI) => void;
+  /** Fase 1 BDI/CCU: metodologia selecionada (default simplificado mantém comportamento atual) */
+  bdiMetodologia?: BdiMetodologia;
+  /** Regime tributário da oportunidade (zera tributos REIDI/Simples/MEI) */
+  regimeTributario?: RegimeTributario;
+  /** Códigos TCU por tributo (sigla → AC/S/G/R/DF/L/IT_*) — usado quando bdiMetodologia === 'tcu_2622' */
+  codigosTcu?: Record<string, CodigoTCU>;
 }
 
 const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
