@@ -840,6 +840,7 @@ export type Database = {
           nome: string
           obrigatorio: boolean
           percentual: number
+          tipo_grupo: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -855,6 +856,7 @@ export type Database = {
           nome: string
           obrigatorio?: boolean
           percentual?: number
+          tipo_grupo?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -870,6 +872,7 @@ export type Database = {
           nome?: string
           obrigatorio?: boolean
           percentual?: number
+          tipo_grupo?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -1832,6 +1835,7 @@ export type Database = {
           observacao_perda: string | null
           origem: string | null
           probabilidade: number | null
+          regime_tributario: Database["public"]["Enums"]["regime_tributario_especial"]
           tipo_obra: string | null
           updated_at: string
           updated_by: string | null
@@ -1861,6 +1865,7 @@ export type Database = {
           observacao_perda?: string | null
           origem?: string | null
           probabilidade?: number | null
+          regime_tributario?: Database["public"]["Enums"]["regime_tributario_especial"]
           tipo_obra?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -1890,6 +1895,7 @@ export type Database = {
           observacao_perda?: string | null
           origem?: string | null
           probabilidade?: number | null
+          regime_tributario?: Database["public"]["Enums"]["regime_tributario_especial"]
           tipo_obra?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -2312,6 +2318,7 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           id: string
+          metodologia_calculo_versao: string
           mobilizacao_id: string | null
           oportunidade_id: string
           preco_total: number
@@ -2335,6 +2342,7 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           id?: string
+          metodologia_calculo_versao?: string
           mobilizacao_id?: string | null
           oportunidade_id: string
           preco_total?: number
@@ -2358,6 +2366,7 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           id?: string
+          metodologia_calculo_versao?: string
           mobilizacao_id?: string | null
           oportunidade_id?: string
           preco_total?: number
@@ -2542,6 +2551,7 @@ export type Database = {
           deleted_by: string | null
           descricao: string | null
           id: string
+          metodologia: Database["public"]["Enums"]["bdi_metodologia"]
           nome: string
           updated_at: string
           updated_by: string | null
@@ -2556,6 +2566,7 @@ export type Database = {
           deleted_by?: string | null
           descricao?: string | null
           id?: string
+          metodologia?: Database["public"]["Enums"]["bdi_metodologia"]
           nome: string
           updated_at?: string
           updated_by?: string | null
@@ -2570,6 +2581,7 @@ export type Database = {
           deleted_by?: string | null
           descricao?: string | null
           id?: string
+          metodologia?: Database["public"]["Enums"]["bdi_metodologia"]
           nome?: string
           updated_at?: string
           updated_by?: string | null
@@ -2579,6 +2591,7 @@ export type Database = {
       parametros_bdi_componentes: {
         Row: {
           ativo: boolean
+          codigo_tcu: string | null
           created_at: string
           created_by: string | null
           deleted_at: string | null
@@ -2596,6 +2609,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          codigo_tcu?: string | null
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -2613,6 +2627,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          codigo_tcu?: string | null
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -2732,6 +2747,54 @@ export type Database = {
         }
         Relationships: []
       }
+      parametros_logistica_regional: {
+        Row: {
+          ativo: boolean
+          bioma: string
+          created_at: string
+          deleted_at: string | null
+          fator_chuva_produtividade: number
+          fator_rota_rodovia_estadual: number
+          fator_rota_rodovia_federal: number
+          fator_rota_vicinal_nao_pavimentada: number
+          fator_rota_vicinal_pavimentada: number
+          id: string
+          uf: string
+          updated_at: string
+          velocidade_media_kmh: number
+        }
+        Insert: {
+          ativo?: boolean
+          bioma: string
+          created_at?: string
+          deleted_at?: string | null
+          fator_chuva_produtividade?: number
+          fator_rota_rodovia_estadual?: number
+          fator_rota_rodovia_federal?: number
+          fator_rota_vicinal_nao_pavimentada?: number
+          fator_rota_vicinal_pavimentada?: number
+          id?: string
+          uf: string
+          updated_at?: string
+          velocidade_media_kmh?: number
+        }
+        Update: {
+          ativo?: boolean
+          bioma?: string
+          created_at?: string
+          deleted_at?: string | null
+          fator_chuva_produtividade?: number
+          fator_rota_rodovia_estadual?: number
+          fator_rota_rodovia_federal?: number
+          fator_rota_vicinal_nao_pavimentada?: number
+          fator_rota_vicinal_pavimentada?: number
+          id?: string
+          uf?: string
+          updated_at?: string
+          velocidade_media_kmh?: number
+        }
+        Relationships: []
+      }
       parametros_margem: {
         Row: {
           ativo: boolean
@@ -2782,6 +2845,9 @@ export type Database = {
       }
       parametros_tributos: {
         Row: {
+          aplicavel_mei: boolean
+          aplicavel_reidi: boolean
+          aplicavel_simples: boolean
           ativo: boolean
           created_at: string
           created_by: string | null
@@ -2796,6 +2862,9 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          aplicavel_mei?: boolean
+          aplicavel_reidi?: boolean
+          aplicavel_simples?: boolean
           ativo?: boolean
           created_at?: string
           created_by?: string | null
@@ -2810,6 +2879,9 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          aplicavel_mei?: boolean
+          aplicavel_reidi?: boolean
+          aplicavel_simples?: boolean
           ativo?: boolean
           created_at?: string
           created_by?: string | null
@@ -3566,6 +3638,7 @@ export type Database = {
         | "comissao"
         | "risco"
         | "outro"
+      bdi_metodologia: "simplificado" | "tcu_2622"
       material_categoria:
         | "plotagem"
         | "consumivel"
@@ -3600,6 +3673,12 @@ export type Database = {
         | "ganho"
         | "perdido"
         | "standby"
+      regime_tributario_especial:
+        | "padrao"
+        | "reidi"
+        | "simples_nacional"
+        | "mei"
+        | "isento_municipio"
       servico_variacao_tipo: "escopo" | "complexidade"
       tipo_insumo:
         | "mao_de_obra"
@@ -3773,6 +3852,7 @@ export const Constants = {
         "risco",
         "outro",
       ],
+      bdi_metodologia: ["simplificado", "tcu_2622"],
       material_categoria: [
         "plotagem",
         "consumivel",
@@ -3810,6 +3890,13 @@ export const Constants = {
         "ganho",
         "perdido",
         "standby",
+      ],
+      regime_tributario_especial: [
+        "padrao",
+        "reidi",
+        "simples_nacional",
+        "mei",
+        "isento_municipio",
       ],
       servico_variacao_tipo: ["escopo", "complexidade"],
       tipo_insumo: [

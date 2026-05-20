@@ -1,111 +1,56 @@
 
-# Análise e Plano: Fluxo Oportunidade → Orçamento + Cronograma
+# Revisão — Fase 1 BDI/CCU (script otimizado)
 
-## 1. Pontos críticos identificados no fluxo atual
+Confirmei que todas as tabelas referenciadas existem no banco (`parametros_bdi`, `parametros_bdi_componentes`, `oportunidades`, `parametros_tributos`, `orcamentos`, `encargos_sociais`). Só falta criar `parametros_logistica_regional`.
 
-### 1.1 Dois caminhos paralelos fazendo a mesma coisa (raiz da fricção)
-- **Caminho A** — `/oportunidades`: cada linha tem 3 atalhos (💲 Custos, 🏢 ADM, 🧮 BDI) que **navegam para fora** (`/custos-servicos?oportunidade=…`, `/mobilizacao?…`, `/bdi?…`).
-- **Caminho B** — `/orcamentos` → `/orcamentos/:id` (OrcamentoDetalhe): wizard de 4 passos (Oportunidade → Serviços → ADM Local → BDI & Preço). Cada passo é **somente leitura** e tem um botão "Editar em página separada" que joga o usuário no mesmo `/custos-servicos`, `/mobilizacao`, `/bdi` do caminho A.
-- Resultado: o usuário **abre o orçamento, sai para editar, volta, sai de novo**. O wizard só consolida — não economiza cliques, duplica o trabalho.
+## O que cada prompt faz
 
-### 1.2 OportunidadeGate redundante
-- `OportunidadeGate` é montado em `CustosServicos`, `Mobilizacao`, `BDI` — cada um faz a sua própria query `gate-oportunidades` e força reselect se o `?oportunidade=` se perde na navegação entre abas do navegador.
-- Quando o usuário vem de OrcamentoDetalhe (já com `id`), o gate aparece desnecessariamente porque a URL muda de `/orcamentos/:id` para `/custos-servicos?oportunidade=:id` — contexto perdido, novo fetch.
+### Prompt A — Migration consolidada + types
+- `orcamentos.metodologia_calculo_versao` (`v1_legado` default → preserva orçamentos atuais).
+- Enum `bdi_metodologia` (`simplificado` | `tcu_2622`) + coluna em `parametros_bdi`.
+- `parametros_bdi_componentes.codigo_tcu` (AC, S, G, R, DF, L, IT_*).
+- Enum `regime_tributario_especial` + coluna em `oportunidades` (padrão/REIDI/Simples/MEI/isento).
+- `parametros_tributos`: flags `aplicavel_reidi/simples/mei`; seed PIS+COFINS como REIDI.
+- `encargos_sociais.tipo_grupo` + seed de 12 encargos CLT padrão (INSS, FGTS, 13º, férias etc.) com `WHERE NOT EXISTS`.
+- Nova tabela `parametros_logistica_regional` (UF × bioma × fatores de rota/chuva/velocidade) + seed dos 27 estados.
+- Cria `src/types/calculo-v2.ts`. **Não toca em UI.**
 
-### 1.3 OrcamentoDetalhe = 1647 linhas, 8+ queries, refetch agressivo
-- Queries em cascata: oportunidade → grupo → serviços → composições → itens; cada navegação entre tabs perde dados in-flight.
-- `queryKey` de `composicaoItens` usa string concatenada de IDs (`.join(",")`) — qualquer mudança de quantidade refaz tudo.
-- Nenhum `prefetch` entre passos.
+### Prompt B — Calculadores corrigidos (`src/lib/calculos-v2.ts`)
+- `aplicarFatorUtilizacao`: v2 **divide** (custo/fu) em vez de multiplicar — corrige distorção.
+- `calcularBDITCU2622`: fórmula oficial TCU `((1+AC+S+G+R)(1+DF)(1+L)/(1-IT)) − 1`.
+- `percentualEfetivoTributo`: zera tributo conforme regime (REIDI/Simples/MEI).
+- `obterParametrosRegionais`: lê `parametros_logistica_regional` com cache.
+- Refatora `composicao-calculo.ts` (equipamento/veículo) para receber metodologia.
+- `OrcamentoDetalhe.tsx`: roteia entre BDI simplificado e TCU; aplica regime tributário.
+- Edge `calcular-rota` e `mobilizacao-calculo.ts`: troca 1.30 e 0.50 hardcoded por valores regionais.
 
-### 1.4 Inconsistência de status / progresso
-- Status de orçamento é computado **3 vezes** com regras diferentes:
-  - `Orcamentos.getStatus` (lista) — exige `temServicos && temMob && temBdi && temGrupo`.
-  - OrcamentoDetalhe — passos próprios.
-  - Oportunidades — sem status.
-- Não existe indicador único "% concluído" que oriente o usuário sobre o próximo passo.
+### Prompt C — UI mínima
+1. Etapa BDI: Toggle simplificado/TCU + validação de `codigo_tcu`; Alert "Recalcular como v2" para orçamentos v1.
+2. Form Oportunidade: Select `regime_tributario` + tooltip REIDI.
+3. Tela Encargos: botão "Aplicar pacote padrão CLT".
+4. Cargos: mostrar K total (% encargos) + warning se K < 60%.
+5. Mobilização: usar `fator_chuva_produtividade` regional em vez de 0.5.
 
-### 1.5 Falta de prefetch e Suspense entre etapas
-- Trocar de aba dispara loading visível sempre. Não há `placeholderData` nem `staleTime` configurados — todo retorno à etapa recarrega.
+### Prompt D — Testes vitest (`calculos-v2.test.ts`)
+8 casos críticos: fator utilização (v1 vs v2, clamp), BDI TCU (faixa 25–35%, rejeita IT≥1 e CD<0), regime tributário (REIDI zera PIS).
 
-### 1.6 Cronograma — só existe no DOCX
-- `relatorio-exequibilidade-docx.ts:377` já calcula um cronograma simples (qtd ÷ produtividade), mas **não há tela**, **não persiste**, **não separa campo/escritório** apesar de `cargos.local_trabalho` já existir.
-- Sem cronograma visível, o usuário não enxerga o impacto da quantidade × produtividade no prazo, nem casa com a duração da Mobilização.
+## Pontos de atenção / divergências do nosso projeto
 
----
+1. **`src/pages/oportunidade/[id].tsx`** — não existe; oportunidades vivem em `src/pages/Oportunidades.tsx`. Vou aplicar lá.
+2. **`src/pages/Encargos.tsx` e `Cargos.tsx`** — temos `src/pages/cadastros/EncargosSociais.tsx` e `cadastros/Cargos.tsx`. Vou usar esses caminhos.
+3. **`snapshot_versao`** — o prompt C menciona criar novo snapshot ao recalcular; o sistema atual usa `composicao_revisoes`/`historico_aprendizado`, sem `snapshot_versao` em `orcamentos`. Proponho gravar entrada em `historico_aprendizado` com diff de preço (sem criar coluna nova).
+4. **`composicao-calculo.ts`** — hoje não recebe `metodologia` nem `orcamento`. A assinatura mudará para receber `metodologia: MetodologiaCalculoVersao`; quem chama (CustosServicos, OrcamentoDetalhe, MemoriaCalculo) precisará passar `orcamento.metodologia_calculo_versao`. Orçamentos antigos continuam em `v1_legado` → comportamento idêntico.
+5. **Edge `calcular-rota`** — vai precisar receber UF/bioma do orçamento ou buscar via PostGIS/lookup; o prompt assume que UF está disponível. Vou ler UF de `mobilizacoes.estado`.
+6. **Branch git** — não tenho controle de git; ignoro a instrução "criar branch".
+7. **CHANGELOG.md** — não existe; posso criar ao final do D.
+8. **Sem refactor extra** — vou seguir à risca, sem polimento fora de escopo.
 
-## 2. Plano de implementação (4 frentes, ordem sugerida)
+## Execução proposta
 
-### Frente A — Unificar o fluxo num único shell editável  *(remove a maior parte da fricção)*
+Quatro entregas separadas, parando para você revisar entre elas:
+- **A**: migration (você aprova SQL) + types.
+- **B**: `calculos-v2.ts` + wiring nos calculadores e edge.
+- **C**: 5 mudanças de UI.
+- **D**: testes + CHANGELOG.
 
-**Objetivo**: tornar `/orcamentos/:id` o único local de trabalho. Custos, ADM Local e BDI passam a ser **abas embarcadas e editáveis** dentro do shell, não páginas separadas.
-
-Passos:
-1. Refatorar `OrcamentoDetalhe.tsx` em um **shell** (cabeçalho + steps + footer) que renderiza componentes-tab.
-2. Extrair o conteúdo editável de `CustosServicos.tsx`, `Mobilizacao.tsx` e `BdiDre.tsx` em componentes reutilizáveis (`<CustosServicosPanel oportunidadeId/>`, `<MobilizacaoPanel/>`, `<BdiPanel/>`).
-3. As páginas standalone (`/custos-servicos`, `/mobilizacao`, `/bdi`) continuam existindo mas viram **wrappers finos** sobre os mesmos panels + `OportunidadeGate` — sem código duplicado.
-4. Em `/oportunidades`, substituir os 3 ícones (💲🏢🧮) por **um único botão "Abrir Orçamento"** que vai direto para `/orcamentos/:id` na aba correta (querystring `?step=servicos|adm|bdi`).
-5. Em `OrcamentoDetalhe`, remover os botões "Editar em página separada" — agora tudo é inline.
-
-### Frente B — Indicador único de progresso + navegação inteligente
-
-1. Criar helper `lib/orcamento-status.ts` com função única `calcularProgressoOrcamento(opId)` que retorna `{ percentual, proximoPasso, pendencias[] }`.
-2. Usar o mesmo helper em `Orcamentos` (lista) e em `OrcamentoDetalhe` (header).
-3. No shell, o botão "Próximo" pula automaticamente para a primeira etapa incompleta.
-4. Adicionar um banner discreto "Próximo passo: configurar BDI" no topo de cada etapa concluída.
-
-### Frente C — Otimização de queries
-
-1. Criar um único hook `useOrcamentoBundle(oportunidadeId)` que retorna `{ oportunidade, composicoes, mobilizacao, bdiProfiles }` numa **única RPC** (`get_orcamento_bundle`) — economiza ~6 round-trips.
-2. Configurar `staleTime: 30_000` e `placeholderData: keepPreviousData` em todas as queries do bundle para eliminar flash de loading entre tabs.
-3. Trocar `queryKey` baseada em `servicos.map(...).join(",")` por chave estável (`["composicao-itens", composicaoIdsStable]` ordenado e memoizado).
-4. Adicionar `queryClient.prefetchQuery` ao passar o mouse sobre cada step.
-
-### Frente D — Módulo Cronograma (Campo × Escritório)
-
-**Modelo de cálculo** (sem necessidade de nova tabela inicial — derivado):
-
-```text
-Para cada item de serviço do orçamento:
-  qtd               = orcamento_itens_servico.quantidade
-  prod_dia          = servicos.produtividade_padrao  (convertida p/ qtd-por-dia
-                       usando unidade_tempo_produtividade + jornada da mobilização)
-  num_equipes       = 1 (default; editável)
-  dias_brutos       = ceil(qtd / (prod_dia * num_equipes))
-  dias_efetivos     = dias_brutos * (1 + fator_improdutividade)   (vem da Mobilização)
-
-Classificação Campo/Escritório:
-  Para cada composicao_itens onde tipo_insumo='mao_de_obra':
-    cargo.local_trabalho = 'campo'        -> contribui para horas_campo
-    cargo.local_trabalho = 'escritorio'   -> contribui para horas_escritorio
-  Proporção campo/escritório por serviço = horas_campo / (horas_campo + horas_escritorio)
-  Duração_campo       = dias_efetivos * proporção_campo
-  Duração_escritório  = dias_efetivos * proporção_escritório  (executa em paralelo)
-```
-
-UI:
-1. Nova aba **"Cronograma"** no shell `OrcamentoDetalhe` (5ª etapa, entre ADM e BDI).
-2. Componente `<CronogramaServicos>`:
-   - Tabela: serviço | qtd | produtividade | nº equipes (editável) | dias campo | dias escritório | data início | data fim.
-   - Gantt simples (barras CSS) com dois trilhos por linha: 🟦 Campo, 🟨 Escritório.
-   - Totalizador no rodapé: total de meses, comparação com `mobilizacao.duracao_meses` (alerta se divergir).
-3. Botão "Aplicar à Mobilização" — atualiza `mobilizacao.duracao_meses` com o resultado do cronograma (mantém coerência ADM Local ↔ cronograma).
-4. Persistência mínima: nova tabela `orcamento_cronograma_itens` apenas para os overrides do usuário (nº equipes, data início customizada, dependências) — o resto é calculado.
-5. Exportar o mesmo cronograma no DOCX existente (substituir o cálculo atual de `relatorio-exequibilidade-docx.ts:377` pelo helper compartilhado).
-
----
-
-## 3. Detalhes técnicos (referência)
-
-- Arquivos principais a tocar: `src/pages/OrcamentoDetalhe.tsx`, `src/pages/Oportunidades.tsx`, `src/pages/CustosServicos.tsx`, `src/pages/Mobilizacao.tsx`, `src/pages/BdiDre.tsx`, `src/components/orcamento/OportunidadeGate.tsx`.
-- Novos: `src/components/orcamento/panels/{CustosServicosPanel,MobilizacaoPanel,BdiPanel,CronogramaPanel}.tsx`, `src/lib/orcamento-status.ts`, `src/lib/cronograma-calculo.ts`, `src/hooks/useOrcamentoBundle.ts`.
-- Migração necessária só na Frente D: tabela `orcamento_cronograma_itens` (id, orcamento_id, composicao_id, num_equipes, data_inicio_override, ordem, ativo) com RLS por `has_role`.
-- Edge function RPC `get_orcamento_bundle` (Frente C) — opcional; pode-se manter as queries individuais com `staleTime` se preferir simplicidade.
-
-## 4. Ordem de execução sugerida
-
-1. **Frente A** (maior ganho de fluidez percebido) — 1 entrega.
-2. **Frente B** (orienta o usuário no novo shell) — 1 entrega.
-3. **Frente D** (cronograma) — 1 entrega.
-4. **Frente C** (otimização fina) — última, opcional/incremental.
-
-Posso começar pela Frente A já no próximo turno.
+Aprove para começar pelo Prompt A (migration), ou peça ajustes nos pontos 1–8 acima.
