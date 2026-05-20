@@ -2,6 +2,8 @@
  * Motor de cálculo de composição de custos
  * Fase 1: Custos diretos (mão de obra, equipamentos, materiais)
  */
+import { aplicarFatorUtilizacao } from "@/lib/calculos-v2";
+import type { MetodologiaCalculoVersao } from "@/types/calculo-v2";
 
 export interface ParametrosMaoDeObra {
   salario_base: number;
@@ -120,7 +122,8 @@ export function calcularMaoDeObra(
 export function calcularEquipamento(
   params: ParametrosEquipamento,
   quantidade: number,
-  coeficiente: number
+  coeficiente: number,
+  metodologia: MetodologiaCalculoVersao = "v1_legado",
 ): ResultadoCalculo {
   const memoria: MemoriaCalculo[] = [];
 
@@ -142,8 +145,9 @@ export function calcularEquipamento(
   const custoHoraProdutiva = depHora + params.manutencao_hora + custoCombustivelHora + params.operador_custo_hora;
   memoria.push({ descricao: "Custo hora produtiva", formula: `${fmt(depHora)} + ${fmt(params.manutencao_hora)} + ${fmt(custoCombustivelHora)} + ${fmt(params.operador_custo_hora)} = ${fmt(custoHoraProdutiva)}`, valor: custoHoraProdutiva });
 
-  const custoHoraComFator = custoHoraProdutiva * params.fator_utilizacao;
-  memoria.push({ descricao: "Custo hora c/ fator utilização", formula: `${fmt(custoHoraProdutiva)} × ${fmt(params.fator_utilizacao)} = ${fmt(custoHoraComFator)}`, valor: custoHoraComFator });
+  const custoHoraComFator = aplicarFatorUtilizacao(custoHoraProdutiva, params.fator_utilizacao, metodologia);
+  const opLabel = metodologia === "v2_corrigido" ? "÷" : "×";
+  memoria.push({ descricao: `Custo hora c/ fator utilização (${metodologia})`, formula: `${fmt(custoHoraProdutiva)} ${opLabel} ${fmt(params.fator_utilizacao)} = ${fmt(custoHoraComFator)}`, valor: custoHoraComFator });
 
   const custoUnitario = custoHoraComFator * coeficiente;
   memoria.push({ descricao: "Custo unitário", formula: `${fmt(custoHoraComFator)} × ${fmt(coeficiente)} = ${fmt(custoUnitario)}`, valor: custoUnitario });
@@ -158,7 +162,8 @@ export function calcularEquipamento(
 export function calcularVeiculo(
   params: ParametrosVeiculo,
   quantidade: number,
-  coeficiente: number
+  coeficiente: number,
+  metodologia: MetodologiaCalculoVersao = "v1_legado",
 ): ResultadoCalculo {
   const memoria: MemoriaCalculo[] = [];
 
@@ -181,8 +186,9 @@ export function calcularVeiculo(
   const custoHoraTotal = params.custo_hora + params.operador_custo_hora;
   memoria.push({ descricao: "Custo hora (veículo + operador)", formula: `${fmt(params.custo_hora)} + ${fmt(params.operador_custo_hora)} = ${fmt(custoHoraTotal)}`, valor: custoHoraTotal });
 
-  const custoComFator = custoHoraTotal * params.fator_utilizacao;
-  memoria.push({ descricao: "Custo hora c/ fator utilização", formula: `${fmt(custoHoraTotal)} × ${fmt(params.fator_utilizacao)} = ${fmt(custoComFator)}`, valor: custoComFator });
+  const custoComFator = aplicarFatorUtilizacao(custoHoraTotal, params.fator_utilizacao, metodologia);
+  const opLabelV = metodologia === "v2_corrigido" ? "÷" : "×";
+  memoria.push({ descricao: `Custo hora c/ fator utilização (${metodologia})`, formula: `${fmt(custoHoraTotal)} ${opLabelV} ${fmt(params.fator_utilizacao)} = ${fmt(custoComFator)}`, valor: custoComFator });
 
   const custoUnitario = custoComFator * coeficiente;
   memoria.push({ descricao: "Custo unitário", formula: `${fmt(custoComFator)} × ${fmt(coeficiente)} = ${fmt(custoUnitario)}`, valor: custoUnitario });

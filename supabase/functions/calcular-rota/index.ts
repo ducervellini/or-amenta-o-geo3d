@@ -18,6 +18,30 @@ Deno.serve(async (req) => {
       );
     }
 
+    // === Carrega fator regional (UF do destino, fallback origem) — Fase 1 BDI/CCU ===
+    const ufRegional = (destino_estado || origem_estado || '').toUpperCase().slice(0, 2);
+    let fatorRotaRegional = 1.30;
+    let velocidadeMediaRegional = 80;
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL');
+      const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+      if (supabaseUrl && serviceKey && ufRegional) {
+        const rRes = await fetch(
+          `${supabaseUrl}/rest/v1/parametros_logistica_regional?uf=eq.${ufRegional}&ativo=eq.true&deleted_at=is.null&select=fator_rota_rodovia_federal,velocidade_media_kmh&limit=1`,
+          { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } }
+        );
+        if (rRes.ok) {
+          const arr = await rRes.json();
+          if (Array.isArray(arr) && arr[0]) {
+            fatorRotaRegional = Number(arr[0].fator_rota_rodovia_federal) || 1.30;
+            velocidadeMediaRegional = Number(arr[0].velocidade_media_kmh) || 80;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Falha ao carregar parametros_logistica_regional, usando defaults:', e);
+    }
+
     if (!destino_municipio && !destino_lat) {
       return new Response(
         JSON.stringify({ success: false, error: 'Destino (município ou coordenadas) é obrigatório' }),
@@ -89,7 +113,7 @@ Deno.serve(async (req) => {
         distanciaKm = Math.round(route.distance / 1000);
         duracaoHoras = Math.round(route.duration / 3600 * 10) / 10;
       } else {
-        // Fallback: Haversine with 1.3x road factor
+        // Fallback: Haversine com fator regional
         const R = 6371;
         const dLat = (destLat - origemLat) * Math.PI / 180;
         const dLon = (destLng - origemLng) * Math.PI / 180;
@@ -98,13 +122,13 @@ Deno.serve(async (req) => {
           Math.sin(dLon/2) * Math.sin(dLon/2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         const straightLine = R * c;
-        distanciaKm = Math.round(straightLine * 1.3);
-        duracaoHoras = Math.round(distanciaKm / 80 * 10) / 10;
-        console.log(`Fallback Haversine: ${straightLine.toFixed(0)}km straight → ${distanciaKm}km estimated`);
+        distanciaKm = Math.round(straightLine * fatorRotaRegional);
+        duracaoHoras = Math.round(distanciaKm / velocidadeMediaRegional * 10) / 10;
+        console.log(`Fallback Haversine (${ufRegional}, fator ${fatorRotaRegional}): ${straightLine.toFixed(0)}km straight → ${distanciaKm}km estimated`);
       }
     } catch (routeErr) {
       console.error('Route calculation error:', routeErr);
-      // Haversine fallback
+      // Haversine fallback regional
       const R = 6371;
       const dLat = (destLat - origemLat) * Math.PI / 180;
       const dLon = (destLng - origemLng) * Math.PI / 180;
@@ -113,8 +137,8 @@ Deno.serve(async (req) => {
         Math.sin(dLon/2) * Math.sin(dLon/2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
       const straightLine = R * c;
-      distanciaKm = Math.round(straightLine * 1.3);
-      duracaoHoras = Math.round(distanciaKm / 80 * 10) / 10;
+      distanciaKm = Math.round(straightLine * fatorRotaRegional);
+      duracaoHoras = Math.round(distanciaKm / velocidadeMediaRegional * 10) / 10;
     }
 
     // 4. Generate rotasbrasil URL for toll lookup

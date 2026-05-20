@@ -622,11 +622,16 @@ export function MobilizacaoContent({ initialOportunidadeId, embedded = false }: 
       if (data.resumo?.media_dias_chuva_mes) {
         const diasChuva = Math.round(data.resumo.media_dias_chuva_mes);
         setDiasChuvaMes(diasChuva);
-        // Aplicar fator de conversão: nem todo dia de chuva é improdutivo (~50%)
-        const diasImprodEstimado = Math.round(diasChuva * 0.5);
+        // Fator regional (Fase 1 BDI/CCU): % dos dias de chuva considerados improdutivos
+        const { obterParametrosRegionais } = await import("@/lib/calculos-v2");
+        const reg = await obterParametrosRegionais(estado || "");
+        const fator = reg.fator_chuva_produtividade ?? 0.5;
+        const diasImprodEstimado = Math.round(diasChuva * fator);
         const diasImprodCapped = Math.min(diasImprodEstimado, diasTrabalho - 1);
         setDiasImprodutivosUsuario(diasImprodCapped);
-        toast.success(`Pluviometria: ${diasChuva} dias de chuva/mês → ${diasImprodCapped} dias improdutivos estimados`);
+        toast.success(
+          `Pluviometria ${reg.bioma}/${reg.uf}: ${diasChuva} dias de chuva/mês × ${(fator * 100).toFixed(0)}% improdutivos = ${diasImprodCapped} dias`,
+        );
       }
     } catch (err: any) {
       console.error("Erro pluviometria:", err);
