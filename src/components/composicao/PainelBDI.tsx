@@ -139,6 +139,36 @@ export function PainelBDI({ custoDireto, onBdiCalculado, bdiMetodologia = "simpl
         </div>
       </div>
 
+      {/* Metodologia BDI: Simplificado vs TCU 2622/2013 */}
+      <div className="bg-card rounded-lg border p-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs flex items-center gap-1.5">
+            <Scale className="w-3.5 h-3.5" /> Metodologia BDI
+          </Label>
+          <ToggleGroup
+            type="single"
+            size="sm"
+            value={metodologia}
+            onValueChange={(v) => v && setMetodologia(v as BdiMetodologia)}
+          >
+            <ToggleGroupItem value="simplificado" className="text-xs h-7 px-2">Simplificado</ToggleGroupItem>
+            <ToggleGroupItem value="tcu_2622" className="text-xs h-7 px-2">TCU 2622/2013</ToggleGroupItem>
+          </ToggleGroup>
+        </div>
+        {orcamentoVersao === "v1_legado" && metodologia === "tcu_2622" && (
+          <Alert variant="default" className="py-2">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle className="text-xs">Recalcular como v2</AlertTitle>
+            <AlertDescription className="text-xs">
+              Este orçamento está marcado como <code>v1_legado</code>. Os valores acima mostram a simulação TCU,
+              mas o orçamento salvo continua na metodologia simplificada original. Atualize a versão do orçamento
+              para v2_corrigido para gravar os novos preços.
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
+
+
       {/* BDI highlight */}
       <div className="bg-primary/10 rounded-lg border border-primary/30 p-4 text-center space-y-1">
         <div className="text-xs text-muted-foreground">BDI</div>
