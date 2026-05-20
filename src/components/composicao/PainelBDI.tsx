@@ -25,7 +25,7 @@ interface Props {
 
 const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
-export function PainelBDI({ custoDireto, onBdiCalculado }: Props) {
+export function PainelBDI({ custoDireto, onBdiCalculado, bdiMetodologia = "simplificado", regimeTributario = "padrao", codigosTcu = {} }: Props) {
   const { data: paramAdminLocal } = useSupabaseQuery("parametros_admin_local");
   const { data: paramAdminCentral } = useSupabaseQuery("parametros_admin_central");
   const { data: paramFinanciamento } = useSupabaseQuery("parametros_financiamento");
