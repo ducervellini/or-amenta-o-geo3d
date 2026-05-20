@@ -69,7 +69,7 @@ export function PainelBDI({ custoDireto, onBdiCalculado, bdiMetodologia = "simpl
 
   const resultadoBDI = useMemo(() => {
     // Roteia para TCU 2622/2013 quando solicitado; preserva simplificado por padrão
-    if (bdiMetodologia === "tcu_2622") {
+    if (metodologia === "tcu_2622") {
       const pct = (sigla: string): number => {
         const t = params.tributos.find((x) => x.sigla.toUpperCase() === sigla);
         return t ? t.percentual / 100 : 0;
@@ -101,7 +101,7 @@ export function PainelBDI({ custoDireto, onBdiCalculado, bdiMetodologia = "simpl
     const r = calcularBDI(custoDireto, params);
     onBdiCalculado?.(r);
     return r;
-  }, [custoDireto, params, bdiMetodologia]);
+  }, [custoDireto, params, metodologia]);
 
   const resultadoDRE = useMemo(() => {
     return calcularDRE(resultadoBDI.preco_final_bdi, custoDireto, params);
