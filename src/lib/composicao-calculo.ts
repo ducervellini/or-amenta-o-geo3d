@@ -162,7 +162,8 @@ export function calcularEquipamento(
 export function calcularVeiculo(
   params: ParametrosVeiculo,
   quantidade: number,
-  coeficiente: number
+  coeficiente: number,
+  metodologia: MetodologiaCalculoVersao = "v1_legado",
 ): ResultadoCalculo {
   const memoria: MemoriaCalculo[] = [];
 
