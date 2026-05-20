@@ -195,6 +195,18 @@ export default function Oportunidades() {
     { name: "grupo_servicos_id", label: "Grupo de Serviços", type: "select" as const, options: (gruposServicos || []).map((g: any) => ({ value: g.id, label: g.nome })) },
     { name: "cidade", label: "Cidade", type: "text" as const },
     { name: "estado", label: "Estado", type: "select" as const, options: ESTADOS_BR.map((uf) => ({ value: uf, label: uf })) },
+    {
+      name: "regime_tributario",
+      label: "Regime Tributário (REIDI zera PIS/COFINS · Simples Nacional usa DAS · MEI isento · isento_municipio zera ISS)",
+      type: "select" as const,
+      options: [
+        { value: "padrao", label: "Padrão (Lucro Real/Presumido)" },
+        { value: "reidi", label: "REIDI — Regime Especial de Infraestrutura" },
+        { value: "simples_nacional", label: "Simples Nacional" },
+        { value: "mei", label: "MEI" },
+        { value: "isento_municipio", label: "Isento de ISS no município" },
+      ],
+    },
   ];
 
   return (
