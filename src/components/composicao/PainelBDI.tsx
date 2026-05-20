@@ -10,7 +10,10 @@ import {
 import { calcularBDITCU2622, percentualEfetivoTributo, type ParametrosTCU2622 } from "@/lib/calculos-v2";
 import type { BdiMetodologia, RegimeTributario, CodigoTCU } from "@/types/calculo-v2";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building, Landmark, TrendingUp, Receipt, DollarSign } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Building, Landmark, TrendingUp, Receipt, DollarSign, AlertTriangle, Scale } from "lucide-react";
+import type { MetodologiaCalculoVersao } from "@/types/calculo-v2";
 
 interface Props {
   custoDireto: number;
