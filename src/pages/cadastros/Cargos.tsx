@@ -281,9 +281,23 @@ function CargoFormDialog({
             <div>
               <div className="flex items-center justify-between mb-3 border-b pb-1">
                 <h3 className="text-sm font-semibold text-foreground">Encargos Sociais</h3>
-                <span className="text-xs text-muted-foreground">
-                  {encargosSel.length} selecionados · {pct(encargos.filter((e: any) => encargosSel.includes(e.id)).reduce((s: number, e: any) => s + Number(e.percentual), 0))}
-                </span>
+                {(() => {
+                  const kTotal = encargos
+                    .filter((e: any) => encargosSel.includes(e.id))
+                    .reduce((s: number, e: any) => s + Number(e.percentual), 0);
+                  const baixo = kTotal < 60;
+                  return (
+                    <span className={`text-xs font-medium ${baixo ? "text-destructive" : "text-muted-foreground"}`}>
+                      {encargosSel.length} selecionados · K total: {pct(kTotal)}
+                      {baixo && (
+                        <span className="ml-2 inline-flex items-center gap-1 text-destructive">
+                          <Info className="w-3 h-3" />
+                          K abaixo do mínimo CLT (~60%) — verifique encargos obrigatórios.
+                        </span>
+                      )}
+                    </span>
+                  );
+                })()}
               </div>
               <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
                 {encargos.filter((e: any) => e.ativo).map((e: any) => (
